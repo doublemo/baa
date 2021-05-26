@@ -7,6 +7,7 @@
 // go install -v -ldflags "-X main.version=$(VERSION) -X main.commitid=$(COMMIT) -X main.builddate=$(BUILDDATE)"
 // go build -race -ldflags "-X main.version=$(VERSION) -X main.commitid=$(COMMIT) -X main.builddate=$(BUILDDATE)"
 // GOOS=linux GOARCH=amd64 go install -ldflags "-X main.version=$(VERSION) -X main.commitid=$(COMMIT) -X main.builddate=$(BUILDDATE)"
+// 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
 
 package main
 
