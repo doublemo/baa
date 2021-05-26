@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The balala Authors <https://github.com/doublemo/baa>
+// Copyright (c) 2019 The baa Authors <https://github.com/doublemo/baa>
 
 package mem
 

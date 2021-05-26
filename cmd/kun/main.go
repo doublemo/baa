@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The balala Authors <https://github.com/doublemo/baa>
+// Copyright (c) 2019 The baa Authors <https://github.com/doublemo/baa>
 //
 // 编译方式,需要通过这种编译写版本信息
 // VERSION = "0.0.1"
