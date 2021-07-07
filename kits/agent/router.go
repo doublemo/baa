@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"crypto/rc4"
 	"fmt"
 	"math/big"
@@ -8,6 +9,8 @@ import (
 	"github.com/doublemo/baa/cores/crypto/dh"
 	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/rpcx"
 	"github.com/doublemo/baa/kits/agent/adapter/router"
 	"github.com/doublemo/baa/kits/agent/errcode"
 	midPeer "github.com/doublemo/baa/kits/agent/middlewares/peer"
@@ -15,10 +18,20 @@ import (
 	"github.com/doublemo/baa/kits/agent/proto/pb"
 	"github.com/doublemo/baa/kits/agent/session"
 	grpcproto "github.com/golang/protobuf/proto"
+	etcdClient "github.com/rpcxio/rpcx-etcd/client"
+	"github.com/smallnest/rpcx/client"
 )
 
-func init() {
+// RouterConfig 路由配置
+type RouterConfig struct {
+	Etcd *conf.Etcd       `alias:"etcd"`
+	Sfu  *conf.RPCXClient `alias:"sfu"`
+}
+
+// InitRouter init
+func InitRouter(config *RouterConfig) {
 	router.On(proto.HandshakeCommand, handshake)
+	router.On(proto.SFUCommand, sfuRouter(config))
 }
 
 func handleTextMessage(peer session.Peer, frame []byte) (coresproto.Response, error) {
@@ -88,8 +101,38 @@ func handshake(peer session.Peer, req coresproto.Request) (coresproto.Response, 
 	return resp, err
 }
 
-func taiRouter() router.Callback {
+// sfuRouter sfu 服务
+func sfuRouter(config *RouterConfig) router.Callback {
+	if config.Etcd == nil || config.Sfu == nil {
+		panic("Invalid config in sfuRouter")
+	}
+
+	etcdDiscovery, err := etcdClient.NewEtcdV3Discovery(config.Etcd.BasePath, "sfu", config.Etcd.Addr, true, nil)
+	if err != nil {
+		panic(err)
+	}
 	return func(peer session.Peer, req coresproto.Request) (coresproto.Response, error) {
-		return nil, nil
+		xclient := client.NewXClient("sfu", client.Failtry, client.RoundRobin, etcdDiscovery, rpcx.Option(*config.Sfu))
+		defer func() {
+			xclient.Close()
+		}()
+
+		// middleware
+		rpcx.Use(xclient, *config.Sfu)
+
+		args := &corespb.Request{
+			Header:  map[string]string{"PeerId": peer.ID()},
+			Command: req.SubCommand().Int32(),
+			Payload: req.Body(),
+		}
+
+		reply := &corespb.Response{}
+		err := xclient.Call(context.Background(), "Call", args, reply)
+		if err != nil {
+			reply.Command = req.SubCommand().Int32()
+			return proto.NewResponseBytes(req.Command(), errcode.Bad(reply, errcode.ErrInternalServer, err.Error())), nil
+		}
+
+		return proto.NewResponseBytes(req.Command(), reply), nil
 	}
 }

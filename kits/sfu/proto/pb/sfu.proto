@@ -1,0 +1,46 @@
+syntax = "proto3";
+package pb;
+option go_package = "github.com/doublemo/baa/kit/sfu/proto/pb";
+
+message SFU {
+    message Subscribe {
+        message Request{
+            string SessionId = 1;
+            string PeerId = 2;
+        }
+
+        message Reply{
+            bool Ok = 1;
+        }
+    } 
+
+    enum Target {
+        PUBLISHER = 0;
+        SUBSCRIBER = 1;
+    }
+
+    message Trickle {
+        Target Target = 1;
+        string Candidate = 2;
+    }
+
+    message Signal {
+        message Request{
+            string SessionId = 1;
+            oneof Payload {
+                bytes  Description = 2;
+                Trickle trickle = 3;
+            } 
+        }
+
+        message Reply {
+            string SessionId = 1;
+            string PeerId = 2;
+            oneof Payload {
+                bytes description = 3;
+                Trickle trickle = 4;
+                string iceConnectionState = 5;
+            }
+        }
+    }
+}

@@ -14,7 +14,7 @@ import (
 )
 
 // NewSocketProcessActor 创建socket服务
-func NewSocketProcessActor(config conf.Scoket) (*os.ProcessActor, error) {
+func NewSocketProcessActor(config *conf.Scoket) (*os.ProcessActor, error) {
 	var wg sync.WaitGroup
 	exitChan := make(chan struct{})
 	s := coresnet.NewSocket2()

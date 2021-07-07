@@ -18,7 +18,7 @@ import (
 )
 
 // NewWebsocketProcessActor 创建Websocket
-func NewWebsocketProcessActor(config conf.Webscoket) (*os.ProcessActor, error) {
+func NewWebsocketProcessActor(config *conf.Webscoket) (*os.ProcessActor, error) {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
@@ -83,7 +83,7 @@ func NewWebsocketProcessActor(config conf.Webscoket) (*os.ProcessActor, error) {
 	}, nil
 }
 
-func webscoketHandler(w http.ResponseWriter, req *http.Request, upgrader websocket.Upgrader, config conf.Webscoket, wg *sync.WaitGroup, exitChan chan struct{}) {
+func webscoketHandler(w http.ResponseWriter, req *http.Request, upgrader websocket.Upgrader, config *conf.Webscoket, wg *sync.WaitGroup, exitChan chan struct{}) {
 	conn, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
 		log.Error(Logger()).Log("error", err)

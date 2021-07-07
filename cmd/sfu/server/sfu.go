@@ -8,12 +8,12 @@ import (
 	"github.com/doublemo/baa/cores/net"
 	"github.com/doublemo/baa/cores/os"
 	"github.com/doublemo/baa/internal/conf"
-	"github.com/doublemo/baa/kits/agent"
+	"github.com/doublemo/baa/kits/sfu"
 )
 
 type Config struct {
 	// MachineID 当前服务的唯一标识
-	MachineID string `alias:"id" default:"kun01"`
+	MachineID string `alias:"id" default:"sfu01"`
 
 	// Runmode 运行模式
 	Runmode string `alias:"runmode" default:"pord"`
@@ -24,20 +24,14 @@ type Config struct {
 	// Domain string 提供服务的域名
 	Domain string `alias:"domain"`
 
-	// Http http(s) 监听端口
-	// 利用http实现信息GET/POST, webscoket 也会这个端口甚而上实现
-	Http *conf.Http `alias:"http"`
+	// Etcd etcd
+	Etcd *conf.Etcd `alias:"etcd"`
 
-	// Websocket 将支持WebSocket服务
-	Websocket *conf.Webscoket `alias:"websocket"`
-
-	// Socket 将支持tcp流服务
-	Socket *conf.Scoket `alias:"socket"`
-
-	Router *agent.RouterConfig `alias:"router"`
+	// RPC rpc
+	RPC *conf.RPC `alias:"rpc"`
 }
 
-type Agent struct {
+type SFU struct {
 	// exitChan 退出信息
 	exitChan chan struct{}
 
@@ -51,7 +45,7 @@ type Agent struct {
 	actors *os.Process
 }
 
-func (s *Agent) Start() error {
+func (s *SFU) Start() error {
 	defer func() {
 		close(s.exitChan)
 	}()
@@ -68,44 +62,37 @@ func (s *Agent) Start() error {
 
 	// 设置日志
 	Logger(o.Runmode)
-	agent.SetLogger(logger)
-
-	// 路由
-	agent.InitRouter(o.Router)
-
-	// 初始数据
+	sfu.SetLogger(logger)
+	sfu.InitRouter()
 
 	// 注册运行服务
-
-	s.actors.Add(s.mustProcessActor(agent.NewSocketProcessActor(o.Socket.Clone())), true)
-	s.actors.Add(s.mustProcessActor(agent.NewWebsocketProcessActor(o.Websocket.Clone())), true)
-
+	s.actors.Add(s.mustProcessActor(sfu.NewRPCXServerActor(o.RPC.Clone(), o.Etcd.Clone())), true)
 	return s.actors.Run()
 }
 
-func (s *Agent) Readyed() bool {
+func (s *SFU) Readyed() bool {
 	return true
 }
 
-func (s *Agent) Shutdown() {
+func (s *SFU) Shutdown() {
 	s.actors.Stop()
 }
 
-func (s *Agent) Reload() {}
+func (s *SFU) Reload() {}
 
-func (s *Agent) ServiceName() string {
+func (s *SFU) ServiceName() string {
 	return ""
 }
 
-func (s *Agent) OtherCommand(cmd int) {
+func (s *SFU) OtherCommand(cmd int) {
 
 }
 
-func (s *Agent) QuitCh() <-chan struct{} {
+func (s *SFU) QuitCh() <-chan struct{} {
 	return s.exitChan
 }
 
-func (s *Agent) mustProcessActor(actor *os.ProcessActor, err error) *os.ProcessActor {
+func (s *SFU) mustProcessActor(actor *os.ProcessActor, err error) *os.ProcessActor {
 	if err != nil {
 		log.Error(logger).Log("error", err)
 		panic(err)
@@ -115,8 +102,8 @@ func (s *Agent) mustProcessActor(actor *os.ProcessActor, err error) *os.ProcessA
 }
 
 // New 创建服务
-func New(opts *ConfigureOptions) *Agent {
-	return &Agent{
+func New(opts *ConfigureOptions) *SFU {
+	return &SFU{
 		exitChan:         make(chan struct{}),
 		readyedChan:      make(chan struct{}),
 		configureOptions: opts,
