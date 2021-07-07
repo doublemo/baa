@@ -2,6 +2,8 @@
 
 package types
 
+import "errors"
+
 // ErrCode 错误码
 type ErrCode struct {
 	// code 错误码
@@ -19,6 +21,16 @@ func (e ErrCode) Code() int32 {
 // Error 错误信息
 func (e ErrCode) Error() string {
 	return e.message
+}
+
+// Bytes 获取错误信息
+func (e ErrCode) Bytes() []byte {
+	return []byte(e.message)
+}
+
+// ToError 转换为error类型
+func (e ErrCode) ToError() error {
+	return errors.New(e.Error())
 }
 
 // NewErrCode 创建错误码

@@ -1,6 +1,4 @@
-// Copyright (c) 2019 The baa Authors <https://github.com/doublemo/baa>
-
-package kun
+package server
 
 import (
 	"errors"
@@ -9,7 +7,6 @@ import (
 	"unsafe"
 
 	alias "github.com/doublemo/baa/cores/conf"
-	"github.com/doublemo/baa/kits/kun/mem"
 )
 
 // ConfigureOptions 配置文件服务
@@ -22,8 +19,8 @@ type ConfigureOptions struct {
 }
 
 // Read 加载配置文件
-func (conf *ConfigureOptions) Read() *mem.Parameters {
-	return (*mem.Parameters)(atomic.LoadPointer(&conf.opts))
+func (conf *ConfigureOptions) Read() *Config {
+	return (*Config)(atomic.LoadPointer(&conf.opts))
 }
 
 // Load 加载配置文件
@@ -36,7 +33,7 @@ func (conf *ConfigureOptions) Load() error {
 		return errors.New("config file does not exist")
 	}
 
-	opts := mem.Parameters{}
+	opts := Config{}
 	if err := alias.BindWithConfFile(conf.fp, &opts); err != nil {
 		return err
 	}
@@ -46,15 +43,15 @@ func (conf *ConfigureOptions) Load() error {
 }
 
 // Reset 重置配置文件
-func (conf *ConfigureOptions) Reset(opts *mem.Parameters) {
+func (conf *ConfigureOptions) Reset(opts *Config) {
 	atomic.StorePointer(&conf.opts, unsafe.Pointer(opts))
 }
 
 // NewConfigureOptions 创建配置文件
-func NewConfigureOptions(fp string, opts *mem.Parameters) *ConfigureOptions {
+func NewConfigureOptions(fp string, opts *Config) *ConfigureOptions {
 	c := &ConfigureOptions{fp: fp}
 	if opts == nil {
-		opts = &mem.Parameters{}
+		opts = &Config{}
 	}
 	atomic.StorePointer(&c.opts, unsafe.Pointer(opts))
 	return c

@@ -1,0 +1,14 @@
+syntax = "proto3";
+package pb;
+option go_package = "github.com/doublemo/baa/kit/agent/proto/pb";
+
+message Agent {
+    message Handshake {
+        int64 E1 = 1;
+        int64 E2 = 2;
+    }
+
+    message Heartbeater {
+        int64 R = 1;
+    }
+}

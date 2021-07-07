@@ -4,7 +4,7 @@ package term
 import (
 	"io"
 
-	"github.com/go-kit/kit/log"
+	"github.com/doublemo/baa/cores/log"
 )
 
 // NewLogger returns a Logger that takes advantage of terminal features if

@@ -32,7 +32,7 @@ type Webscoket struct {
 	WriteBufferSize int `alias:"writebuffersize" default:"32767"`
 
 	// MaxMessageSize WebSocket每帧最在数据大小
-	MaxMessageSize int64 `alias:"maxmessagesize" default:"1024"`
+	MaxMessageSize int64 `alias:"maxmessagesize" default:"10240"`
 
 	// ReadDeadline 读取超时
 	ReadDeadline int `alias:"readdeadline" default:"310"`

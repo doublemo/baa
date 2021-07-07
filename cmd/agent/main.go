@@ -16,8 +16,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/doublemo/baa/cmd/agent/server"
 	coresos "github.com/doublemo/baa/cores/os"
-	"github.com/doublemo/baa/kits/kun"
 )
 
 // 定义版本信息
@@ -91,8 +91,8 @@ func main() {
 	fs.Usage = usage
 	fs.BoolVar(&showHelp, "h", false, "Show this message.")
 	fs.BoolVar(&showHelp, "help", false, "Show this message.")
-	fs.StringVar(&fp, "c", "conf/kun.conf", "Configuration file")
-	fs.StringVar(&fp, "config", "conf/kun.conf", "Configuration file")
+	fs.StringVar(&fp, "c", "conf/agent.conf", "Configuration file")
+	fs.StringVar(&fp, "config", "conf/agent.conf", "Configuration file")
 	fs.BoolVar(&showVersion, "version", false, "Print version information.")
 	fs.BoolVar(&showVersion, "v", false, "Print version information.")
 	fs.BoolVar(&install, "install", false, "Install this server to Windows Services")
@@ -113,20 +113,12 @@ func main() {
 		ver()
 	}
 
-	// if install {
-	// 	installService(service.Name, dname, description, args)
-	// }
-
-	// if uninstall {
-	// 	uninstallService(service.Name)
-	// }
-
-	opts := kun.NewConfigureOptions(fp, nil)
+	opts := server.NewConfigureOptions(fp, nil)
 	if err := opts.Load(); err != nil {
 		panic(err)
 	}
 
-	if err := coresos.Run(kun.New(opts)); err != nil {
+	if err := coresos.Run(server.New(opts)); err != nil {
 		panic(err)
 	}
 }

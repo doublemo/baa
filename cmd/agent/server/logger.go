@@ -1,6 +1,4 @@
-// Copyright (c) 2019 The baa Authors <https://github.com/doublemo/baa>
-
-package kun
+package server
 
 import (
 	"os"
@@ -14,7 +12,7 @@ var logger log.Logger
 
 func init() {
 	logger = log.NewLogfmtLogger(os.Stderr)
-	logger = log.WithPrefix(logger, "[kit]", "kun")
+	logger = log.WithPrefix(logger, "[kit]", "agent")
 	logger = log.With(logger, "ts", log.TimestampFormat(func() time.Time { return time.Now() }, time.RFC3339Nano))
 }
 
