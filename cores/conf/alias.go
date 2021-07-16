@@ -6,9 +6,15 @@ import (
 	"reflect"
 )
 
+var aliasKeys = []string{"alias"}
+
 // BindWithConfFile 将配置文件绑定到对象
 // 需要conf库的支持
-func BindWithConfFile(fp string, o interface{}) error {
+func BindWithConfFile(fp string, o interface{}, keys ...string) error {
+	if len(keys) > 0 {
+		aliasKeys = keys
+	}
+
 	mapping, err := ParseFile(fp)
 	if err != nil {
 		return err
@@ -19,7 +25,11 @@ func BindWithConfFile(fp string, o interface{}) error {
 
 // BindWithConf 将配置文件内容绑定到对象
 // 需要conf库的支持
-func BindWithConf(data string, o interface{}) error {
+func BindWithConf(data string, o interface{}, keys ...string) error {
+	if len(keys) > 0 {
+		aliasKeys = keys
+	}
+
 	mapping, err := Parse(data)
 	if err != nil {
 		return err
@@ -35,12 +45,8 @@ func Bind(mapping map[string]interface{}, o interface{}) error {
 	for i := 0; i < typElem.NumField(); i++ {
 		field := typElem.Field(i)
 		name := field.Name
-		if alias, ok := field.Tag.Lookup("alias"); ok {
-			if alias == "-" {
-				name = ""
-			} else {
-				name = alias
-			}
+		if alias := lookupKeys(field.Tag, aliasKeys...); alias != "" {
+			name = alias
 		}
 
 		if name == "" {
@@ -76,4 +82,13 @@ func Bind(mapping map[string]interface{}, o interface{}) error {
 	}
 
 	return nil
+}
+
+func lookupKeys(tag reflect.StructTag, keys ...string) string {
+	for _, key := range keys {
+		if value, ok := tag.Lookup(key); ok && value != "-" {
+			return value
+		}
+	}
+	return ""
 }

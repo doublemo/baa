@@ -16,6 +16,7 @@ func NewResponseBytes(cmd coresproto.Command, resp *corespb.Response) *coresprot
 	w.SubCmd = coresproto.Command(resp.Command)
 	w.SID = 1
 	w.Code = 0
+	w.Ver = 1
 	switch payload := resp.Payload.(type) {
 	case *corespb.Response_Content:
 		w.Content = payload.Content

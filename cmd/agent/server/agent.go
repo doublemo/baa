@@ -77,9 +77,9 @@ func (s *Agent) Start() error {
 
 	// 注册运行服务
 
+	//s.actors.Add(s.mustProcessActor(agent.NewSFUActor(o.Router.Sfu, o.Router.Etcd)), true)
 	s.actors.Add(s.mustProcessActor(agent.NewSocketProcessActor(o.Socket.Clone())), true)
 	s.actors.Add(s.mustProcessActor(agent.NewWebsocketProcessActor(o.Websocket.Clone())), true)
-
 	return s.actors.Run()
 }
 

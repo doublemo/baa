@@ -1,6 +1,8 @@
 package session
 
-import "sync"
+import (
+	"sync"
+)
 
 var (
 	defaultSessionID = "default"

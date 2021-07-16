@@ -7,10 +7,12 @@ message SFU {
         message Request{
             string SessionId = 1;
             string PeerId = 2;
+            bytes  Description  = 3;
         }
 
         message Reply{
             bool Ok = 1;
+            bytes Description = 2;
         }
     } 
 

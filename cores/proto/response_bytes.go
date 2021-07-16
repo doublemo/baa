@@ -37,7 +37,11 @@ func (resp *ResponseBytes) SubCommand() Command {
 }
 
 // SeqID 请求编号
-func (resp *ResponseBytes) SeqID() uint32 {
+func (resp *ResponseBytes) SeqID(n ...uint32) uint32 {
+	if len(n) > 0 {
+		resp.SID = n[0]
+	}
+
 	return resp.SID
 }
 
@@ -108,4 +112,3 @@ func (resp *ResponseBytes) Unmarshal(frame []byte) error {
 	resp.Content = rd.Bytes()
 	return nil
 }
-

@@ -22,7 +22,6 @@ func (rpm *RPMLimiter) Receive() func(session.PeerMessageProcessor) session.Peer
 	return func(next session.PeerMessageProcessor) session.PeerMessageProcessor {
 		return session.PeerMessageProcessFunc(func(args session.PeerMessageProcessArgs) {
 			counter++
-
 			if time.Now().Sub(last).Seconds() > 60 {
 				last = time.Now()
 				counter = 0

@@ -34,7 +34,7 @@ func (conf *ConfigureOptions) Load() error {
 	}
 
 	opts := Config{}
-	if err := alias.BindWithConfFile(conf.fp, &opts); err != nil {
+	if err := alias.BindWithConfFile(conf.fp, &opts, "alias", "mapstructure"); err != nil {
 		return err
 	}
 

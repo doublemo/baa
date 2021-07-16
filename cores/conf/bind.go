@@ -85,7 +85,13 @@ func bindSlice(typ reflect.Type, v interface{}) (reflect.Value, error) {
 		if err != nil {
 			return result, err
 		}
-		result.Index(i).Set(m)
+
+		if typ.Kind() != reflect.Ptr && m.Type().Kind() == reflect.Ptr {
+			result.Index(i).Set(m.Elem())
+		} else {
+			result.Index(i).Set(m)
+		}
+
 	}
 	return result, nil
 }
@@ -123,7 +129,6 @@ func bindStruct(typ reflect.Type, v interface{}) (reflect.Value, error) {
 		valueKind = value.Elem().Type().Kind()
 		v = value.Elem().Interface()
 	}
-
 	if valueKind == reflect.Map {
 		return bindStructMap(typ, v)
 	} else if valueKind == reflect.Struct {
@@ -149,12 +154,12 @@ func bindStructMap(typ reflect.Type, v interface{}) (reflect.Value, error) {
 	for i := 0; i < resultElem.NumField(); i++ {
 		field := resultElem.Field(i)
 		name := field.Name
-		if alias, ok := field.Tag.Lookup("alias"); ok {
-			if alias == "-" {
-				continue
-			}
-
+		if alias := lookupKeys(field.Tag, aliasKeys...); alias != "" {
 			name = alias
+		}
+
+		if name == "" {
+			continue
 		}
 
 		if val, ok := field.Tag.Lookup("default"); ok && val != "" {
@@ -179,7 +184,12 @@ func bindStructMap(typ reflect.Type, v interface{}) (reflect.Value, error) {
 		if err != nil {
 			return value, err
 		}
-		result.Elem().FieldByName(field.Name).Set(m)
+
+		if field.Type.Kind() != reflect.Ptr && m.Type().Kind() == reflect.Ptr {
+			result.Elem().FieldByName(field.Name).Set(m.Elem())
+		} else {
+			result.Elem().FieldByName(field.Name).Set(m)
+		}
 	}
 	return result, nil
 }
@@ -200,12 +210,12 @@ func bindStructStruct(typ reflect.Type, v interface{}) (reflect.Value, error) {
 	for i := 0; i < resultElem.NumField(); i++ {
 		field := resultElem.Field(i)
 		name := field.Name
-		if alias, ok := field.Tag.Lookup("alias"); ok {
-			if alias == "-" {
-				continue
-			}
-
+		if alias := lookupKeys(field.Tag, aliasKeys...); alias != "" {
 			name = alias
+		}
+
+		if name == "" {
+			continue
 		}
 
 		if val, ok := field.Tag.Lookup("default"); ok && val != "" {
@@ -241,7 +251,11 @@ func bindStructStruct(typ reflect.Type, v interface{}) (reflect.Value, error) {
 			return value, err
 		}
 
-		result.Elem().FieldByName(field.Name).Set(m)
+		if field.Type.Kind() != reflect.Ptr && m.Type().Kind() == reflect.Ptr {
+			result.Elem().FieldByName(field.Name).Set(m.Elem())
+		} else {
+			result.Elem().FieldByName(field.Name).Set(m)
+		}
 	}
 
 	return result, nil

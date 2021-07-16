@@ -24,6 +24,7 @@ require (
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/pion/dtls/v2 v2.0.9 // indirect
 	github.com/pion/ice/v2 v2.1.7 // indirect
+	github.com/pion/ion-sfu v1.10.6 // indirect
 	github.com/pion/logging v0.2.2 // indirect
 	github.com/pion/rtcp v1.2.6 // indirect
 	github.com/pion/rtp v1.6.5 // indirect

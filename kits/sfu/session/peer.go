@@ -1,22 +1,17 @@
 package session
 
 import (
-	"net"
-
 	"github.com/pion/webrtc/v3"
 )
 
 type (
 	Peer interface {
 		ID() string
-		OnOffer(func(*webrtc.SessionDescription))
-		OnIceCandidate(func(*webrtc.ICECandidateInit, int))
-		OnNotify(func([]byte) error)
 	}
 
 	PeerLocal struct {
 		id             string
-		conn           net.Conn
+		pc             *webrtc.PeerConnection
 		onOffer        func(*webrtc.SessionDescription)
 		onIceCandidate func(*webrtc.ICECandidateInit, int)
 		onNotify       func(payload []byte) error

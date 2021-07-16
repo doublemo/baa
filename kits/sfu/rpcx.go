@@ -10,17 +10,30 @@ import (
 	"github.com/doublemo/baa/cores/os"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/rpcx"
+	sfulog "github.com/pion/ion-sfu/pkg/logger"
+	ionsfu "github.com/pion/ion-sfu/pkg/sfu"
 )
 
 // NewRPCXServerActor 提供RPC服务
-func NewRPCXServerActor(config *conf.RPC, etcd *conf.Etcd) (*os.ProcessActor, error) {
+func NewRPCXServerActor(config *conf.RPC, etcd *conf.Etcd, sfuconfig *Configuration) (*os.ProcessActor, error) {
 	s, err := rpcx.NewRPCXServer(config.Salt, config.Key, config.ServiceSecurityKey)
 	if err != nil {
 		return nil, err
 	}
 
+	var c ionsfu.Config
+	{
+		c.SFU.Ballast = sfuconfig.Ballast
+		c.SFU.WithStats = sfuconfig.WithStats
+		c.WebRTC = sfuconfig.WebRTC
+		c.Router = sfuconfig.Router
+		c.Turn = sfuconfig.Turn
+	}
+	fmt.Println(c.WebRTC, c.Router, c.Turn)
+	ionsfu.Logger = sfulog.New()
 	serv := &sfuservice{
 		server: s,
+		sfu:    ionsfu.NewSFU(c),
 	}
 
 	addr, err := rpcxAddress(config.Addr)

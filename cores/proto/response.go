@@ -15,7 +15,7 @@ type Response interface {
 	V() int8
 
 	// SeqID 协议编号
-	SeqID() uint32
+	SeqID(n ...uint32) uint32
 
 	// Command 主命令
 	Command() Command

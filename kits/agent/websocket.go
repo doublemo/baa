@@ -91,7 +91,6 @@ func webscoketHandler(w http.ResponseWriter, req *http.Request, upgrader websock
 	}
 
 	wg.Add(1)
-
 	peer := session.NewPeerWebsocket(conn, time.Duration(config.ReadDeadline)*time.Second, time.Duration(config.WriteDeadline)*time.Second, config.MaxMessageSize, exitChan)
 	peer.OnReceive(func(p session.Peer, m session.PeerMessagePayload) error {
 		var (
@@ -120,6 +119,7 @@ func webscoketHandler(w http.ResponseWriter, req *http.Request, upgrader websock
 	peer.OnClose(func(p session.Peer) {
 		wg.Done()
 		session.RemovePeer(p)
+		sfuUnsubscribe(p)
 	})
 
 	peer.Use(midPeer.NewRPMLimiter(config.RPMLimit, Logger()))

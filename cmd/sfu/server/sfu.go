@@ -29,6 +29,9 @@ type Config struct {
 
 	// RPC rpc
 	RPC *conf.RPC `alias:"rpc"`
+
+	// SFU ion-sfu
+	SFU *sfu.Configuration `alias:"sfu"`
 }
 
 type SFU struct {
@@ -66,7 +69,7 @@ func (s *SFU) Start() error {
 	sfu.InitRouter()
 
 	// 注册运行服务
-	s.actors.Add(s.mustProcessActor(sfu.NewRPCXServerActor(o.RPC.Clone(), o.Etcd.Clone())), true)
+	s.actors.Add(s.mustProcessActor(sfu.NewRPCXServerActor(o.RPC.Clone(), o.Etcd.Clone(), o.SFU)), true)
 	return s.actors.Run()
 }
 
