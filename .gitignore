@@ -16,4 +16,3 @@
 .vscode/
 *.exe
 protoc/
-test/

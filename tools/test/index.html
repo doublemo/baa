@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
+      crossorigin="anonymous"
+    />
+
+    <style>
+      pre {
+        outline: 1px solid #ccc;
+        padding: 5px;
+        margin: 5px;
+      }
+
+      .string {
+        color: green;
+      }
+
+      .number {
+        color: darkorange;
+      }
+
+      .boolean {
+        color: blue;
+      }
+
+      .null {
+        color: magenta;
+      }
+
+      .key {
+        color: red;
+      }
+    </style>
+
+    <title>Test Websocket</title>
+  </head>
+
+  <body>
+    <nav class="navbar navbar-light bg-light border-bottom">
+      <h3>Websocket</h3>
+    </nav>
+    <div class="container pt-4">
+      <div class="row" id="start-btns">
+        <div class="col-12">
+          <button type="button" class="btn btn-primary" onclick="send()">
+            start
+          </button>
+          <button type="button" class="btn btn-primary" onclick="send2()">
+            send
+          </button>
+          <video
+            id="local-video"
+            style="background-color: black"
+            width="320"
+            height="240"
+          ></video>
+
+          <video
+            id="remote-video"
+            style="background-color: black"
+            width="320"
+            height="240"
+          ></video>
+
+          <p>
+          <audio style="background-color: black" id="remote-audio">您的浏览器不支持 audio 标签。</audio>
+          </p>
+        </div>
+      </div>
+     <script src="baajs.min.js" type="text/javascript"> </script>
+     <script> 
+      var localVideo = document.getElementById("local-video");
+      var remoteVideo = document.getElementById("remote-video");
+      var remoteAudio = document.getElementById("remote-audio");
+      var ws = new baa.Socket("ws://localhost:9093/websocket");
+      ws.use(new baa.BytesMiddleware());
+
+      // new peer
+      var peer = new baa.Peer(ws);
+      peer.ontrack = function(track, stream){
+        console.log("track.kind:", track.kind);
+        if(track.kind == "video") {
+          remoteVideo.srcObject = stream;
+          remoteVideo.autoplay = true;
+          remoteVideo.controls = true;
+          console.log("ojjjjj");
+        } else if(track.kind == "audio") {
+          console.log("audio start");
+          remoteAudio.srcObject = stream;
+          remoteAudio.autoplay = true;
+          remoteAudio.controls = true;
+        }
+      }
+
+      peer.ondatachannel = ({ channel }) => {
+          channel.onclose = () => console.log('ondatachannel has closed')
+          channel.onopen = () => console.log('ondatachannel has opened')
+          channel.onmessage = (e) => {
+            console.log("channel message ----->", e.data);
+          }
+      }
+
+      var channel;
+      ws.onConnect = function() {
+           // init rc4
+           var rc4 = new baa.Rc4Middleware();
+           ws.use(rc4);
+
+           // rc4 handshake
+           var req = new baa.RequestBytes();
+           req.ver = 1;
+           req.command = baa.Command.Agent.Command;
+           req.subCommand = baa.Command.Agent.SubCommand.HandshakeCommand;
+           req.content = rc4.handshake();
+           ws.send(req);
+
+           
+
+           setTimeout(async () =>  {
+            await peer.join();
+           }, 1000);
+      }
+
+      ws.onMessage = peer.onMessage();
+
+      
+      function send() {
+        channel = peer.createDataChannel("tesok");
+        baa.LocalStream.getUserMedia({
+            resolution: "hd",
+            simulcast: false,
+            audio: true,
+            video:true,
+            codec: 'vp8'
+        }).then((stream) => {
+            localVideo.srcObject = stream;
+            localVideo.autoplay = true;
+            peer.publish(stream);
+        }).catch(console.error);
+      }
+
+      function send2() {
+        if(channel.readyState === "open") {
+          console.log("send.");
+          channel.send("---------------------------ok-okk-----------v--");
+        }
+      }
+
+      
+    </script>
+  </body>
+</html>
