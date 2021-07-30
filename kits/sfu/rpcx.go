@@ -14,6 +14,14 @@ import (
 	ionsfu "github.com/pion/ion-sfu/pkg/sfu"
 )
 
+const (
+	// RPCXServiceName 服务名称
+	RPCXServiceName = "sfu"
+
+	// RPCXStreamServiceName 流服务名称
+	RPCXStreamServiceName = "sfu-s"
+)
+
 // NewRPCXServerActor 提供RPC服务
 func NewRPCXServerActor(config *conf.RPC, etcd *conf.Etcd, sfuconfig *Configuration) (*os.ProcessActor, error) {
 	s, err := rpcx.NewRPCXServer(config.Salt, config.Key, config.ServiceSecurityKey)
@@ -29,7 +37,6 @@ func NewRPCXServerActor(config *conf.RPC, etcd *conf.Etcd, sfuconfig *Configurat
 		c.Router = sfuconfig.Router
 		c.Turn = sfuconfig.Turn
 	}
-	fmt.Println(c.WebRTC, c.Router, c.Turn)
 	ionsfu.Logger = sfulog.New()
 	serv := &sfuservice{
 		server: s,
@@ -50,7 +57,7 @@ func NewRPCXServerActor(config *conf.RPC, etcd *conf.Etcd, sfuconfig *Configurat
 	return &os.ProcessActor{
 		Exec: func() error {
 			Logger().Log("transport", "rpc", "on", config.Addr)
-			s.RegisterName("sfu", serv, fmt.Sprintf("weight=%d&group=%s", config.Weight, config.Group))
+			s.RegisterName(RPCXServiceName, serv, fmt.Sprintf("weight=%d&group=%s", config.Weight, config.Group))
 			s.Serve(rpcx.Netname(), config.Addr)
 			return nil
 		},

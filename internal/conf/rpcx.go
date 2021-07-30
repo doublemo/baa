@@ -16,6 +16,12 @@ type RPC struct {
 	// Addr 监听地址
 	Addr string `alias:"addr" default:":9092"`
 
+	// StreamAddr 流服务监听地址
+	StreamAddr string `alias:"streamaddr" default:":9093"`
+
+	// StreamWaitNum 流服务等待队列最大容量
+	StreamWaitNum int `alias:"streamwait" default:"1024"`
+
 	// Salt 公钥
 	// 当网络模式为tcp并且tls开启，这个支持将是pem的地址
 	// 当网络模式为kcp时，这个将是kcp salt
@@ -33,9 +39,12 @@ type RPC struct {
 // Clone RPC
 func (o *RPC) Clone() *RPC {
 	return &RPC{
+		Name:               o.Name,
 		Weight:             o.Weight,
 		Group:              o.Group,
 		Addr:               o.Addr,
+		StreamAddr:         o.StreamAddr,
+		StreamWaitNum:      o.StreamWaitNum,
 		Salt:               o.Salt,
 		Key:                o.Key,
 		ServiceSecurityKey: o.ServiceSecurityKey,

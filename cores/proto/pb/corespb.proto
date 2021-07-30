@@ -21,4 +21,10 @@ message Response {
         bytes Content = 2;
         Error Error   = 3;
     }
+    map<string, string> Header   = 4;
+}
+
+service Service{
+    rpc BidirectionalStreaming(stream Request) returns(stream Response){}
+    rpc Call(Request) returns(Response) {}
 }

@@ -2,22 +2,19 @@ package agent
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"strconv"
 
 	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
-	"github.com/doublemo/baa/internal/conf"
-	"github.com/doublemo/baa/internal/rpcx"
 	"github.com/doublemo/baa/kits/agent/adapter/router"
-	"github.com/doublemo/baa/kits/agent/errcode"
 	"github.com/doublemo/baa/kits/agent/proto"
 	"github.com/doublemo/baa/kits/agent/session"
-	sfuCommand "github.com/doublemo/baa/kits/sfu/proto"
-	sfupb "github.com/doublemo/baa/kits/sfu/proto/pb"
-	grpcproto "github.com/golang/protobuf/proto"
+	sfu "github.com/doublemo/baa/kits/sfu"
 	"github.com/gorilla/websocket"
-	etcdClient "github.com/rpcxio/rpcx-etcd/client"
-	"github.com/smallnest/rpcx/client"
-	"github.com/smallnest/rpcx/protocol"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 // sfuRouter sfu 服务
@@ -26,116 +23,94 @@ func sfuRouter(config *RouterConfig) router.Callback {
 		panic("Invalid config in sfuRouter")
 	}
 
-	etcdDiscovery, err := etcdClient.NewEtcdV3Discovery(config.Etcd.BasePath, "sfu", config.Etcd.Addr, true, nil)
+	conn, err := grpc.Dial(
+		fmt.Sprintf("%s:///%s", sfu.ServiceName, config.Sfu.Group),
+		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`), // This sets the initial balancing policy.
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+	)
+
 	if err != nil {
 		panic(err)
 	}
 
+	client := corespb.NewServiceClient(conn)
+
 	// return
 	return func(peer session.Peer, req coresproto.Request) (coresproto.Response, error) {
-		if req.SubCommand() == sfuCommand.JoinCommand {
-			return sfuSubscribe(peer, req, etcdDiscovery, *config.Sfu)
+		var (
+			stream corespb.Service_BidirectionalStreamingClient
+			err    error
+		)
+		sfuClient, ok := peer.Params("sfuClient")
+		if !ok || sfuClient == nil {
+			md := metadata.Pairs("PeerId", peer.ID())
+			ctx := metadata.NewOutgoingContext(context.Background(), md)
+			stream, err = client.BidirectionalStreaming(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			go sfuRecv(peer, conn, stream)
+			peer.SetParams("sfuClient", stream)
+		} else {
+			stream, ok = sfuClient.(corespb.Service_BidirectionalStreamingClient)
+			if !ok {
+				return nil, nil
+			}
 		}
 
-		xclient := client.NewXClient("sfu", client.Failtry, client.RoundRobin, etcdDiscovery, rpcx.Option(*config.Sfu))
-		defer func() {
-			xclient.Close()
-		}()
-
-		// middleware
-		rpcx.Use(xclient, *config.Sfu)
-		args := &corespb.Request{
-			Header:  map[string]string{"PeerId": peer.ID()},
+		err = stream.Send(&corespb.Request{
+			Header:  map[string]string{"PeerId": peer.ID(), "seqno": strconv.FormatUint(uint64(req.SID()), 10)},
 			Command: req.SubCommand().Int32(),
 			Payload: req.Body(),
-		}
+		})
 
-		reply := &corespb.Response{}
-		err := xclient.Call(context.Background(), "Call", args, reply)
 		if err != nil {
-			reply.Command = req.SubCommand().Int32()
-			return proto.NewResponseBytes(req.Command(), errcode.Bad(reply, errcode.ErrInternalServer, err.Error())), nil
-		}
-
-		if reply.Command < 1 {
-			return nil, nil
-		}
-
-		return proto.NewResponseBytes(req.Command(), reply), nil
-	}
-}
-
-func sfuSubscribe(peer session.Peer, req coresproto.Request, d client.ServiceDiscovery, option conf.RPCXClient) (coresproto.Response, error) {
-	if m, ok := peer.Params("sfuXClient"); ok && m != nil {
-		return nil, nil
-	}
-
-	ch := make(chan *protocol.Message)
-	xclient := client.NewBidirectionalXClient("sfu", client.Failtry, client.RoundRobin, d, rpcx.Option(option), ch)
-	rpcx.Use(xclient, option)
-
-	var args sfupb.SFU_Subscribe_Request
-	{
-		if err := grpcproto.Unmarshal(req.Body(), &args); err != nil {
 			return nil, err
 		}
-	}
-
-	args.PeerId = peer.ID()
-	reply := sfupb.SFU_Subscribe_Reply{}
-	resp := corespb.Response{Command: req.SubCommand().Int32()}
-	err := xclient.Call(context.Background(), "Subscribe", &args, &reply)
-	if err != nil || !reply.Ok {
-		xclient.Close()
 		return nil, nil
 	}
-
-	go func(peerId string, messageChan chan *protocol.Message) {
-		defer func() {
-			close(messageChan)
-		}()
-
-		for frame := range messageChan {
-			mStautsType := frame.Header.MessageStatusType()
-			if mStautsType == protocol.Error || len(frame.Payload) < 1 {
-				return
-			}
-
-			var data corespb.Response
-			{
-				if err := grpcproto.Unmarshal(frame.Payload, &data); err != nil {
-					return
-				}
-			}
-
-			w := proto.NewResponseBytes(proto.SFUCommand, &data)
-			if sess, ok := session.GetPeer(peerId); ok && sess != nil {
-				bytes, err := w.Marshal()
-				if err != nil {
-					continue
-				}
-				sess.Send(session.PeerMessagePayload{Type: websocket.BinaryMessage, Data: bytes})
-			}
-
-		}
-	}(peer.ID(), ch)
-	peer.SetParams("sfuXClient", xclient)
-
-	bytes, _ := grpcproto.Marshal(&reply)
-	resp.Payload = &corespb.Response_Content{Content: bytes}
-	return proto.NewResponseBytes(req.Command(), &resp), nil
 }
 
-func sfuUnsubscribe(peer session.Peer) {
-	sfuXClient, ok := peer.Params("sfuXClient")
+func sfuRecv(peer session.Peer, cc *grpc.ClientConn, stream corespb.Service_BidirectionalStreamingClient) {
+	defer func() {
+		fmt.Println("ss-------------------------")
+		cc.Close()
+	}()
+
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			return
+		}
+
+		if err != nil {
+			fmt.Println("recv err:", err)
+			return
+		}
+
+		if resp == nil {
+			continue
+		}
+
+		w := proto.NewResponseBytes(proto.SFUCommand, resp)
+		bytes, _ := w.Marshal()
+		peer.Send(session.PeerMessagePayload{Type: websocket.BinaryMessage, Data: bytes})
+	}
+}
+
+func stopSFUGRPC(peer session.Peer) {
+	sfuXClient, ok := peer.Params("sfuClient")
 	if !ok || sfuXClient == nil {
 		return
 	}
 
-	xclient, ok := sfuXClient.(client.XClient)
+	xclient, ok := sfuXClient.(corespb.Service_BidirectionalStreamingClient)
 	if !ok {
 		return
 	}
-	xclient.Close()
-	peer.SetParams("sfuXClient", nil)
+
+	xclient.CloseSend()
+	peer.SetParams("sfuClient", nil)
 }

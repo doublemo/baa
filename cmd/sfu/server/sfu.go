@@ -69,7 +69,9 @@ func (s *SFU) Start() error {
 	sfu.InitRouter()
 
 	// 注册运行服务
-	s.actors.Add(s.mustProcessActor(sfu.NewRPCXServerActor(o.RPC.Clone(), o.Etcd.Clone(), o.SFU)), true)
+	//s.actors.Add(s.mustProcessActor(sfu.NewRPCXServerActor(o.RPC.Clone(), o.Etcd.Clone(), o.SFU)), true)
+	s.actors.Add(s.mustProcessActor(sfu.NewServerActor(o.RPC.Clone(), o.Etcd.Clone(), o.SFU)), true)
+	s.actors.Add(s.mustProcessActor(sfu.NewServiceDiscoveryProcessActor(o.MachineID, *o.RPC.Clone(), *o.Etcd)), true)
 	return s.actors.Run()
 }
 

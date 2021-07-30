@@ -1,6 +1,8 @@
 package proto
 
 import (
+	"strconv"
+
 	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 )
@@ -17,6 +19,13 @@ func NewResponseBytes(cmd coresproto.Command, resp *corespb.Response) *coresprot
 	w.SID = 1
 	w.Code = 0
 	w.Ver = 1
+
+	if seqno, ok := resp.Header["seqno"]; ok {
+		if i, err := strconv.ParseUint(seqno, 10, 32); err == nil {
+			w.SID = uint32(i)
+		}
+	}
+
 	switch payload := resp.Payload.(type) {
 	case *corespb.Response_Content:
 		w.Content = payload.Content

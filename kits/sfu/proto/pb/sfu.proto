@@ -1,6 +1,6 @@
 syntax = "proto3";
 package pb;
-option go_package = "github.com/doublemo/baa/kit/sfu/proto/pb";
+option go_package = "github.com/doublemo/baa/kits/sfu/proto/pb";
 
 message SFU {
     message Subscribe {

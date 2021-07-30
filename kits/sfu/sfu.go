@@ -3,6 +3,7 @@ package sfu
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net"
 
 	coresproto "github.com/doublemo/baa/cores/proto"
@@ -16,6 +17,9 @@ import (
 	"github.com/pion/webrtc/v3"
 	"github.com/smallnest/rpcx/server"
 )
+
+// ServiceName 服务名称
+const ServiceName = "sfu"
 
 // Configuration k
 type Configuration struct {
@@ -39,6 +43,8 @@ func (s *sfuservice) Subscribe(ctx context.Context, args *pb.SFU_Subscribe_Reque
 			return err
 		}
 	}
+
+	fmt.Println("okkkk->", conn.RemoteAddr().String())
 
 	peer := ionsfu.NewPeer(s.sfu)
 	peer.OnOffer = func(offer *webrtc.SessionDescription) {

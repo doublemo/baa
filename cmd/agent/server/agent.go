@@ -9,6 +9,7 @@ import (
 	"github.com/doublemo/baa/cores/os"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/kits/agent"
+	"github.com/doublemo/baa/kits/agent/sd"
 )
 
 type Config struct {
@@ -35,6 +36,12 @@ type Config struct {
 	Socket *conf.Scoket `alias:"socket"`
 
 	Router *agent.RouterConfig `alias:"router"`
+
+	// RPC rpc
+	RPC *conf.RPC `alias:"rpc"`
+
+	// Etcd etcd
+	Etcd *conf.Etcd `alias:"etcd"`
 }
 
 type Agent struct {
@@ -70,6 +77,11 @@ func (s *Agent) Start() error {
 	Logger(o.Runmode)
 	agent.SetLogger(logger)
 
+	// 服务发现
+	if err := sd.Init(o.MachineID, o.Etcd.Clone(), o.RPC.Clone()); err != nil {
+		return err
+	}
+
 	// 路由
 	agent.InitRouter(o.Router)
 
@@ -80,6 +92,7 @@ func (s *Agent) Start() error {
 	//s.actors.Add(s.mustProcessActor(agent.NewSFUActor(o.Router.Sfu, o.Router.Etcd)), true)
 	s.actors.Add(s.mustProcessActor(agent.NewSocketProcessActor(o.Socket.Clone())), true)
 	s.actors.Add(s.mustProcessActor(agent.NewWebsocketProcessActor(o.Websocket.Clone())), true)
+	s.actors.Add(s.mustProcessActor(agent.NewServiceDiscoveryProcessActor()), true)
 	return s.actors.Run()
 }
 

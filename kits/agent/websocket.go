@@ -119,7 +119,7 @@ func webscoketHandler(w http.ResponseWriter, req *http.Request, upgrader websock
 	peer.OnClose(func(p session.Peer) {
 		wg.Done()
 		session.RemovePeer(p)
-		sfuUnsubscribe(p)
+		stopSFUGRPC(p)
 	})
 
 	peer.Use(midPeer.NewRPMLimiter(config.RPMLimit, Logger()))

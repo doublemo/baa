@@ -1,6 +1,6 @@
 syntax = "proto3";
 package pb;
-option go_package = "github.com/doublemo/baa/kit/agent/proto/pb";
+option go_package = "github.com/doublemo/baa/kits/agent/proto/pb";
 
 message Agent {
     message Handshake {
