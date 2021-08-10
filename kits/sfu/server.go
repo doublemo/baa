@@ -11,22 +11,37 @@ import (
 	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/kits/sfu/adapter/router"
 	"github.com/doublemo/baa/kits/sfu/proto"
 	sfulog "github.com/pion/ion-sfu/pkg/logger"
 	"github.com/pion/ion-sfu/pkg/sfu"
 	ionsfu "github.com/pion/ion-sfu/pkg/sfu"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/channelz/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
-var ionsfuServer *sfu.SFU
+var (
+	ionsfuServer *sfu.SFU
+)
 
-type baseserver struct {
-	corespb.UnimplementedServiceServer
-}
+type (
+
+	// Configuration k
+	Configuration struct {
+		Ballast   int64               `alias:"ballast"`
+		WithStats bool                `alias:"withstats"`
+		WebRTC    ionsfu.WebRTCConfig `alias:"webrtc"`
+		Router    ionsfu.RouterConfig `alias:"router"`
+		Turn      ionsfu.TurnConfig   `alias:"turn"`
+	}
+
+	baseserver struct {
+		corespb.UnimplementedServiceServer
+	}
+)
 
 func (s *baseserver) Call(ctx context.Context, req *corespb.Request) (*corespb.Response, error) {
 	return nil, nil
@@ -99,7 +114,12 @@ func NewServerActor(config *conf.RPC, etcd *conf.Etcd, sfuconfig *Configuration)
 		return nil, err
 	}
 
-	s := grpc.NewServer()
+	s, err := rpc.NewServer(config)
+	if err != nil {
+		return nil, err
+	}
+
+	service.RegisterChannelzServiceToServer(s)
 	corespb.RegisterServiceServer(s, &baseserver{})
 	return &os.ProcessActor{
 		Exec: func() error {

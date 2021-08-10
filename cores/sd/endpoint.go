@@ -4,22 +4,6 @@ import (
 	"net/url"
 )
 
-const (
-	FEndpointId     = "id"
-	FEndpointName   = "name"
-	FEndpointAddr   = "addr"
-	FEndpointGroup  = "group"
-	FEndpointWeight = "weight"
-)
-
-var endpointValidFields = map[string]bool{
-	FEndpointId:     true,
-	FEndpointName:   true,
-	FEndpointAddr:   true,
-	FEndpointGroup:  true,
-	FEndpointWeight: true,
-}
-
 type (
 	// Endpoint 节点
 	Endpoint interface {
@@ -28,6 +12,9 @@ type (
 
 		// Name 服务名称
 		Name() string
+
+		// Addr 节点地址
+		Addr() string
 
 		// Set 设置节点附加内容
 		Set(key, value string)
@@ -44,35 +31,37 @@ type (
 
 	// EndpointLocal 实现节点信息
 	EndpointLocal struct {
+		EId    string
+		EName  string
+		EAddr  string
 		values url.Values
 	}
 )
 
 func (endpoint *EndpointLocal) ID() string {
-	return endpoint.values.Get(FEndpointId)
+	return endpoint.EId
 }
 
 func (endpoint *EndpointLocal) Name() string {
-	return endpoint.values.Get(FEndpointName)
+	return endpoint.EName
+}
+
+func (endpoint *EndpointLocal) Addr() string {
+	return endpoint.EAddr
 }
 
 func (endpoint *EndpointLocal) Get(key string) string {
-	if !endpointValidFields[key] {
-		return ""
-	}
-
 	return endpoint.values.Get(key)
 }
 
 func (endpoint *EndpointLocal) Set(key, value string) {
-	if !endpointValidFields[key] {
-		return
-	}
-
 	endpoint.values.Set(key, value)
 }
 
 func (endpoint *EndpointLocal) Marshal() string {
+	endpoint.values.Set("id", endpoint.EId)
+	endpoint.values.Set("name", endpoint.EName)
+	endpoint.values.Set("addr", endpoint.EAddr)
 	return endpoint.values.Encode()
 }
 
@@ -84,26 +73,33 @@ func (endpoint *EndpointLocal) Unmarshal(data string) error {
 
 	newValues := make(url.Values)
 	for k, v := range values {
-		if !endpointValidFields[k] {
-			continue
-		}
 
 		if len(v) < 1 {
 			continue
 		}
 
-		newValues.Set(k, v[0])
+		switch k {
+		case "id":
+			endpoint.EId = v[0]
+		case "name":
+			endpoint.EName = v[0]
+		case "addr":
+			endpoint.EAddr = v[0]
+		default:
+			newValues.Set(k, v[0])
+		}
 	}
 
 	endpoint.values = newValues
 	return nil
 }
 
-func NewEndpoint(id, name string) *EndpointLocal {
-	values := make(url.Values)
-	values.Set(FEndpointId, id)
-	values.Set(FEndpointName, name)
+// NewEndpoint 创建节点
+func NewEndpoint(id, name, addr string) *EndpointLocal {
 	return &EndpointLocal{
-		values: values,
+		EId:    id,
+		EName:  name,
+		EAddr:  addr,
+		values: make(url.Values),
 	}
 }

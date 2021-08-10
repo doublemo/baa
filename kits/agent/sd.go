@@ -4,7 +4,7 @@ import (
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/os"
 	"github.com/doublemo/baa/cores/sd/etcdv3"
-	"github.com/doublemo/baa/kits/agent/sd"
+	"github.com/doublemo/baa/internal/sd"
 )
 
 // NewServiceDiscoveryProcessActor 创建服务发现

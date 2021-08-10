@@ -8,8 +8,8 @@ import (
 	"github.com/doublemo/baa/cores/net"
 	"github.com/doublemo/baa/cores/os"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/agent"
-	"github.com/doublemo/baa/kits/agent/sd"
 )
 
 type Config struct {
@@ -85,13 +85,10 @@ func (s *Agent) Start() error {
 	// 路由
 	agent.InitRouter(o.Router)
 
-	// 初始数据
-
 	// 注册运行服务
-
-	//s.actors.Add(s.mustProcessActor(agent.NewSFUActor(o.Router.Sfu, o.Router.Etcd)), true)
 	s.actors.Add(s.mustProcessActor(agent.NewSocketProcessActor(o.Socket.Clone())), true)
 	s.actors.Add(s.mustProcessActor(agent.NewWebsocketProcessActor(o.Websocket.Clone())), true)
+	s.actors.Add(s.mustProcessActor(agent.NewRPCServerActor(o.RPC.Clone())), true)
 	s.actors.Add(s.mustProcessActor(agent.NewServiceDiscoveryProcessActor()), true)
 	return s.actors.Run()
 }

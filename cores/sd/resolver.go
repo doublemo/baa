@@ -2,7 +2,6 @@ package sd
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"google.golang.org/grpc/resolver"
@@ -44,12 +43,9 @@ func (br *ResolverBuilder) Build(target resolver.Target, cc resolver.ClientConn,
 	// 注册通知
 	r.endpointer.Register(br.scheme, r.rn)
 
-	fmt.Println("target", target, br)
-
 	r.wg.Add(1)
 	go r.watch()
 	r.resolve()
-	fmt.Println("target2", target, br)
 	return r, nil
 }
 
@@ -94,8 +90,8 @@ func (r *dnsResolver) resolve() {
 	addrs := make([]resolver.Address, 0)
 	for _, endpoint := range endpoints {
 		name := endpoint.Name()
-		group := endpoint.Get(FEndpointGroup)
-		addr := endpoint.Get(FEndpointAddr)
+		group := endpoint.Get("group")
+		addr := endpoint.Addr()
 		if name != r.target.Scheme || group != r.serviceName {
 			continue
 		}
@@ -105,13 +101,10 @@ func (r *dnsResolver) resolve() {
 		}
 		addrs = append(addrs, resolver.Address{Addr: addr})
 	}
-
-	fmt.Println("addrs", addrs)
 	r.cc.UpdateState(resolver.State{Addresses: addrs})
 }
 
 func (r *dnsResolver) ResolveNow(o resolver.ResolveNowOptions) {
-	fmt.Println("ResolveNow")
 	select {
 	case r.rn <- struct{}{}:
 	default:

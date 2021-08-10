@@ -36,7 +36,7 @@ type (
 )
 
 func (s Service) Key() string {
-	return s.Prefix + "/" + s.Endpoint.Get(sd.FEndpointName) + "/" + s.Endpoint.Get(sd.FEndpointId)
+	return s.Prefix + "/" + s.Endpoint.Name() + "/" + s.Endpoint.ID()
 }
 
 func (s Service) Value() string {

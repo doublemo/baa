@@ -5,31 +5,41 @@ import (
 	"strconv"
 	"time"
 
-	coressd "github.com/doublemo/baa/cores/sd"
+	"github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/cores/sd/etcdv3"
 	"github.com/doublemo/baa/internal/conf"
 	"google.golang.org/grpc"
 )
 
 var (
-	endpoint   coressd.Endpoint
-	endpointer coressd.Endpointer
+	endpoint   sd.Endpoint
+	endpointer sd.Endpointer
 	client     etcdv3.Client
+	prefix     string
 )
 
-func Endpoint() coressd.Endpoint {
+//Endpoint  获取节点信息
+func Endpoint() sd.Endpoint {
 	return endpoint
 }
 
-func Endpointer() coressd.Endpointer {
+// Endpointer 获取节点发现
+func Endpointer() sd.Endpointer {
 	return endpointer
 }
 
+// Client 获取etcdv3 客户端
 func Client() etcdv3.Client {
 	return client
 }
 
-func Init(machineID string, conf conf.RPC, etcd conf.Etcd) error {
+// Prefix 获取连接前缀
+func Prefix() string {
+	return prefix
+}
+
+// Init 初始化节点信息
+func Init(machineID string, etcd *conf.Etcd, rpc *conf.RPC) error {
 	config := etcdv3.Config{
 		Addrs:         etcd.Addr,
 		DialTimeout:   3 * time.Second,
@@ -48,10 +58,13 @@ func Init(machineID string, conf conf.RPC, etcd conf.Etcd) error {
 	}
 
 	client = c
-	endpoint = coressd.NewEndpoint(machineID, conf.Name)
-	endpoint.Set(coressd.FEndpointAddr, conf.Addr)
-	endpoint.Set(coressd.FEndpointGroup, conf.Group)
-	endpoint.Set(coressd.FEndpointWeight, strconv.Itoa(conf.Weight))
-	endpointer = coressd.NewEndpointer(instancer)
+	prefix = etcd.BasePath
+	endpointer = sd.NewEndpointer(instancer)
+
+	if rpc != nil {
+		endpoint = sd.NewEndpoint(machineID, rpc.Name, rpc.Addr)
+		endpoint.Set("group", rpc.Group)
+		endpoint.Set("weight", strconv.Itoa(rpc.Weight))
+	}
 	return nil
 }

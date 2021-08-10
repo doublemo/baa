@@ -1,7 +1,7 @@
 package etcdv3
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/cores/sd/internal/instance"
@@ -28,7 +28,7 @@ func NewInstancer(c Client, prefix string) (*Instancer, error) {
 
 	instances, err := s.client.GetEntries(s.prefix)
 	if err != nil {
-		fmt.Println("err:", err)
+		log.Println("err:", err)
 	}
 
 	s.cache.Update(sd.Event{Instances: instances, Err: err})
@@ -37,9 +37,6 @@ func NewInstancer(c Client, prefix string) (*Instancer, error) {
 }
 
 func (s *Instancer) loop() {
-	defer func() {
-		fmt.Println("loop return")
-	}()
 	ch := make(chan struct{})
 	go s.client.WatchPrefix(s.prefix, ch)
 
@@ -48,11 +45,10 @@ func (s *Instancer) loop() {
 		case <-ch:
 			instances, err := s.client.GetEntries(s.prefix)
 			if err != nil {
-				fmt.Println("msg", "failed to retrieve entries", "err", err)
+				log.Println("msg", "failed to retrieve entries", "err", err)
 				s.cache.Update(sd.Event{Err: err})
 				continue
 			}
-
 			s.cache.Update(sd.Event{Instances: instances})
 
 		case <-s.quitc:

@@ -24,7 +24,7 @@ func TestNewClientLocal(t *testing.T) {
 		return
 	}
 
-	client.Register(Service{Prefix: "/services/baa/xx", Endpoint: sd.NewEndpoint("test01", "test")})
+	client.Register(Service{Prefix: "/services/baa/xx", Endpoint: sd.NewEndpoint("test01", "test", "")})
 	t.Log(client.GetEntries("/services/baa"))
 
 	ch := make(chan struct{})

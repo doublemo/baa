@@ -94,14 +94,12 @@ func (c *ClientLocal) GetEntries(key string) ([]string, error) {
 func (c *ClientLocal) WatchPrefix(prefix string, ch chan struct{}) {
 	c.wctx, c.wcf = context.WithCancel(c.ctx)
 	c.watcher = clientv3.NewWatcher(c.cli)
-
 	wch := c.watcher.Watch(c.wctx, prefix, clientv3.WithPrefix(), clientv3.WithRev(0))
 	ch <- struct{}{}
 	for wr := range wch {
 		if wr.Canceled {
 			return
 		}
-
 		ch <- struct{}{}
 	}
 }
@@ -121,10 +119,10 @@ func (c *ClientLocal) Register(s Service) error {
 
 	c.leaser = clientv3.NewLease(c.cli)
 
-	if c.watcher != nil {
-		c.watcher.Close()
+	if c.watcher == nil {
+		c.watcher = clientv3.NewWatcher(c.cli)
 	}
-	c.watcher = clientv3.NewWatcher(c.cli)
+
 	if c.kv == nil {
 		c.kv = clientv3.NewKV(c.cli)
 	}
@@ -170,7 +168,6 @@ func (c *ClientLocal) Register(s Service) error {
 
 func (c *ClientLocal) Deregister(s Service) error {
 	defer c.close()
-
 	if s.Key() == "" {
 		return ErrNoKey
 	}
@@ -242,6 +239,5 @@ func NewClient(ctx context.Context, config Config) (*ClientLocal, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &ClientLocal{cli: cli, ctx: ctx, kv: clientv3.NewKV(cli)}, nil
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/doublemo/baa/cores/net"
 	"github.com/doublemo/baa/cores/os"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/sfu"
 )
 
@@ -68,10 +69,15 @@ func (s *SFU) Start() error {
 	sfu.SetLogger(logger)
 	sfu.InitRouter()
 
+	// 服务发现
+	if err := sd.Init(o.MachineID, o.Etcd.Clone(), o.RPC.Clone()); err != nil {
+		return err
+	}
+
 	// 注册运行服务
 	//s.actors.Add(s.mustProcessActor(sfu.NewRPCXServerActor(o.RPC.Clone(), o.Etcd.Clone(), o.SFU)), true)
 	s.actors.Add(s.mustProcessActor(sfu.NewServerActor(o.RPC.Clone(), o.Etcd.Clone(), o.SFU)), true)
-	s.actors.Add(s.mustProcessActor(sfu.NewServiceDiscoveryProcessActor(o.MachineID, *o.RPC.Clone(), *o.Etcd)), true)
+	s.actors.Add(s.mustProcessActor(sfu.NewServiceDiscoveryProcessActor()), true)
 	return s.actors.Run()
 }
 
