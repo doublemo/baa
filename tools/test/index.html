@@ -115,16 +115,16 @@
       var channel;
       ws.onConnect = function() {
            // init rc4
-           var rc4 = new baa.Rc4Middleware();
-           ws.use(rc4);
+          //  var rc4 = new baa.Rc4Middleware();
+          //  ws.use(rc4);
 
-           // rc4 handshake
-           var req = new baa.RequestBytes();
-           req.ver = 1;
-           req.command = baa.Command.Agent.Command;
-           req.subCommand = baa.Command.Agent.SubCommand.HandshakeCommand;
-           req.content = rc4.handshake();
-           ws.send(req);
+          //  // rc4 handshake
+          //  var req = new baa.RequestBytes();
+          //  req.ver = 1;
+          //  req.command = baa.Command.Agent.Command;
+          //  req.subCommand = baa.Command.Agent.SubCommand.HandshakeCommand;
+          //  req.content = rc4.handshake();
+          //  ws.send(req);
 
            
 

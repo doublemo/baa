@@ -2,9 +2,8 @@ package sfu
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"net"
+	"sync"
 
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/os"
@@ -13,7 +12,7 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/kits/sfu/adapter/router"
-	"github.com/doublemo/baa/kits/sfu/proto"
+	"github.com/doublemo/baa/kits/sfu/session"
 	sfulog "github.com/pion/ion-sfu/pkg/logger"
 	"github.com/pion/ion-sfu/pkg/sfu"
 	ionsfu "github.com/pion/ion-sfu/pkg/sfu"
@@ -40,6 +39,7 @@ type (
 
 	baseserver struct {
 		corespb.UnimplementedServiceServer
+		mutex sync.Mutex
 	}
 )
 
@@ -53,47 +53,57 @@ func (s *baseserver) BidirectionalStreaming(stream corespb.Service_Bidirectional
 		return status.Errorf(codes.DataLoss, "BidirectionalStreaming: failed to get metadata")
 	}
 
-	peerId, ok := md["peerid"]
-	if !ok {
+	peermd, ok := md["peerid"]
+	if !ok || len(peermd) < 1 {
 		return status.Errorf(codes.DataLoss, "BidirectionalStreaming: failed to get metadata PeerId")
 	}
 
-	fmt.Println("peerId:", peerId)
+	peer := session.NewPeerLocal(peermd[0])
 
-	var (
-		resp *corespb.Response
-		errr error
-	)
+	// create ion sfu peer
+	peer.Peer(ionsfu.NewPeer(ionsfuServer))
+	datach := make(chan *corespb.Request, 1)
+	go func(ss corespb.Service_BidirectionalStreamingServer, dataChan chan *corespb.Request) {
+		for {
+			r, err := ss.Recv()
+			if err != nil {
+				return
+			}
+
+			dataChan <- r
+		}
+	}(stream, datach)
 
 	for {
-		req, err := stream.Recv()
-		if err == io.EOF {
-			return nil
-		}
+		select {
+		case frame, ok := <-datach:
+			if !ok {
+				return status.Errorf(codes.DataLoss, "BidirectionalStreaming: failed to get data")
+			}
 
-		if err != nil {
-			return err
-		}
-
-		if req.Command == proto.JoinCommand.Int32() {
-			resp, errr = join(stream, peerId[0], req)
-		} else {
-			fn, err := router.Fn(coresproto.Command(req.Command))
+			fn, err := router.Fn(coresproto.Command(frame.Command))
 			if err != nil {
 				return err
 			}
-			resp, errr = fn(req)
-		}
 
-		if errr != nil {
-			return errr
-		}
+			resp, err := fn(peer, frame)
+			if err != nil {
+				return err
+			}
 
-		if resp == nil {
-			continue
-		}
+			if resp != nil {
+				stream.Send(resp)
+			}
 
-		stream.Send(resp)
+		case w, ok := <-peer.DataChannel():
+			if !ok {
+				return status.Errorf(codes.DataLoss, "BidirectionalStreaming: failed to get data")
+			}
+
+			if w != nil {
+				stream.Send(w)
+			}
+		}
 	}
 }
 

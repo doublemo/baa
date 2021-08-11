@@ -12,7 +12,6 @@ require (
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-logfmt/logfmt v0.5.0
-	github.com/go-logr/logr v0.4.0 // indirect
 	github.com/go-playground/validator/v10 v10.6.1 // indirect
 	github.com/go-stack/stack v1.8.0
 	github.com/golang/protobuf v1.5.2
@@ -25,8 +24,7 @@ require (
 	github.com/lucsky/cuid v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/pion/dtls/v2 v2.0.9 // indirect
-	github.com/pion/ice/v2 v2.1.7 // indirect
-	github.com/pion/ion-sfu v1.10.7 // indirect
+	github.com/pion/ion-sfu v1.10.8 // indirect
 	github.com/pion/logging v0.2.2 // indirect
 	github.com/pion/rtcp v1.2.6 // indirect
 	github.com/pion/rtp v1.6.5 // indirect

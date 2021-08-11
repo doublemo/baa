@@ -113,42 +113,6 @@ func (bsc *BidirectionalStreamingClient) Close() {
 	})
 }
 
-func (bsc *BidirectionalStreamingClient) policy() string {
-	return `{
-		"loadBalancingPolicy": "round_robin",
-		"methodConfig": [{
-			"name": [{"service": "sfu"}],
-			"waitForReady": true,
-			"timeout":"1s",
-			"maxRequestMessageBytes":10240,
-			"maxResponseMessageBytes":10240,
-	
-			"retryPolicy": {
-				"maxAttempts": 4,
-				"initialBackoff": ".01s",
-				"maxBackoff": ".01s",
-				"backoffMultiplier": 1.0,
-				"retryableStatusCodes": [ "UNAVAILABLE" ]
-			},
-	
-			"hedgingPolicy":{
-				"maxAttempts":4,
-				"hedgingDelay": "0s",
-				"nonFatalStatusCodes":  [ 
-				"UNAVAILABLE",
-				"INTERNAL",
-				"ABORTED" ]
-			}
-		}],
-	
-		"retryThrottling":{
-			"maxTokens": 10,
-			"tokenRatio":0.1
-		}
-	}`
-
-}
-
 // NewBidirectionalStreamingClient 创建流客户端
 func NewBidirectionalStreamingClient(conn *grpc.ClientConn, l logger.Logger) *BidirectionalStreamingClient {
 	return &BidirectionalStreamingClient{

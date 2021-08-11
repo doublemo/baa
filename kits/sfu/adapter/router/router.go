@@ -5,6 +5,7 @@ import (
 
 	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/kits/sfu/session"
 )
 
 var (
@@ -13,7 +14,7 @@ var (
 )
 
 // Callback 配置器调用函数类型
-type Callback func(*corespb.Request) (*corespb.Response, error)
+type Callback func(session.Peer, *corespb.Request) (*corespb.Response, error)
 
 var routes = make(map[coresproto.Command]Callback)
 
