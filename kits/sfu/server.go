@@ -2,6 +2,7 @@ package sfu
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"sync"
 
@@ -13,8 +14,6 @@ import (
 	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/kits/sfu/adapter/router"
 	"github.com/doublemo/baa/kits/sfu/session"
-	sfulog "github.com/pion/ion-sfu/pkg/logger"
-	"github.com/pion/ion-sfu/pkg/sfu"
 	ionsfu "github.com/pion/ion-sfu/pkg/sfu"
 	"google.golang.org/grpc/channelz/service"
 	"google.golang.org/grpc/codes"
@@ -22,21 +21,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var (
-	ionsfuServer *sfu.SFU
-)
-
 type (
-
-	// Configuration k
-	Configuration struct {
-		Ballast   int64               `alias:"ballast"`
-		WithStats bool                `alias:"withstats"`
-		WebRTC    ionsfu.WebRTCConfig `alias:"webrtc"`
-		Router    ionsfu.RouterConfig `alias:"router"`
-		Turn      ionsfu.TurnConfig   `alias:"turn"`
-	}
-
 	baseserver struct {
 		corespb.UnimplementedServiceServer
 		mutex sync.Mutex
@@ -61,7 +46,10 @@ func (s *baseserver) BidirectionalStreaming(stream corespb.Service_Bidirectional
 	peer := session.NewPeerLocal(peermd[0])
 
 	// create ion sfu peer
-	peer.Peer(ionsfu.NewPeer(ionsfuServer))
+	p := ionsfu.NewPeer(sfuServer)
+	peer.Peer(p)
+	defer p.Close()
+
 	datach := make(chan *corespb.Request, 1)
 	go func(ss corespb.Service_BidirectionalStreamingServer, dataChan chan *corespb.Request) {
 		for {
@@ -101,24 +89,18 @@ func (s *baseserver) BidirectionalStreaming(stream corespb.Service_Bidirectional
 			}
 
 			if w != nil {
+				switch p := w.Payload.(type) {
+				case *corespb.Response_Content:
+					fmt.Println("send to :", w.Command, string(p.Content))
+				}
+
 				stream.Send(w)
 			}
 		}
 	}
 }
 
-func NewServerActor(config *conf.RPC, etcd *conf.Etcd, sfuconfig *Configuration) (*os.ProcessActor, error) {
-	var c ionsfu.Config
-	{
-		c.SFU.Ballast = sfuconfig.Ballast
-		c.SFU.WithStats = sfuconfig.WithStats
-		c.WebRTC = sfuconfig.WebRTC
-		c.Router = sfuconfig.Router
-		c.Turn = sfuconfig.Turn
-	}
-	ionsfu.Logger = sfulog.New()
-	ionsfuServer = ionsfu.NewSFU(c)
-
+func NewServerActor(config *conf.RPC) (*os.ProcessActor, error) {
 	lis, err := net.Listen("tcp", config.Addr)
 	if err != nil {
 		return nil, err

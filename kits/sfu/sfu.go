@@ -2,7 +2,6 @@ package sfu
 
 import (
 	"encoding/json"
-	"fmt"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/kits/sfu/errcode"
@@ -10,11 +9,44 @@ import (
 	"github.com/doublemo/baa/kits/sfu/proto/pb"
 	"github.com/doublemo/baa/kits/sfu/session"
 	grpcproto "github.com/golang/protobuf/proto"
+	sfulog "github.com/pion/ion-sfu/pkg/logger"
+	"github.com/pion/ion-sfu/pkg/middlewares/datachannel"
 	ionsfu "github.com/pion/ion-sfu/pkg/sfu"
 	"github.com/pion/webrtc/v3"
 )
 
-func NewSFUServer() {}
+var sfuServer *ionsfu.SFU
+
+// Configuration sfu config
+type Configuration struct {
+	Ballast   int64               `alias:"ballast"`
+	WithStats bool                `alias:"withstats"`
+	WebRTC    ionsfu.WebRTCConfig `alias:"webrtc"`
+	Router    ionsfu.RouterConfig `alias:"router"`
+	Turn      ionsfu.TurnConfig   `alias:"turn"`
+}
+
+// NewSFUServer 创建sfu 服务器
+func NewSFUServer(config *Configuration) *ionsfu.SFU {
+	var ionsfuConfig ionsfu.Config
+	{
+		ionsfuConfig.SFU.Ballast = config.Ballast
+		ionsfuConfig.SFU.WithStats = config.WithStats
+		ionsfuConfig.WebRTC = config.WebRTC
+		ionsfuConfig.Router = config.Router
+		ionsfuConfig.Turn = config.Turn
+	}
+
+	ionsfu.Logger = sfulog.New()
+	ionsfuServer := ionsfu.NewSFU(ionsfuConfig)
+	dc := ionsfuServer.NewDatachannel(ionsfu.APIChannelLabel)
+	dc.Use(datachannel.SubscriberAPI)
+	return ionsfuServer
+}
+
+func SetSFUServer(s *ionsfu.SFU) {
+	sfuServer = s
+}
 
 func join(peer session.Peer, r *corespb.Request) (*corespb.Response, error) {
 	w := &corespb.Response{
@@ -47,10 +79,26 @@ func join(peer session.Peer, r *corespb.Request) (*corespb.Response, error) {
 	// Notify user of new offer
 	sfuPeer.OnOffer = makeOnOffer(peer, &args)
 
+	// Notify user of ICEConnectionStateChange
+	sfuPeer.OnICEConnectionStateChange = makeOnICEConnectionStateChange(peer, &args)
+
 	// join
 	if err := sfuPeer.Join(args.SessionId, peer.ID(), ionsfu.JoinConfig{NoPublish: false, NoSubscribe: false}); err != nil {
-		errcode.Bad(w, errcode.ErrInternalServer, err.Error())
-		return w, nil
+		switch err {
+		case ionsfu.ErrTransportExists:
+			fallthrough
+
+		case ionsfu.ErrOfferIgnored:
+			errcode.Bad(w, errcode.ErrInternalServer, err.Error())
+			if err := peer.Send(w); err != nil {
+				errcode.Bad(w, errcode.ErrInternalServer, err.Error())
+				return w, nil
+			}
+
+		default:
+			errcode.Bad(w, errcode.ErrInternalServer, err.Error())
+			return w, nil
+		}
 	}
 
 	answer, err := sfuPeer.Answer(offer)
@@ -59,14 +107,23 @@ func join(peer session.Peer, r *corespb.Request) (*corespb.Response, error) {
 		return w, nil
 	}
 
-	answerBytes, _ := json.Marshal(answer)
-	peer.Peer(sfuPeer)
+	answerBytes, err := json.Marshal(answer)
+	if err != nil {
+		errcode.Bad(w, errcode.ErrInternalServer, err.Error())
+		return w, nil
+	}
+
 	reply := pb.SFU_Subscribe_Reply{
 		Ok:          true,
 		Description: answerBytes,
 	}
 
-	b, _ := grpcproto.Marshal(&reply)
+	b, err := grpcproto.Marshal(&reply)
+	if err != nil {
+		errcode.Bad(w, errcode.ErrInternalServer, err.Error())
+		return w, nil
+	}
+
 	w.Payload = &corespb.Response_Content{Content: b}
 	return w, nil
 }
@@ -146,7 +203,6 @@ func negotiateBySDP(peer session.Peer, w *corespb.Response, payload []byte, fram
 }
 
 func negotiateByTrickle(peer session.Peer, w *corespb.Response, payload *pb.SFU_Trickle, frame *pb.SFU_Signal_Request) (*corespb.Response, error) {
-	fmt.Println(payload.Target, payload.Candidate)
 	var candidate webrtc.ICECandidateInit
 	{
 		if err := json.Unmarshal([]byte(payload.Candidate), &candidate); err != nil {
@@ -195,6 +251,21 @@ func makeOnIceCandidate(peer session.Peer, r *pb.SFU_Subscribe_Request) func(*we
 			Candidate: string(bytes),
 		}}
 
+		b, _ := grpcproto.Marshal(&w)
+		resp := corespb.Response{Command: proto.NegotiateCommand.Int32()}
+		resp.Payload = &corespb.Response_Content{Content: b}
+		peer.Send(&resp)
+	}
+}
+
+func makeOnICEConnectionStateChange(peer session.Peer, r *pb.SFU_Subscribe_Request) func(webrtc.ICEConnectionState) {
+	return func(c webrtc.ICEConnectionState) {
+		w := pb.SFU_Signal_Reply{
+			SessionId: r.SessionId,
+			PeerId:    peer.ID(),
+		}
+
+		w.Payload = &pb.SFU_Signal_Reply_IceConnectionState{IceConnectionState: c.String()}
 		b, _ := grpcproto.Marshal(&w)
 		resp := corespb.Response{Command: proto.NegotiateCommand.Int32()}
 		resp.Payload = &corespb.Response_Content{Content: b}

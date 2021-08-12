@@ -53,7 +53,7 @@
     </nav>
     <div class="container pt-4">
       <div class="row" id="start-btns">
-        <div class="col-12">
+        <div class="col-12" id="videos">
           <button type="button" class="btn btn-primary" onclick="send()">
             start
           </button>
@@ -67,41 +67,62 @@
             height="240"
           ></video>
 
-          <video
-            id="remote-video"
-            style="background-color: black"
-            width="320"
-            height="240"
-          ></video>
+          <div id="remotes">
+            <p>remotes</p>
+          </div>
 
-          <p>
-          <audio style="background-color: black" id="remote-audio">您的浏览器不支持 audio 标签。</audio>
-          </p>
+      
         </div>
       </div>
      <script src="baajs.min.js" type="text/javascript"> </script>
      <script> 
       var localVideo = document.getElementById("local-video");
-      var remoteVideo = document.getElementById("remote-video");
-      var remoteAudio = document.getElementById("remote-audio");
+      var remotesDiv = document.getElementById("remotes");
       var ws = new baa.Socket("ws://localhost:9093/websocket");
       ws.use(new baa.BytesMiddleware());
+
+      const streams = {};
+      let remoteVideoIsMuted = true
 
       // new peer
       var peer = new baa.Peer(ws);
       peer.ontrack = function(track, stream){
-        console.log("track.kind:", track.kind);
-        if(track.kind == "video") {
-          remoteVideo.srcObject = stream;
-          remoteVideo.autoplay = true;
-          remoteVideo.controls = true;
-          console.log("ojjjjj");
-        } else if(track.kind == "audio") {
-          console.log("audio start");
-          remoteAudio.srcObject = stream;
-          remoteAudio.autoplay = true;
-          remoteAudio.controls = true;
+        console.log("got track", track.id, "for stream", stream.id);
+        track.onunmute = () => {
+          if (!streams[stream.id]) {
+            remoteVideo = document.createElement("video");
+            remoteVideo.srcObject = stream;
+            remoteVideo.autoplay = true;
+            remoteVideo.muted = false;
+            remoteVideo.width = 320;
+            remoteVideo.height = 240;
+            remoteVideo.style ="margin:5px;background-color: black"
+            remotesDiv.appendChild(remoteVideo);
+
+            streams[stream.id] = { stream, videoElement: remoteVideo };
+            stream.onremovetrack = () => {
+              try {
+                if (streams[stream.id]) {
+                  const { videoElement } = streams[stream.id];
+                  remotesDiv.removeChild(videoElement);
+                  delete streams[stream.id];
+                }
+              }catch (err) {}
+            }
+          }
         }
+        // console.log("track.kind:", track.kind);
+        // if(track.kind == "video") {
+        //   remoteVideo.srcObject = stream;
+        //   remoteVideo.autoplay = true;
+        //   remoteVideo.controls = true;
+        //   console.log("ojjjjj");
+        // } else if(track.kind == "audio") {
+        //   console.log("audio start");
+        //   remoteAudio.srcObject = stream;
+        //   remoteAudio.autoplay = true;
+        //   remoteAudio.controls = true;
+        // }
       }
 
       peer.ondatachannel = ({ channel }) => {
