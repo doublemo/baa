@@ -1,29 +1,48 @@
 package sfu
 
 import (
-	"encoding/json"
+	"fmt"
+	"sync"
+	"time"
 
-	corespb "github.com/doublemo/baa/cores/proto/pb"
-	"github.com/doublemo/baa/kits/sfu/errcode"
-	"github.com/doublemo/baa/kits/sfu/proto"
-	"github.com/doublemo/baa/kits/sfu/proto/pb"
-	"github.com/doublemo/baa/kits/sfu/session"
-	grpcproto "github.com/golang/protobuf/proto"
-	sfulog "github.com/pion/ion-sfu/pkg/logger"
-	"github.com/pion/ion-sfu/pkg/middlewares/datachannel"
-	ionsfu "github.com/pion/ion-sfu/pkg/sfu"
+	sfulog "github.com/doublemo/baa/kits/sfu/pkg/logger"
+	"github.com/doublemo/baa/kits/sfu/pkg/middlewares/datachannel"
+	"github.com/doublemo/baa/kits/sfu/pkg/relay"
+	ionsfu "github.com/doublemo/baa/kits/sfu/pkg/sfu"
+	"github.com/pion/turn/v2"
 	"github.com/pion/webrtc/v3"
 )
 
-var sfuServer *ionsfu.SFU
+var sfuServer2 *ionsfu.SFU
 
-// Configuration sfu config
-type Configuration struct {
-	Ballast   int64               `alias:"ballast"`
-	WithStats bool                `alias:"withstats"`
-	WebRTC    ionsfu.WebRTCConfig `alias:"webrtc"`
-	Router    ionsfu.RouterConfig `alias:"router"`
-	Turn      ionsfu.TurnConfig   `alias:"turn"`
+type (
+
+	// Configuration sfu config
+	Configuration struct {
+		Ballast   int64               `alias:"ballast"`
+		WithStats bool                `alias:"withstats"`
+		WebRTC    ionsfu.WebRTCConfig `alias:"webrtc"`
+		Router    ionsfu.RouterConfig `alias:"router"`
+		Turn      ionsfu.TurnConfig   `alias:"turn"`
+	}
+
+	sfuServer struct {
+		sync.RWMutex
+		webrtc       ionsfu.WebRTCTransportConfig
+		turn         *turn.Server
+		datachannels []*ionsfu.Datachannel
+		withStats    bool
+	}
+)
+
+func (s *sfuServer) NewDatachannel(label string) *ionsfu.Datachannel {
+	dc := &ionsfu.Datachannel{Label: label}
+	s.datachannels = append(s.datachannels, dc)
+	return dc
+}
+
+func (s *sfuServer) GetSession(sid string) (ionsfu.Session, ionsfu.WebRTCTransportConfig) {
+	return nil, s.webrtc
 }
 
 // NewSFUServer 创建sfu 服务器
@@ -41,234 +60,81 @@ func NewSFUServer(config *Configuration) *ionsfu.SFU {
 	ionsfuServer := ionsfu.NewSFU(ionsfuConfig)
 	dc := ionsfuServer.NewDatachannel(ionsfu.APIChannelLabel)
 	dc.Use(datachannel.SubscriberAPI)
+
+	go func(srv *ionsfu.SFU) {
+		timer := time.NewTicker(time.Second * 5)
+		defer timer.Stop()
+
+		for {
+			select {
+			case <-timer.C:
+				s, _ := srv.GetSession("test")
+				dcs := s.GetFanOutDataChannelLabels()
+				fmt.Println("dcs", s.GetDataChannels("", "relayPeerChan"), s.RelayPeers())
+				if len(dcs) > 0 {
+					s.FanOutMessage("", dcs[0], webrtc.DataChannelMessage{IsString: true, Data: []byte("人这生啊")})
+				}
+			}
+		}
+	}(ionsfuServer)
+
+	sx, w := ionsfuServer.GetSession("test")
+	relayMeta := relay.PeerMeta{
+		PeerID:    "realyone",
+		SessionID: "test",
+	}
+
+	relayConfig := relay.PeerConfig{
+		SettingEngine: w.Setting,
+		ICEServers:    w.Configuration.ICEServers,
+		Logger:        sfulog.New(),
+	}
+
+	peer, err := relay.NewPeer(relayMeta, &relayConfig)
+	if err != nil {
+		fmt.Println(err)
+		return ionsfuServer
+	}
+
+	fn := func(meta relay.PeerMeta, signal []byte) ([]byte, error) {
+		return sx.AddRelayPeer(meta.PeerID, signal)
+	}
+
+	// relayPeer := sfu.NewRelayPeer(peer, sx, &w)
+	// vpeer, err := relayPeer.Relay()
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return ionsfuServer
+	// }
+
+	peer.OnDataChannel(func(channel *webrtc.DataChannel) {
+		fmt.Println("relayPeer OnDataChannel:", channel.Label())
+	})
+
+	peer.OnReady(func() {
+		fmt.Println("Relay Peer OnReady")
+
+		dc, err := peer.CreateDataChannel("relayPeerChan")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+			fmt.Println("-------we:", msg)
+		})
+
+		//sx.AddDatachannel("", dc)
+	})
+
+	if err := peer.Offer(fn); err != nil {
+		fmt.Println(err)
+		return ionsfuServer
+	}
+
 	return ionsfuServer
 }
 
 func SetSFUServer(s *ionsfu.SFU) {
-	sfuServer = s
-}
-
-func join(peer session.Peer, r *corespb.Request) (*corespb.Response, error) {
-	w := &corespb.Response{
-		Command: r.Command,
-	}
-
-	if r.Header != nil {
-		w.Header = r.Header
-	}
-
-	var args pb.SFU_Subscribe_Request
-	{
-		if err := grpcproto.Unmarshal(r.Payload, &args); err != nil {
-			return nil, err
-		}
-	}
-
-	var offer webrtc.SessionDescription
-	{
-		if err := json.Unmarshal(args.Description, &offer); err != nil {
-			return nil, err
-		}
-	}
-
-	sfuPeer := peer.Peer().(*ionsfu.PeerLocal)
-
-	// Notify user of new ice candidate
-	sfuPeer.OnIceCandidate = makeOnIceCandidate(peer, &args)
-
-	// Notify user of new offer
-	sfuPeer.OnOffer = makeOnOffer(peer, &args)
-
-	// Notify user of ICEConnectionStateChange
-	sfuPeer.OnICEConnectionStateChange = makeOnICEConnectionStateChange(peer, &args)
-
-	// join
-	if err := sfuPeer.Join(args.SessionId, peer.ID(), ionsfu.JoinConfig{NoPublish: false, NoSubscribe: false}); err != nil {
-		switch err {
-		case ionsfu.ErrTransportExists:
-			fallthrough
-
-		case ionsfu.ErrOfferIgnored:
-			errcode.Bad(w, errcode.ErrInternalServer, err.Error())
-			if err := peer.Send(w); err != nil {
-				errcode.Bad(w, errcode.ErrInternalServer, err.Error())
-				return w, nil
-			}
-
-		default:
-			errcode.Bad(w, errcode.ErrInternalServer, err.Error())
-			return w, nil
-		}
-	}
-
-	answer, err := sfuPeer.Answer(offer)
-	if err != nil {
-		errcode.Bad(w, errcode.ErrInternalServer, err.Error())
-		return w, nil
-	}
-
-	answerBytes, err := json.Marshal(answer)
-	if err != nil {
-		errcode.Bad(w, errcode.ErrInternalServer, err.Error())
-		return w, nil
-	}
-
-	reply := pb.SFU_Subscribe_Reply{
-		Ok:          true,
-		Description: answerBytes,
-	}
-
-	b, err := grpcproto.Marshal(&reply)
-	if err != nil {
-		errcode.Bad(w, errcode.ErrInternalServer, err.Error())
-		return w, nil
-	}
-
-	w.Payload = &corespb.Response_Content{Content: b}
-	return w, nil
-}
-
-func negotiate(peer session.Peer, r *corespb.Request) (*corespb.Response, error) {
-	w := &corespb.Response{
-		Command: r.Command,
-	}
-
-	if r.Header != nil {
-		w.Header = r.Header
-	}
-
-	var frame pb.SFU_Signal_Request
-	{
-		if err := grpcproto.Unmarshal(r.Payload, &frame); err != nil {
-			errcode.Bad(w, errcode.ErrInternalServer, err.Error())
-			return w, nil
-		}
-	}
-
-	switch payload := frame.Payload.(type) {
-	case *pb.SFU_Signal_Request_Description:
-		return negotiateBySDP(peer, w, payload.Description, &frame)
-
-	case *pb.SFU_Signal_Request_Trickle:
-		return negotiateByTrickle(peer, w, payload.Trickle, &frame)
-	}
-
-	return nil, nil
-}
-
-func negotiateBySDP(peer session.Peer, w *corespb.Response, payload []byte, frame *pb.SFU_Signal_Request) (*corespb.Response, error) {
-	var sdp webrtc.SessionDescription
-	{
-		if err := json.Unmarshal(payload, &sdp); err != nil {
-			errcode.Bad(w, errcode.ErrInternalServer, err.Error())
-			return w, nil
-		}
-	}
-
-	sfuPeerOld := peer.Peer()
-	if sfuPeerOld == nil {
-		errcode.Bad(w, errcode.ErrInternalServer, "sfu peer is nil")
-		return w, nil
-	}
-
-	sfuPeer := sfuPeerOld.(*ionsfu.PeerLocal)
-
-	switch sdp.Type {
-	case webrtc.SDPTypeOffer:
-		answer, err := sfuPeer.Answer(sdp)
-		if err != nil {
-			errcode.Bad(w, errcode.ErrInternalServer, err.Error())
-			return w, nil
-		}
-
-		bytes, _ := json.Marshal(answer)
-		bytes2, _ := grpcproto.Marshal(&pb.SFU_Signal_Reply{
-			SessionId: frame.SessionId,
-			PeerId:    peer.ID(),
-			Payload: &pb.SFU_Signal_Reply_Description{
-				Description: bytes,
-			},
-		})
-		w.Payload = &corespb.Response_Content{Content: bytes2}
-		return w, nil
-
-	case webrtc.SDPTypeAnswer:
-		if err := sfuPeer.SetRemoteDescription(sdp); err != nil {
-			errcode.Bad(w, errcode.ErrInternalServer, err.Error())
-			return w, nil
-		}
-	}
-
-	return nil, nil
-}
-
-func negotiateByTrickle(peer session.Peer, w *corespb.Response, payload *pb.SFU_Trickle, frame *pb.SFU_Signal_Request) (*corespb.Response, error) {
-	var candidate webrtc.ICECandidateInit
-	{
-		if err := json.Unmarshal([]byte(payload.Candidate), &candidate); err != nil {
-			errcode.Bad(w, errcode.ErrInternalServer, err.Error())
-			return w, nil
-		}
-	}
-
-	sfuPeerOld := peer.Peer()
-	if sfuPeerOld == nil {
-		errcode.Bad(w, errcode.ErrInternalServer, "sfu peer is nil")
-		return w, nil
-	}
-
-	sfuPeer := sfuPeerOld.(*ionsfu.PeerLocal)
-	sfuPeer.Trickle(candidate, int(payload.Target))
-	return nil, nil
-}
-
-func makeOnOffer(peer session.Peer, r *pb.SFU_Subscribe_Request) func(*webrtc.SessionDescription) {
-	return func(offer *webrtc.SessionDescription) {
-		bytes, _ := json.Marshal(offer)
-		w := pb.SFU_Signal_Reply{
-			SessionId: r.SessionId,
-			PeerId:    peer.ID(),
-		}
-
-		w.Payload = &pb.SFU_Signal_Reply_Description{Description: bytes}
-		b, _ := grpcproto.Marshal(&w)
-		resp := corespb.Response{Command: proto.NegotiateCommand.Int32()}
-		resp.Payload = &corespb.Response_Content{Content: b}
-		peer.Send(&resp)
-	}
-}
-
-func makeOnIceCandidate(peer session.Peer, r *pb.SFU_Subscribe_Request) func(*webrtc.ICECandidateInit, int) {
-	return func(candidate *webrtc.ICECandidateInit, target int) {
-		bytes, _ := json.Marshal(candidate)
-		w := pb.SFU_Signal_Reply{
-			SessionId: r.SessionId,
-			PeerId:    peer.ID(),
-		}
-
-		w.Payload = &pb.SFU_Signal_Reply_Trickle{Trickle: &pb.SFU_Trickle{
-			Target:    pb.SFU_Target(target),
-			Candidate: string(bytes),
-		}}
-
-		b, _ := grpcproto.Marshal(&w)
-		resp := corespb.Response{Command: proto.NegotiateCommand.Int32()}
-		resp.Payload = &corespb.Response_Content{Content: b}
-		peer.Send(&resp)
-	}
-}
-
-func makeOnICEConnectionStateChange(peer session.Peer, r *pb.SFU_Subscribe_Request) func(webrtc.ICEConnectionState) {
-	return func(c webrtc.ICEConnectionState) {
-		w := pb.SFU_Signal_Reply{
-			SessionId: r.SessionId,
-			PeerId:    peer.ID(),
-		}
-
-		w.Payload = &pb.SFU_Signal_Reply_IceConnectionState{IceConnectionState: c.String()}
-		b, _ := grpcproto.Marshal(&w)
-		resp := corespb.Response{Command: proto.NegotiateCommand.Int32()}
-		resp.Payload = &corespb.Response_Content{Content: b}
-		peer.Send(&resp)
-	}
+	sfuServer2 = s
 }

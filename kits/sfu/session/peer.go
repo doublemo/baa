@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
-	ionsfu "github.com/pion/ion-sfu/pkg/sfu"
+	ionsfu "github.com/doublemo/baa/kits/sfu/pkg/sfu"
 )
 
 type (

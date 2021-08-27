@@ -6,13 +6,12 @@ import "sync/atomic"
 type AtomicBool int32
 
 // Set 存储
-func (a *AtomicBool) Set(value bool) {
-	var i int32
+func (a *AtomicBool) Set(value bool) bool {
 	if value {
-		i = 1
+		return atomic.SwapInt32((*int32)(a), 1) == 0
 	}
 
-	atomic.StoreInt32((*int32)(a), i)
+	return atomic.SwapInt32((*int32)(a), 0) == 1
 }
 
 // Get 获取

@@ -2,7 +2,6 @@ package sfu
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"sync"
 
@@ -13,8 +12,8 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/kits/sfu/adapter/router"
+	ionsfu "github.com/doublemo/baa/kits/sfu/pkg/sfu"
 	"github.com/doublemo/baa/kits/sfu/session"
-	ionsfu "github.com/pion/ion-sfu/pkg/sfu"
 	"google.golang.org/grpc/channelz/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -46,7 +45,7 @@ func (s *baseserver) BidirectionalStreaming(stream corespb.Service_Bidirectional
 	peer := session.NewPeerLocal(peermd[0])
 
 	// create ion sfu peer
-	p := ionsfu.NewPeer(sfuServer)
+	p := ionsfu.NewPeer(sfuServer2)
 	peer.Peer(p)
 	defer p.Close()
 
@@ -89,11 +88,6 @@ func (s *baseserver) BidirectionalStreaming(stream corespb.Service_Bidirectional
 			}
 
 			if w != nil {
-				switch p := w.Payload.(type) {
-				case *corespb.Response_Content:
-					fmt.Println("send to :", w.Command, string(p.Content))
-				}
-
 				stream.Send(w)
 			}
 		}

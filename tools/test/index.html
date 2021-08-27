@@ -69,6 +69,7 @@
 
           <div id="remotes">
             <p>remotes</p>
+            
           </div>
 
       
@@ -77,6 +78,7 @@
      <script src="baajs.min.js" type="text/javascript"> </script>
      <script> 
       var localVideo = document.getElementById("local-video");
+      var remoteVideoV = document.getElementById("remote-video");
       var remotesDiv = document.getElementById("remotes");
       var ws = new baa.Socket("ws://localhost:9093/websocket");
       ws.use(new baa.BytesMiddleware());
@@ -88,16 +90,19 @@
       var peer = new baa.Peer(ws);
       peer.ontrack = function(track, stream){
         console.log("got track", track.id, "for stream", stream.id);
+        
         track.onunmute = () => {
           if (!streams[stream.id]) {
             remoteVideo = document.createElement("video");
             remoteVideo.srcObject = stream;
-            remoteVideo.autoplay = true;
+            
             remoteVideo.muted = false;
+            remoteVideo.controls = true;
             remoteVideo.width = 320;
             remoteVideo.height = 240;
             remoteVideo.style ="margin:5px;background-color: black"
             remotesDiv.appendChild(remoteVideo);
+            remoteVideo.autoplay = true;
 
             streams[stream.id] = { stream, videoElement: remoteVideo };
             stream.onremovetrack = () => {
@@ -155,10 +160,9 @@
       }
 
       ws.onMessage = peer.onMessage();
-
-      
       function send() {
-        channel = peer.createDataChannel("tesok");
+        x = Math.floor(Math.random() * 100)
+        channel = peer.createDataChannel("tesok" + x);
         baa.LocalStream.getUserMedia({
             resolution: "hd",
             simulcast: false,
