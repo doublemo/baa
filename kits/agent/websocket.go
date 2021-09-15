@@ -13,7 +13,6 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	midPeer "github.com/doublemo/baa/kits/agent/middlewares/peer"
 	"github.com/doublemo/baa/kits/agent/session"
-	awebrtc "github.com/doublemo/baa/kits/agent/webrtc"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -133,13 +132,10 @@ func webscoketHandler(w http.ResponseWriter, req *http.Request, upgrader websock
 	peer.Use(midPeer.NewRPMLimiter(config.RPMLimit, Logger()))
 	session.AddPeer(peer)
 
-	dc, err := session.NewDataChannel(peer, awebrtc.Transport())
-	if err != nil {
+	// bind datachannel
+	if err := useDataChannel(peer); err != nil {
 		log.Error(Logger()).Log("error", err)
 		peer.Close()
 		return
 	}
-
-	dc.OnICEConnectionStateChange(makeICEConnectionStateChange(peer))
-	peer.UseDataChannel(dc)
 }

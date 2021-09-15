@@ -2,15 +2,36 @@ package agent
 
 import (
 	"encoding/json"
+	"fmt"
 
 	log "github.com/doublemo/baa/cores/log/level"
 	coresproto "github.com/doublemo/baa/cores/proto"
 	"github.com/doublemo/baa/kits/agent/proto"
 	"github.com/doublemo/baa/kits/agent/proto/pb"
 	"github.com/doublemo/baa/kits/agent/session"
+	awebrtc "github.com/doublemo/baa/kits/agent/webrtc"
 	grpcproto "github.com/golang/protobuf/proto"
 	"github.com/pion/webrtc/v3"
 )
+
+// useDataChannel 绑定datachannel
+func useDataChannel(peer session.Peer) error {
+	dc, err := session.NewDataChannel(peer, awebrtc.Transport())
+	if err != nil {
+		return err
+	}
+
+	dc.OnDataChannel(func(dc *webrtc.DataChannel) {
+		dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+			fmt.Println("ddc-----", string(msg.Data))
+			dc.SendText("dd-lalalal")
+		})
+	})
+
+	dc.OnICEConnectionStateChange(makeICEConnectionStateChange(peer))
+	peer.UseDataChannel(dc)
+	return nil
+}
 
 // datachannel 数据通道
 func datachannel(peer session.Peer, req coresproto.Request) (coresproto.Response, error) {

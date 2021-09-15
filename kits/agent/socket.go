@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -12,8 +11,6 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	midPeer "github.com/doublemo/baa/kits/agent/middlewares/peer"
 	"github.com/doublemo/baa/kits/agent/session"
-	awebrtc "github.com/doublemo/baa/kits/agent/webrtc"
-	"github.com/pion/webrtc/v3"
 )
 
 // NewSocketProcessActor 创建socket服务
@@ -44,22 +41,12 @@ func NewSocketProcessActor(config *conf.Scoket) (*os.ProcessActor, error) {
 		peer.Use(midPeer.NewRPMLimiter(config.RPMLimit, Logger()))
 		session.AddPeer(peer)
 
-		dc, err := session.NewDataChannel(peer, awebrtc.Transport())
-		if err != nil {
+		// bind datachannel
+		if err := useDataChannel(peer); err != nil {
 			log.Error(Logger()).Log("error", err)
 			peer.Close()
 			return
 		}
-
-		dc.OnDataChannel(func(dc *webrtc.DataChannel) {
-			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-				fmt.Println("ddc-----", string(msg.Data))
-				dc.SendText("dd-lalalal")
-			})
-		})
-
-		dc.OnICEConnectionStateChange(makeICEConnectionStateChange(peer))
-		peer.UseDataChannel(dc)
 	})
 
 	s.OnClose(func() {
