@@ -12,7 +12,6 @@ import (
 	"github.com/doublemo/baa/kits/agent/adapter/router"
 	"github.com/doublemo/baa/kits/agent/proto"
 	"github.com/doublemo/baa/kits/agent/session"
-	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -57,9 +56,9 @@ func sfuRouterBidirectionalStreamingClient(peer session.Peer, conn ...*grpc.Clie
 
 	client := rpc.NewBidirectionalStreamingClient(conn[0], Logger())
 	client.OnReceive = func(r *corespb.Response) {
-		w := proto.NewResponseBytes(proto.SFUCommand, r)
+		w := proto.NewResponseBytes(proto.SFU, r)
 		bytes, _ := w.Marshal()
-		if err := peer.Send(session.PeerMessagePayload{Type: websocket.BinaryMessage, Data: bytes}); err != nil {
+		if err := peer.Send(session.PeerMessagePayload{Data: bytes}); err != nil {
 			log.Error(Logger()).Log("error", err)
 		}
 	}

@@ -34,11 +34,12 @@ type (
 		Params(string) (interface{}, bool)
 		SetParams(string, interface{})
 		Close() error
+		DataChannel() *DataChannel
+		UseDataChannel(*DataChannel)
 	}
 
 	// PeerMessagePayload 信息结构
 	PeerMessagePayload struct {
-		Type int
 		Data []byte
 	}
 

@@ -2,7 +2,6 @@ package sfu
 
 import (
 	"encoding/json"
-	"fmt"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/kits/sfu/adapter/router"
@@ -54,9 +53,7 @@ func handleWebrtcJoin(peer session.Peer, r *corespb.Request) (*corespb.Response,
 
 	// Notify user of ICEConnectionStateChange
 	sfuPeer.OnICEConnectionStateChange = makeOnICEConnectionStateChange(peer, &args)
-	fmt.Println("SessionID:", args.SessionId)
-	ts, _ := sfuServer2.GetSession(args.GetSessionId())
-	fmt.Println(ts.GetFanOutDataChannelLabels())
+
 	// join
 	if err := sfuPeer.Join(args.SessionId, peer.ID(), ionsfu.JoinConfig{NoPublish: false, NoSubscribe: false}); err != nil {
 		switch err {

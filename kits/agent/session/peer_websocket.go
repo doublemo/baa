@@ -19,6 +19,7 @@ type PeerWebsocket struct {
 	readDeadline       time.Duration
 	writeDeadline      time.Duration
 	maxMessageSize     int64
+	messageType        int
 	onReceive          PeerOnReceiveCallback
 	onWrite            PeerOnWriteCallback
 	onClose            PeerOnCloseCallback
@@ -33,6 +34,7 @@ type PeerWebsocket struct {
 	mutex              sync.Mutex
 	mutexRW            sync.RWMutex
 	closeOnce          sync.Once
+	dc                 *DataChannel
 }
 
 // ID 返回Peer ID
@@ -135,6 +137,24 @@ func (p *PeerWebsocket) SetParams(key string, value interface{}) {
 	p.params.Store(m2)
 }
 
+// MessageType 设置和获取数类型
+func (p *PeerWebsocket) MessageType(t ...int) int {
+	if len(t) > 0 {
+		if t[0] != websocket.BinaryMessage && t[0] != websocket.TextMessage {
+			return p.messageType
+		}
+
+		p.mutexRW.Lock()
+		p.messageType = t[0]
+		p.mutexRW.Unlock()
+		return t[0]
+	}
+
+	p.mutexRW.RLock()
+	defer p.mutexRW.RUnlock()
+	return p.messageType
+}
+
 func (p *PeerWebsocket) receiver() {
 	defer func() {
 		if stoped := p.stoped.Get(); !stoped {
@@ -151,7 +171,7 @@ func (p *PeerWebsocket) receiver() {
 			return nil
 		})
 
-		frameType, payload, err := p.conn.ReadMessage()
+		_, payload, err := p.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure, websocket.CloseProtocolError) {
 				kitlog.Error(Logger()).Log("error", err)
@@ -175,7 +195,7 @@ func (p *PeerWebsocket) receiver() {
 			}
 		}))
 
-		m.Process(PeerMessageProcessArgs{Peer: p, Payload: PeerMessagePayload{Type: frameType, Data: payload}})
+		m.Process(PeerMessageProcessArgs{Peer: p, Payload: PeerMessagePayload{Data: payload}})
 
 		select {
 		case <-p.stopChan:
@@ -225,7 +245,7 @@ func (p *PeerWebsocket) writer() {
 					payload = onWriteCallback(args.Payload)
 				}
 
-				if err := p.write(payload.Type, payload.Data); err != nil {
+				if err := p.write(p.MessageType(), payload.Data); err != nil {
 					kitlog.Error(Logger()).Log("action", "weite", "error", err)
 					return
 				}
@@ -264,6 +284,20 @@ func (p *PeerWebsocket) write(frametype int, frame []byte) error {
 	return w.Close()
 }
 
+// DataChannel 获取数据通道
+func (p *PeerWebsocket) DataChannel() *DataChannel {
+	p.mutexRW.RLock()
+	defer p.mutexRW.RUnlock()
+	return p.dc
+}
+
+// UseDataChannel 数据通道
+func (p *PeerWebsocket) UseDataChannel(dc *DataChannel) {
+	p.mutexRW.Lock()
+	p.dc = dc
+	p.mutexRW.Unlock()
+}
+
 // NewPeerWebsocket 创建
 func NewPeerWebsocket(conn *websocket.Conn, readDeadline, writeDeadline time.Duration, maxMessageSize int64, notifyChan chan struct{}) *PeerWebsocket {
 	if maxMessageSize < 1 {
@@ -276,6 +310,7 @@ func NewPeerWebsocket(conn *websocket.Conn, readDeadline, writeDeadline time.Dur
 		readDeadline:       readDeadline,
 		writeDeadline:      writeDeadline,
 		maxMessageSize:     maxMessageSize,
+		messageType:        websocket.BinaryMessage,
 		receiveMiddlewares: make(PeerMessageMiddlewares, 0),
 		writeMiddlewares:   make(PeerMessageMiddlewares, 0),
 		writeChan:          make(chan PeerMessagePayload, 1024),

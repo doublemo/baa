@@ -362,6 +362,7 @@ func (s *SessionLocal) GetDataChannels(peerID, label string) []*webrtc.DataChann
 				dcs = append(dcs, dc)
 			}
 		}
+
 	}
 	for _, rp := range s.relayPeers {
 		if dc := rp.DataChannel(label); dc != nil {

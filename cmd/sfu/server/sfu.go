@@ -74,11 +74,9 @@ func (s *SFU) Start() error {
 		return err
 	}
 
-	sfu.SetSFUServer(sfu.NewSFUServer(o.SFU))
-
 	// 注册运行服务
 	//s.actors.Add(s.mustProcessActor(sfu.NewRPCXServerActor(o.RPC.Clone(), o.Etcd.Clone(), o.SFU)), true)
-	s.actors.Add(s.mustProcessActor(sfu.NewServerActor(o.RPC.Clone())), true)
+	s.actors.Add(s.mustProcessActor(sfu.NewServerActor(o.RPC.Clone(), o.SFU)), true)
 	s.actors.Add(s.mustProcessActor(sfu.NewServiceDiscoveryProcessActor()), true)
 	return s.actors.Run()
 }

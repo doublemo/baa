@@ -84,7 +84,17 @@
       ws.use(new baa.BytesMiddleware());
 
       const streams = {};
-      let remoteVideoIsMuted = true
+      let remoteVideoIsMuted = true;
+      let config =   {
+        codec: 'vp8',
+        iceServers: [
+          {
+            urls: ['stun:192.168.31.52:3478'],
+            username:'pion',
+            credentials:'ion'
+          },
+        ],
+       };
 
       // new peer
       var peer = new baa.Peer(ws);

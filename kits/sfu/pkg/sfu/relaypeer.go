@@ -37,7 +37,7 @@ func NewRelayPeer(peer *relay.Peer, session Session, config *WebRTCTransportConf
 	}
 
 	peer.OnTrack(func(track *webrtc.TrackRemote, receiver *webrtc.RTPReceiver, meta *relay.TrackMeta) {
-		if recv, pub := r.AddReceiver(receiver, track); pub {
+		if recv, pub := r.AddReceiver(receiver, track, meta.TrackID, meta.StreamID); pub {
 			recv.SetTrackMeta(meta.TrackID, meta.StreamID)
 			session.Publish(r, recv)
 			rp.mu.Lock()
@@ -92,8 +92,6 @@ func (r *RelayPeer) Relay(signalFn func(meta relay.PeerMeta, signal []byte) ([]b
 		}
 		r.relayPeers = append(r.relayPeers, rp)
 		r.mu.Unlock()
-
-		fmt.Println("rp.OnReady-------------ch", r.ID())
 		go r.relayReports(rp)
 	})
 
@@ -102,7 +100,6 @@ func (r *RelayPeer) Relay(signalFn func(meta relay.PeerMeta, signal []byte) ([]b
 		r.dataChannels = append(r.dataChannels, channel)
 		r.mu.Unlock()
 		r.session.AddDatachannel("", channel)
-		fmt.Println("-------------ch", channel.Label())
 	})
 
 	if err = rp.Offer(signalFn); err != nil {

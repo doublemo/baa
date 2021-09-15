@@ -11,4 +11,18 @@ message Agent {
     message Heartbeater {
         int64 R = 1;
     }
+
+    message Webrtc{
+        message Trickle {
+            string Candidate = 1;
+        }
+
+        message Signal {
+            oneof Payload {
+                bytes Description = 1;
+                Trickle Trickle = 2;
+                string IceConnectionState = 3;
+            }
+        }
+    }
 }

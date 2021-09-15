@@ -3,7 +3,6 @@ package sfu
 import (
 	"context"
 	"net"
-	"sync"
 
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/os"
@@ -23,7 +22,7 @@ import (
 type (
 	baseserver struct {
 		corespb.UnimplementedServiceServer
-		mutex sync.Mutex
+		sfu *ionsfu.SFU
 	}
 )
 
@@ -45,7 +44,7 @@ func (s *baseserver) BidirectionalStreaming(stream corespb.Service_Bidirectional
 	peer := session.NewPeerLocal(peermd[0])
 
 	// create ion sfu peer
-	p := ionsfu.NewPeer(sfuServer2)
+	p := ionsfu.NewPeer(s.sfu)
 	peer.Peer(p)
 	defer p.Close()
 
@@ -94,7 +93,8 @@ func (s *baseserver) BidirectionalStreaming(stream corespb.Service_Bidirectional
 	}
 }
 
-func NewServerActor(config *conf.RPC) (*os.ProcessActor, error) {
+// NewServerActor 创建rpc服务
+func NewServerActor(config *conf.RPC, sfuConfig *Configuration) (*os.ProcessActor, error) {
 	lis, err := net.Listen("tcp", config.Addr)
 	if err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func NewServerActor(config *conf.RPC) (*os.ProcessActor, error) {
 	}
 
 	service.RegisterChannelzServiceToServer(s)
-	corespb.RegisterServiceServer(s, &baseserver{})
+	corespb.RegisterServiceServer(s, &baseserver{sfu: newSFUServer(sfuConfig)})
 	return &os.ProcessActor{
 		Exec: func() error {
 			Logger().Log("transport", "rpc", "on", config.Addr)

@@ -35,6 +35,7 @@ type PeerSocket struct {
 	mutex              sync.Mutex
 	mutexRW            sync.RWMutex
 	closeOnce          sync.Once
+	dc                 *DataChannel
 }
 
 // ID 返回Peer ID
@@ -161,7 +162,6 @@ func (p *PeerSocket) receiver() {
 			kitlog.Error(Logger()).Log("error", "read payload failed", "reason", err.Error(), "size", n)
 			return
 		}
-
 		p.LoadOrResetSeqNo(1)
 		p.mutexRW.RLock()
 		onReceiveCallback := p.onReceive
@@ -177,7 +177,7 @@ func (p *PeerSocket) receiver() {
 			}
 		}))
 
-		m.Process(PeerMessageProcessArgs{Peer: p, Payload: PeerMessagePayload{Type: 0, Data: payload}})
+		m.Process(PeerMessageProcessArgs{Peer: p, Payload: PeerMessagePayload{Data: payload}})
 
 		select {
 		case <-p.stopChan:
@@ -227,7 +227,7 @@ func (p *PeerSocket) writer() {
 					payload = onWriteCallback(args.Payload)
 				}
 
-				if n, err := p.write(payload.Type, payload.Data); err != nil {
+				if n, err := p.write(payload.Data); err != nil {
 					kitlog.Error(Logger()).Log("action", "write", "error", err, "size", n)
 					return
 				}
@@ -244,11 +244,25 @@ func (p *PeerSocket) writer() {
 	}
 }
 
-func (p *PeerSocket) write(frametype int, frame []byte) (int, error) {
+func (p *PeerSocket) write(frame []byte) (int, error) {
 	size := len(frame)
 	binary.BigEndian.PutUint16(p.cacheBytes, uint16(size))
 	copy(p.cacheBytes[2:], frame)
 	return p.conn.Write(p.cacheBytes[:size+2])
+}
+
+// DataChannel 获取数据通道
+func (p *PeerSocket) DataChannel() *DataChannel {
+	p.mutexRW.RLock()
+	defer p.mutexRW.RUnlock()
+	return p.dc
+}
+
+// UseDataChannel 数据通道
+func (p *PeerSocket) UseDataChannel(dc *DataChannel) {
+	p.mutexRW.Lock()
+	p.dc = dc
+	p.mutexRW.Unlock()
 }
 
 // NewPeerSocket 创建

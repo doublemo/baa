@@ -32,8 +32,8 @@ func InitRouter(config *RouterConfig) {
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceSFU.Name, config.ServiceSFU.Group, sd.Endpointer()))
 
 	// command register
-	router.On(proto.HandshakeCommand, handshake)
-	router.On(proto.SFUCommand, sfuRouter(config.ServiceSFU))
+	router.On(proto.Agent, agentRouter)
+	router.On(proto.SFU, sfuRouter(config.ServiceSFU))
 }
 
 func handleTextMessage(peer session.Peer, frame []byte) (coresproto.Response, error) {
@@ -61,6 +61,18 @@ func handleBinaryMessage(peer session.Peer, frame []byte) (coresproto.Response, 
 	}
 
 	return resp, err
+}
+
+func agentRouter(peer session.Peer, req coresproto.Request) (coresproto.Response, error) {
+	switch req.SubCommand() {
+	case proto.HandshakeCommand:
+		return handshake(peer, req)
+
+	case proto.DatachannelCommand:
+		return datachannel(peer, req)
+	}
+
+	return nil, nil
 }
 
 // handshake rc4加密握手

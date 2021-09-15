@@ -13,6 +13,7 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	midPeer "github.com/doublemo/baa/kits/agent/middlewares/peer"
 	"github.com/doublemo/baa/kits/agent/session"
+	awebrtc "github.com/doublemo/baa/kits/agent/webrtc"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -98,12 +99,15 @@ func webscoketHandler(w http.ResponseWriter, req *http.Request, upgrader websock
 			resp coresproto.Response
 		)
 
-		switch m.Type {
-		case websocket.BinaryMessage:
+		switch peerLocal := p.(type) {
+		case *session.PeerSocket:
 			resp, err = handleBinaryMessage(p, m.Data)
-
-		case websocket.TextMessage:
-			resp, err = handleTextMessage(p, m.Data)
+		case *session.PeerWebsocket:
+			if peerLocal.MessageType() == websocket.TextMessage {
+				resp, err = handleTextMessage(p, m.Data)
+			} else {
+				resp, err = handleBinaryMessage(p, m.Data)
+			}
 		}
 
 		if resp != nil {
@@ -111,7 +115,7 @@ func webscoketHandler(w http.ResponseWriter, req *http.Request, upgrader websock
 			if err != nil {
 				return err
 			}
-			p.Send(session.PeerMessagePayload{Type: m.Type, Data: bytes})
+			p.Send(session.PeerMessagePayload{Data: bytes})
 		}
 		return err
 	})
@@ -128,4 +132,14 @@ func webscoketHandler(w http.ResponseWriter, req *http.Request, upgrader websock
 
 	peer.Use(midPeer.NewRPMLimiter(config.RPMLimit, Logger()))
 	session.AddPeer(peer)
+
+	dc, err := session.NewDataChannel(peer, awebrtc.Transport())
+	if err != nil {
+		log.Error(Logger()).Log("error", err)
+		peer.Close()
+		return
+	}
+
+	dc.OnICEConnectionStateChange(makeICEConnectionStateChange(peer))
+	peer.UseDataChannel(dc)
 }

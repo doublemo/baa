@@ -148,8 +148,6 @@ func NewPeer(meta PeerMeta, conf *PeerConfig) (*Peer, error) {
 		if f := p.onDataChannel.Load(); f != nil {
 			f.(func(dataChannel *webrtc.DataChannel))(channel)
 		}
-
-		fmt.Println(" p.onDataChannel.Load():", p.onDataChannel.Load())
 	})
 
 	i.OnConnectionStateChange(func(state webrtc.ICETransportState) {

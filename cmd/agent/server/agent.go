@@ -10,6 +10,7 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/agent"
+	"github.com/doublemo/baa/kits/agent/webrtc"
 )
 
 type Config struct {
@@ -42,6 +43,9 @@ type Config struct {
 
 	// Etcd etcd
 	Etcd *conf.Etcd `alias:"etcd"`
+
+	//Webrtc  webrtc config
+	Webrtc webrtc.WebRTCConfig `alias:"webrtc"`
 }
 
 type Agent struct {
@@ -84,6 +88,11 @@ func (s *Agent) Start() error {
 
 	// 路由
 	agent.InitRouter(o.Router)
+
+	// webrtc
+	if err := webrtc.Init(o.Webrtc); err != nil {
+		return err
+	}
 
 	// 注册运行服务
 	s.actors.Add(s.mustProcessActor(agent.NewSocketProcessActor(o.Socket.Clone())), true)
