@@ -18,6 +18,7 @@ import (
 	"github.com/doublemo/baa/kits/agent/proto/pb"
 	"github.com/doublemo/baa/kits/agent/session"
 	grpcproto "github.com/golang/protobuf/proto"
+	"github.com/gorilla/websocket"
 	"google.golang.org/grpc/resolver"
 )
 
@@ -34,6 +35,43 @@ func InitRouter(config *RouterConfig) {
 	// command register
 	router.On(proto.Agent, agentRouter)
 	router.On(proto.SFU, sfuRouter(config.ServiceSFU))
+}
+
+func onMessage(peer session.Peer, msg session.PeerMessagePayload) error {
+	var (
+		err  error
+		resp coresproto.Response
+	)
+
+	switch peerLocal := peer.(type) {
+	case *session.PeerSocket:
+		if msg.Channel == session.PeerMessageChannelWebrtc {
+			resp, err = handleFromDataChannelBinaryMessage(peer, msg.Data)
+		} else {
+			resp, err = handleBinaryMessage(peer, msg.Data)
+		}
+
+	case *session.PeerWebsocket:
+		if msg.Channel == session.PeerMessageChannelWebrtc {
+			resp, err = handleFromDataChannelBinaryMessage(peer, msg.Data)
+		} else {
+			if peerLocal.MessageType() == websocket.TextMessage {
+				resp, err = handleTextMessage(peer, msg.Data)
+			} else {
+				resp, err = handleBinaryMessage(peer, msg.Data)
+			}
+		}
+	}
+
+	if resp != nil {
+		bytes, err := resp.Marshal()
+		if err != nil {
+			return err
+		}
+		err = peer.Send(session.PeerMessagePayload{Channel: msg.Channel, Data: bytes})
+	}
+
+	return err
 }
 
 func handleTextMessage(peer session.Peer, frame []byte) (coresproto.Response, error) {
@@ -63,6 +101,11 @@ func handleBinaryMessage(peer session.Peer, frame []byte) (coresproto.Response, 
 	return resp, err
 }
 
+func handleFromDataChannelBinaryMessage(peer session.Peer, frame []byte) (coresproto.Response, error) {
+	fmt.Println("--<", string(frame))
+	return proto.NewResponseBytes(0, errcode.Bad(&corespb.Response{Command: 0}, errcode.ErrorInvalidSEQID)), nil
+}
+
 func agentRouter(peer session.Peer, req coresproto.Request) (coresproto.Response, error) {
 	switch req.SubCommand() {
 	case proto.HandshakeCommand:
@@ -83,6 +126,8 @@ func handshake(peer session.Peer, req coresproto.Request) (coresproto.Response, 
 			return nil, err
 		}
 	}
+
+	fmt.Println("handshake->", peer.ID())
 
 	x1, e1 := dh.DHExchange()
 	x2, e2 := dh.DHExchange()

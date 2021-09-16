@@ -2,6 +2,7 @@ package peer
 
 import (
 	"crypto/rc4"
+	"fmt"
 
 	"github.com/doublemo/baa/kits/agent/session"
 )
@@ -15,6 +16,13 @@ func (r *RC4) Receive() func(session.PeerMessageProcessor) session.PeerMessagePr
 	decoder := r.decoder
 	return func(next session.PeerMessageProcessor) session.PeerMessageProcessor {
 		return session.PeerMessageProcessFunc(func(args session.PeerMessageProcessArgs) {
+			if args.Payload.Channel == session.PeerMessageChannelWebrtc {
+				next.Process(args)
+				return
+			}
+
+			fmt.Println("decoder:", decoder == nil)
+
 			if decoder != nil {
 				decoder.XORKeyStream(args.Payload.Data, args.Payload.Data)
 			}
@@ -28,6 +36,13 @@ func (r *RC4) Write() func(session.PeerMessageProcessor) session.PeerMessageProc
 	first := true
 	return func(next session.PeerMessageProcessor) session.PeerMessageProcessor {
 		return session.PeerMessageProcessFunc(func(args session.PeerMessageProcessArgs) {
+			if args.Payload.Channel == session.PeerMessageChannelWebrtc {
+				next.Process(args)
+				return
+			}
+
+			fmt.Println("encoder:", first, encoder == nil)
+
 			if encoder != nil && !first {
 				encoder.XORKeyStream(args.Payload.Data, args.Payload.Data)
 			}

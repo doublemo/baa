@@ -1,31 +1,48 @@
 package session
 
 import (
+	"sync"
+
 	kitlog "github.com/doublemo/baa/cores/log/level"
-	awebrtc "github.com/doublemo/baa/kits/agent/webrtc"
 	"github.com/pion/webrtc/v3"
 )
 
 // DataChannel 数据通道
 type DataChannel struct {
 	pc         *webrtc.PeerConnection
+	dcs        []*webrtc.DataChannel
 	candidates []webrtc.ICECandidateInit
-	peer       Peer
-}
-
-// OnTrack call
-func (dc *DataChannel) OnTrack(f func(*webrtc.TrackRemote, *webrtc.RTPReceiver)) {
-	dc.pc.OnTrack(f)
-}
-
-// OnDataChannel call
-func (dc *DataChannel) OnDataChannel(f func(*webrtc.DataChannel)) {
-	dc.pc.OnDataChannel(f)
+	mutex      sync.RWMutex
 }
 
 // OnICEConnectionStateChange call
 func (dc *DataChannel) OnICEConnectionStateChange(f func(webrtc.ICEConnectionState)) {
 	dc.pc.OnICEConnectionStateChange(f)
+}
+
+// AddDataChannel add
+func (dc *DataChannel) AddDataChannel(d *webrtc.DataChannel) {
+	dc.mutex.Lock()
+	dc.dcs = append(dc.dcs, d)
+	dc.mutex.Unlock()
+}
+
+// RemoveDataChannel remove
+func (dc *DataChannel) RemoveDataChannel(label string) {
+	dcs := make([]*webrtc.DataChannel, 0)
+	dc.mutex.RLock()
+	for _, d := range dc.dcs {
+		if d.Label() == label {
+			continue
+		}
+
+		dcs = append(dcs, d)
+	}
+	dc.mutex.RUnlock()
+
+	dc.mutex.Lock()
+	dc.dcs = dcs
+	dc.mutex.Unlock()
 }
 
 // Answer get/set Description
@@ -69,15 +86,21 @@ func (dc *DataChannel) AddICECandidate(candidate webrtc.ICECandidateInit) error 
 	return nil
 }
 
-// NewDataChannel 创建数据通道
-func NewDataChannel(peer Peer, w awebrtc.WebRTCTransportConfig) (*DataChannel, error) {
-	api := webrtc.NewAPI(webrtc.WithMediaEngine(&webrtc.MediaEngine{}), webrtc.WithSettingEngine(w.Setting))
-	pc, err := api.NewPeerConnection(w.Configuration)
-	if err != nil {
-		return nil, err
-	}
+// Close 关闭
+func (dc *DataChannel) Close() error {
+	return dc.pc.Close()
+}
 
-	return &DataChannel{
-		pc: pc,
-	}, nil
+// Send 发送信息到数据通道
+func (dc *DataChannel) Send(msg []byte) error {
+	dc.mutex.RLock()
+	for _, d := range dc.dcs {
+		dc.mutex.RUnlock()
+		if err := d.Send(msg); err != nil {
+			return err
+		}
+		dc.mutex.RLock()
+	}
+	dc.mutex.RUnlock()
+	return nil
 }

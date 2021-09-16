@@ -2,6 +2,8 @@ package session
 
 import (
 	"errors"
+
+	"github.com/doublemo/baa/kits/agent/webrtc"
 )
 
 var (
@@ -10,6 +12,10 @@ var (
 
 	// ErrPeerChannelIsFulled 写入通道已经满
 	ErrPeerChannelIsFulled = errors.New("ErrPeerWriteMessageFailed")
+)
+
+const (
+	PeerMessageChannelWebrtc = "datachannel"
 )
 
 type (
@@ -35,12 +41,14 @@ type (
 		SetParams(string, interface{})
 		Close() error
 		DataChannel() *DataChannel
-		UseDataChannel(*DataChannel)
+		CreateDataChannel(webrtc.WebRTCTransportConfig) (*DataChannel, error)
+		Go()
 	}
 
 	// PeerMessagePayload 信息结构
 	PeerMessagePayload struct {
-		Data []byte
+		Channel string
+		Data    []byte
 	}
 
 	// PeerMessageMiddleware 信息处理中间件

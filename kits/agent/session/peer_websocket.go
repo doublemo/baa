@@ -1,13 +1,16 @@
 package session
 
 import (
+	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	kitlog "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/types"
+	awebrtc "github.com/doublemo/baa/kits/agent/webrtc"
 	"github.com/gorilla/websocket"
+	"github.com/pion/webrtc/v3"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -215,7 +218,12 @@ func (p *PeerWebsocket) writer() {
 
 		p.mutexRW.RLock()
 		onCloseCallback := p.onClose
+		dc := p.dc
 		p.mutexRW.RUnlock()
+
+		if dc != nil {
+			dc.Close()
+		}
 
 		if onCloseCallback != nil {
 			onCloseCallback(p)
@@ -245,10 +253,18 @@ func (p *PeerWebsocket) writer() {
 					payload = onWriteCallback(args.Payload)
 				}
 
-				if err := p.write(p.MessageType(), payload.Data); err != nil {
-					kitlog.Error(Logger()).Log("action", "weite", "error", err)
-					return
+				if payload.Channel == PeerMessageChannelWebrtc {
+					if err := p.writeToDataChannel(payload.Data); err != nil {
+						kitlog.Error(Logger()).Log("action", "write", "error", err)
+						return
+					}
+				} else {
+					if err := p.write(p.MessageType(), payload.Data); err != nil {
+						kitlog.Error(Logger()).Log("action", "weite", "error", err)
+						return
+					}
 				}
+
 			}))
 
 			m.Process(PeerMessageProcessArgs{Peer: p, Payload: frame})
@@ -284,6 +300,13 @@ func (p *PeerWebsocket) write(frametype int, frame []byte) error {
 	return w.Close()
 }
 
+func (p *PeerWebsocket) writeToDataChannel(frame []byte) error {
+	if p.dc == nil {
+		return errors.New("datachnnel is nil")
+	}
+	return p.dc.Send(frame)
+}
+
 // DataChannel 获取数据通道
 func (p *PeerWebsocket) DataChannel() *DataChannel {
 	p.mutexRW.RLock()
@@ -291,11 +314,58 @@ func (p *PeerWebsocket) DataChannel() *DataChannel {
 	return p.dc
 }
 
-// UseDataChannel 数据通道
-func (p *PeerWebsocket) UseDataChannel(dc *DataChannel) {
+// CreateDataChannel 数据通道
+func (p *PeerWebsocket) CreateDataChannel(w awebrtc.WebRTCTransportConfig) (*DataChannel, error) {
+	api := webrtc.NewAPI(webrtc.WithMediaEngine(&webrtc.MediaEngine{}), webrtc.WithSettingEngine(w.Setting))
+	pc, err := api.NewPeerConnection(w.Configuration)
+	if err != nil {
+		return nil, err
+	}
+
+	mdc := &DataChannel{
+		pc:         pc,
+		dcs:        make([]*webrtc.DataChannel, 0),
+		candidates: make([]webrtc.ICECandidateInit, 0),
+	}
+
+	pc.OnDataChannel(func(peer *PeerWebsocket, m *DataChannel) func(*webrtc.DataChannel) {
+		return func(dc *webrtc.DataChannel) {
+			m.AddDataChannel(dc)
+			dc.OnClose(func() { m.RemoveDataChannel(dc.Label()) })
+			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+				peer.mutexRW.RLock()
+				onReceiveCallback := peer.onReceive
+				mws := newDCChain(peer.receiveMiddlewares)
+				peer.mutexRW.RUnlock()
+
+				m := mws.Process(PeerMessageProcessFunc(func(args PeerMessageProcessArgs) {
+					if onReceiveCallback != nil {
+						if err := onReceiveCallback(args.Peer, args.Payload); err != nil {
+							kitlog.Error(Logger()).Log("error", "onReceiveCallback failed", "reason", err.Error())
+						}
+					}
+				}))
+				m.Process(PeerMessageProcessArgs{Peer: peer, Payload: PeerMessagePayload{Channel: PeerMessageChannelWebrtc, Data: msg.Data}})
+			})
+		}
+	}(p, mdc))
+
 	p.mutexRW.Lock()
-	p.dc = dc
+	p.dc = mdc
 	p.mutexRW.Unlock()
+	return mdc, nil
+}
+
+func (p *PeerWebsocket) Go() {
+	p.readyedChan = make(chan struct{})
+	go p.receiver()
+	go p.writer()
+
+	for i := 0; i < 2; i++ {
+		<-p.readyedChan
+	}
+
+	close(p.readyedChan)
 }
 
 // NewPeerWebsocket 创建
@@ -321,14 +391,5 @@ func NewPeerWebsocket(conn *websocket.Conn, readDeadline, writeDeadline time.Dur
 
 	// init params
 	peer.params.Store(make(map[string]interface{}))
-
-	go peer.receiver()
-	go peer.writer()
-
-	for i := 0; i < 2; i++ {
-		<-peer.readyedChan
-	}
-
-	close(peer.readyedChan)
 	return peer
 }

@@ -21,24 +21,14 @@ func NewSocketProcessActor(config *conf.Scoket) (*os.ProcessActor, error) {
 	s.OnConnect(func(conn net.Conn) {
 		wg.Add(1)
 		peer := session.NewPeerSocket(conn, time.Duration(config.ReadDeadline)*time.Second, time.Duration(config.WriteDeadline)*time.Second, exitChan)
-		peer.OnReceive(func(p session.Peer, m session.PeerMessagePayload) error {
-			resp, err := handleBinaryMessage(p, m.Data)
-			if resp != nil {
-				bytes, err := resp.Marshal()
-				if err != nil {
-					return err
-				}
-				p.Send(session.PeerMessagePayload{Data: bytes})
-			}
-			return err
-		})
-
+		peer.OnReceive(onMessage)
 		peer.OnClose(func(p session.Peer) {
 			wg.Done()
 			session.RemovePeer(p)
 		})
 
 		peer.Use(midPeer.NewRPMLimiter(config.RPMLimit, Logger()))
+		peer.Go()
 		session.AddPeer(peer)
 
 		// bind datachannel

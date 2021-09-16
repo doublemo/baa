@@ -2,7 +2,6 @@ package agent
 
 import (
 	"encoding/json"
-	"fmt"
 
 	log "github.com/doublemo/baa/cores/log/level"
 	coresproto "github.com/doublemo/baa/cores/proto"
@@ -16,20 +15,12 @@ import (
 
 // useDataChannel 绑定datachannel
 func useDataChannel(peer session.Peer) error {
-	dc, err := session.NewDataChannel(peer, awebrtc.Transport())
+	dc, err := peer.CreateDataChannel(awebrtc.Transport())
 	if err != nil {
 		return err
 	}
 
-	dc.OnDataChannel(func(dc *webrtc.DataChannel) {
-		dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-			fmt.Println("ddc-----", string(msg.Data))
-			dc.SendText("dd-lalalal")
-		})
-	})
-
-	dc.OnICEConnectionStateChange(makeICEConnectionStateChange(peer))
-	peer.UseDataChannel(dc)
+	dc.OnICEConnectionStateChange(iceConnectionStateChange(peer))
 	return nil
 }
 
@@ -100,7 +91,7 @@ func webrtcTrickle(peer session.Peer, req coresproto.Request, payload *pb.Agent_
 	return nil, nil
 }
 
-func makeICEConnectionStateChange(peer session.Peer) func(connectionState webrtc.ICEConnectionState) {
+func iceConnectionStateChange(peer session.Peer) func(connectionState webrtc.ICEConnectionState) {
 	return func(connectionState webrtc.ICEConnectionState) {
 		resp := &coresproto.ResponseBytes{
 			Ver:    1,

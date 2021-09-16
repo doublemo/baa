@@ -2,6 +2,7 @@ package session
 
 import (
 	"encoding/binary"
+	"errors"
 	"io"
 	"net"
 	"sync"
@@ -10,6 +11,8 @@ import (
 
 	kitlog "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/types"
+	awebrtc "github.com/doublemo/baa/kits/agent/webrtc"
+	"github.com/pion/webrtc/v3"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -162,6 +165,7 @@ func (p *PeerSocket) receiver() {
 			kitlog.Error(Logger()).Log("error", "read payload failed", "reason", err.Error(), "size", n)
 			return
 		}
+
 		p.LoadOrResetSeqNo(1)
 		p.mutexRW.RLock()
 		onReceiveCallback := p.onReceive
@@ -197,7 +201,12 @@ func (p *PeerSocket) writer() {
 
 		p.mutexRW.RLock()
 		onCloseCallback := p.onClose
+		dc := p.dc
 		p.mutexRW.RUnlock()
+
+		if dc != nil {
+			dc.Close()
+		}
 
 		if onCloseCallback != nil {
 			onCloseCallback(p)
@@ -227,9 +236,16 @@ func (p *PeerSocket) writer() {
 					payload = onWriteCallback(args.Payload)
 				}
 
-				if n, err := p.write(payload.Data); err != nil {
-					kitlog.Error(Logger()).Log("action", "write", "error", err, "size", n)
-					return
+				if payload.Channel == PeerMessageChannelWebrtc {
+					if err := p.writeToDataChannel(payload.Data); err != nil {
+						kitlog.Error(Logger()).Log("action", "write", "error", err)
+						return
+					}
+				} else {
+					if n, err := p.write(payload.Data); err != nil {
+						kitlog.Error(Logger()).Log("action", "write", "error", err, "size", n)
+						return
+					}
 				}
 			}))
 
@@ -251,6 +267,16 @@ func (p *PeerSocket) write(frame []byte) (int, error) {
 	return p.conn.Write(p.cacheBytes[:size+2])
 }
 
+func (p *PeerSocket) writeToDataChannel(frame []byte) error {
+	size := len(frame)
+	binary.BigEndian.PutUint16(p.cacheBytes, uint16(size))
+	copy(p.cacheBytes[2:], frame)
+	if p.dc == nil {
+		return errors.New("datachnnel is nil")
+	}
+	return p.dc.Send(p.cacheBytes[:size+2])
+}
+
 // DataChannel 获取数据通道
 func (p *PeerSocket) DataChannel() *DataChannel {
 	p.mutexRW.RLock()
@@ -258,11 +284,57 @@ func (p *PeerSocket) DataChannel() *DataChannel {
 	return p.dc
 }
 
-// UseDataChannel 数据通道
-func (p *PeerSocket) UseDataChannel(dc *DataChannel) {
+func (p *PeerSocket) CreateDataChannel(w awebrtc.WebRTCTransportConfig) (*DataChannel, error) {
+	api := webrtc.NewAPI(webrtc.WithMediaEngine(&webrtc.MediaEngine{}), webrtc.WithSettingEngine(w.Setting))
+	pc, err := api.NewPeerConnection(w.Configuration)
+	if err != nil {
+		return nil, err
+	}
+
+	mdc := &DataChannel{
+		pc:         pc,
+		dcs:        make([]*webrtc.DataChannel, 0),
+		candidates: make([]webrtc.ICECandidateInit, 0),
+	}
+
+	pc.OnDataChannel(func(peer *PeerSocket, m *DataChannel) func(*webrtc.DataChannel) {
+		return func(dc *webrtc.DataChannel) {
+			m.AddDataChannel(dc)
+			dc.OnClose(func() { m.RemoveDataChannel(dc.Label()) })
+			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+				peer.mutexRW.RLock()
+				onReceiveCallback := peer.onReceive
+				mws := newDCChain(peer.receiveMiddlewares)
+				peer.mutexRW.RUnlock()
+
+				m := mws.Process(PeerMessageProcessFunc(func(args PeerMessageProcessArgs) {
+					if onReceiveCallback != nil {
+						if err := onReceiveCallback(args.Peer, args.Payload); err != nil {
+							kitlog.Error(Logger()).Log("error", "onReceiveCallback failed", "reason", err.Error())
+						}
+					}
+				}))
+				m.Process(PeerMessageProcessArgs{Peer: peer, Payload: PeerMessagePayload{Channel: PeerMessageChannelWebrtc, Data: msg.Data}})
+			})
+		}
+	}(p, mdc))
+
 	p.mutexRW.Lock()
-	p.dc = dc
+	p.dc = mdc
 	p.mutexRW.Unlock()
+	return mdc, nil
+}
+
+func (p *PeerSocket) Go() {
+	p.readyedChan = make(chan struct{})
+	go p.receiver()
+	go p.writer()
+
+	for i := 0; i < 2; i++ {
+		<-p.readyedChan
+	}
+
+	close(p.readyedChan)
 }
 
 // NewPeerSocket 创建
@@ -276,21 +348,11 @@ func NewPeerSocket(conn net.Conn, readDeadline, writeDeadline time.Duration, not
 		receiveMiddlewares: make(PeerMessageMiddlewares, 0),
 		writeMiddlewares:   make(PeerMessageMiddlewares, 0),
 		writeChan:          make(chan PeerMessagePayload, 1024),
-		readyedChan:        make(chan struct{}),
 		stopChan:           make(chan struct{}),
 		notifyDieChan:      notifyChan,
 	}
 
 	// init params
 	peer.params.Store(make(map[string]interface{}))
-
-	go peer.receiver()
-	go peer.writer()
-
-	for i := 0; i < 2; i++ {
-		<-peer.readyedChan
-	}
-
-	close(peer.readyedChan)
 	return peer
 }
