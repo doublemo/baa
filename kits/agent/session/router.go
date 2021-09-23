@@ -1,4 +1,14 @@
 package session
 
-// Router session 路由接口
-type Router interface{}
+import (
+	coresproto "github.com/doublemo/baa/cores/proto"
+)
+
+type (
+	// Router peer
+	Router interface {
+		New()
+		Go(Peer, coresproto.Request) (coresproto.Response, error)
+		Close()
+	}
+)

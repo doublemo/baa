@@ -498,7 +498,7 @@ func (d *DownTrack) handleRTCP(bytes []byte) {
 
 	var (
 		maxRatePacketLoss  uint8
-		expectedMinBitrate uint64
+		expectedMinBitrate float32
 	)
 
 	ssrc := atomic.LoadUint32(&d.lastSSRC)
@@ -550,7 +550,7 @@ func (d *DownTrack) handleRTCP(bytes []byte) {
 	}
 }
 
-func (d *DownTrack) handleLayerChange(maxRatePacketLoss uint8, expectedMinBitrate uint64) {
+func (d *DownTrack) handleLayerChange(maxRatePacketLoss uint8, expectedMinBitrate float32) {
 	currentSpatialLayer := atomic.LoadInt32(&d.currentSpatialLayer)
 	targetSpatialLayer := atomic.LoadInt32(&d.targetSpatialLayer)
 
@@ -567,11 +567,11 @@ func (d *DownTrack) handleLayerChange(maxRatePacketLoss uint8, expectedMinBitrat
 
 			if maxRatePacketLoss <= 5 {
 				if currentTemporalLayer < mctl && currentTemporalLayer+1 <= atomic.LoadInt32(&d.maxTemporalLayer) &&
-					expectedMinBitrate >= 3*cbr/4 {
+					expectedMinBitrate >= float32(3*cbr/4) {
 					d.SwitchTemporalLayer(currentTemporalLayer+1, false)
 					d.simulcast.switchDelay = time.Now().Add(3 * time.Second)
 				}
-				if currentTemporalLayer >= mctl && expectedMinBitrate >= 3*cbr/2 && currentSpatialLayer+1 <= atomic.LoadInt32(&d.maxSpatialLayer) &&
+				if currentTemporalLayer >= mctl && expectedMinBitrate >= float32(3*cbr/2) && currentSpatialLayer+1 <= atomic.LoadInt32(&d.maxSpatialLayer) &&
 					currentSpatialLayer+1 <= 2 {
 					if err := d.SwitchSpatialLayer(currentSpatialLayer+1, false); err == nil {
 						d.SwitchTemporalLayer(0, false)
@@ -580,7 +580,7 @@ func (d *DownTrack) handleLayerChange(maxRatePacketLoss uint8, expectedMinBitrat
 				}
 			}
 			if maxRatePacketLoss >= 25 {
-				if (expectedMinBitrate <= 5*cbr/8 || currentTemporalLayer == 0) &&
+				if (expectedMinBitrate <= float32(5*cbr/8) || currentTemporalLayer == 0) &&
 					currentSpatialLayer > 0 &&
 					brs[currentSpatialLayer-1] != 0 {
 					if err := d.SwitchSpatialLayer(currentSpatialLayer-1, false); err != nil {

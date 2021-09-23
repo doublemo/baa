@@ -15,4 +15,7 @@ const (
 
 	//DatachannelCommand 创建数据通道
 	DatachannelCommand coresproto.Command = 2
+
+	// HeartbeaterCommand 心跳
+	HeartbeaterCommand coresproto.Command = 3
 )

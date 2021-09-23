@@ -356,6 +356,7 @@ func (p *PeerWebsocket) CreateDataChannel(w awebrtc.WebRTCTransportConfig) (*Dat
 	return mdc, nil
 }
 
+// Go start
 func (p *PeerWebsocket) Go() {
 	p.readyedChan = make(chan struct{})
 	go p.receiver()

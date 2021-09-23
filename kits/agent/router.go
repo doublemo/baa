@@ -11,15 +11,20 @@ import (
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/sd"
-	"github.com/doublemo/baa/kits/agent/adapter/router"
 	"github.com/doublemo/baa/kits/agent/errcode"
 	midPeer "github.com/doublemo/baa/kits/agent/middlewares/peer"
 	"github.com/doublemo/baa/kits/agent/proto"
 	"github.com/doublemo/baa/kits/agent/proto/pb"
+	mrouter "github.com/doublemo/baa/kits/agent/router"
 	"github.com/doublemo/baa/kits/agent/session"
 	grpcproto "github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"google.golang.org/grpc/resolver"
+)
+
+var (
+	sRouter = mrouter.New()
+	dRouter = mrouter.New()
 )
 
 // RouterConfig 路由配置
@@ -32,9 +37,11 @@ func InitRouter(config *RouterConfig) {
 	// Register grpc load balance
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceSFU.Name, config.ServiceSFU.Group, sd.Endpointer()))
 
-	// command register
-	router.On(proto.Agent, agentRouter)
-	router.On(proto.SFU, sfuRouter(config.ServiceSFU))
+	// 注册处理socket/websocket来的请求
+	sRouter.HandleFunc(proto.Agent, agentRouter)
+	sRouter.Handle(proto.SFU, newSFURouter(config.ServiceSFU))
+
+	// 注册处理datachannel来的请求
 }
 
 func onMessage(peer session.Peer, msg session.PeerMessagePayload) error {
@@ -88,12 +95,7 @@ func handleBinaryMessage(peer session.Peer, frame []byte) (coresproto.Response, 
 		return proto.NewResponseBytes(req.Cmd, errcode.Bad(&corespb.Response{Command: req.Command().Int32()}, errcode.ErrorInvalidSEQID)), nil
 	}
 
-	fn, err := router.Fn(req.Cmd)
-	if err != nil {
-		return proto.NewResponseBytes(req.Cmd, errcode.Bad(&corespb.Response{Command: req.Command().Int32()}, errcode.ErrCommandInvalid)), nil
-	}
-
-	resp, err := fn(peer, req)
+	resp, err := sRouter.Handler(peer, req)
 	if resp != nil {
 		resp.SeqID(req.SID())
 	}
@@ -102,8 +104,17 @@ func handleBinaryMessage(peer session.Peer, frame []byte) (coresproto.Response, 
 }
 
 func handleFromDataChannelBinaryMessage(peer session.Peer, frame []byte) (coresproto.Response, error) {
-	fmt.Println("--<", string(frame))
-	return proto.NewResponseBytes(0, errcode.Bad(&corespb.Response{Command: 0}, errcode.ErrorInvalidSEQID)), nil
+	req := &coresproto.RequestBytes{}
+	if err := req.Unmarshal(frame); err != nil {
+		return nil, errcode.ErrorInvalidProtoVersion.ToError()
+	}
+
+	resp, err := dRouter.Handler(peer, req)
+	if resp != nil {
+		resp.SeqID(req.SID())
+	}
+
+	return resp, err
 }
 
 func agentRouter(peer session.Peer, req coresproto.Request) (coresproto.Response, error) {
@@ -113,6 +124,8 @@ func agentRouter(peer session.Peer, req coresproto.Request) (coresproto.Response
 
 	case proto.DatachannelCommand:
 		return datachannel(peer, req)
+
+	case proto.HeartbeaterCommand:
 	}
 
 	return nil, nil
@@ -126,8 +139,6 @@ func handshake(peer session.Peer, req coresproto.Request) (coresproto.Response, 
 			return nil, err
 		}
 	}
-
-	fmt.Println("handshake->", peer.ID())
 
 	x1, e1 := dh.DHExchange()
 	x2, e2 := dh.DHExchange()

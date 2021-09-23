@@ -25,6 +25,7 @@ func NewSocketProcessActor(config *conf.Scoket) (*os.ProcessActor, error) {
 		peer.OnClose(func(p session.Peer) {
 			wg.Done()
 			session.RemovePeer(p)
+			sRouter.Destroy(p)
 		})
 
 		peer.Use(midPeer.NewRPMLimiter(config.RPMLimit, Logger()))

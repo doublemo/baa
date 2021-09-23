@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"sync"
 	"time"
@@ -12,16 +11,13 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	midPeer "github.com/doublemo/baa/kits/agent/middlewares/peer"
 	"github.com/doublemo/baa/kits/agent/session"
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
 
 // NewWebsocketProcessActor 创建Websocket
 func NewWebsocketProcessActor(config *conf.Webscoket) (*os.ProcessActor, error) {
-	r := gin.New()
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
-
+	r := mux.NewRouter()
 	var webSocketUpgrader websocket.Upgrader
 	{
 		webSocketUpgrader = websocket.Upgrader{
@@ -35,14 +31,9 @@ func NewWebsocketProcessActor(config *conf.Webscoket) (*os.ProcessActor, error) 
 
 	var wg sync.WaitGroup
 	exitChan := make(chan struct{})
-	r.GET("/websocket", func(ctx *gin.Context) {
-		if !ctx.IsWebsocket() {
-			ctx.AbortWithError(http.StatusNotFound, errors.New("404 Not found"))
-			return
-		}
-
-		webscoketHandler(ctx.Writer, ctx.Request, webSocketUpgrader, config, &wg, exitChan)
-	})
+	r.HandleFunc("/websocket", func(rw http.ResponseWriter, r *http.Request) {
+		serveWebsocket(rw, r, webSocketUpgrader, config, &wg, exitChan)
+	}).Methods("GET")
 
 	s := &http.Server{
 		Addr:           config.Addr,
@@ -82,7 +73,7 @@ func NewWebsocketProcessActor(config *conf.Webscoket) (*os.ProcessActor, error) 
 	}, nil
 }
 
-func webscoketHandler(w http.ResponseWriter, req *http.Request, upgrader websocket.Upgrader, config *conf.Webscoket, wg *sync.WaitGroup, exitChan chan struct{}) {
+func serveWebsocket(w http.ResponseWriter, req *http.Request, upgrader websocket.Upgrader, config *conf.Webscoket, wg *sync.WaitGroup, exitChan chan struct{}) {
 	conn, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
 		log.Error(Logger()).Log("error", err)
@@ -95,11 +86,7 @@ func webscoketHandler(w http.ResponseWriter, req *http.Request, upgrader websock
 	peer.OnClose(func(p session.Peer) {
 		wg.Done()
 		session.RemovePeer(p)
-
-		// close sfu
-		if m, ok := sfuRouterBidirectionalStreamingClient(p); ok {
-			m.Close()
-		}
+		sRouter.Destroy(p)
 	})
 
 	peer.Use(midPeer.NewRPMLimiter(config.RPMLimit, Logger()))
