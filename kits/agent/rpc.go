@@ -11,7 +11,7 @@ import (
 )
 
 // NewRPCServerActor 创建RPC服务
-func NewRPCServerActor(config *conf.RPC) (*os.ProcessActor, error) {
+func NewRPCServerActor(config conf.RPC) (*os.ProcessActor, error) {
 	lis, err := net.Listen("tcp", config.Addr)
 	if err != nil {
 		return nil, err

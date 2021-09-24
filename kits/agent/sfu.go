@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"fmt"
 	"strconv"
 	"sync"
 
@@ -63,7 +62,6 @@ func (r *sfuRouter) Destroy(peer session.Peer) {
 	r.mutex.Lock()
 	delete(r.clients, peer.ID())
 	r.mutex.Unlock()
-	fmt.Println("--------x-----xx--", peer.ID())
 }
 
 func (r *sfuRouter) getClient(peer session.Peer) (*rpc.BidirectionalStreamingClient, error) {

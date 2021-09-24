@@ -39,7 +39,7 @@ func Prefix() string {
 }
 
 // Init 初始化节点信息
-func Init(machineID string, etcd *conf.Etcd, rpc *conf.RPC) error {
+func Init(machineID string, etcd conf.Etcd, rpc conf.RPC) error {
 	config := etcdv3.Config{
 		Addrs:         etcd.Addr,
 		DialTimeout:   3 * time.Second,
@@ -61,7 +61,7 @@ func Init(machineID string, etcd *conf.Etcd, rpc *conf.RPC) error {
 	prefix = etcd.BasePath
 	endpointer = sd.NewEndpointer(instancer)
 
-	if rpc != nil {
+	if rpc.Name != "" && rpc.Addr != "" {
 		endpoint = sd.NewEndpoint(machineID, rpc.Name, rpc.Addr)
 		endpoint.Set("group", rpc.Group)
 		endpoint.Set("weight", strconv.Itoa(rpc.Weight))

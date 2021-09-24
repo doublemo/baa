@@ -22,15 +22,3 @@ type Scoket struct {
 	// RPMLimit per connection rpm limit
 	RPMLimit int `alias:"rpm" default:"200"`
 }
-
-// Clone Scoket
-func (o *Scoket) Clone() *Scoket {
-	return &Scoket{
-		Addr:            o.Addr,
-		ReadBufferSize:  o.ReadBufferSize,
-		WriteBufferSize: o.WriteBufferSize,
-		ReadDeadline:    o.ReadDeadline,
-		WriteDeadline:   o.WriteDeadline,
-		RPMLimit:        o.RPMLimit,
-	}
-}

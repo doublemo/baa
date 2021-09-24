@@ -43,22 +43,3 @@ type Webscoket struct {
 	// RPMLimit per connection rpm limit
 	RPMLimit int `alias:"rpm" default:"200"`
 }
-
-// Clone Webscoket
-func (o *Webscoket) Clone() *Webscoket {
-	return &Webscoket{
-		Addr:            o.Addr,
-		ReadTimeout:     o.ReadTimeout,
-		WriteTimeout:    o.WriteTimeout,
-		MaxHeaderBytes:  o.MaxHeaderBytes,
-		SSL:             o.SSL,
-		Key:             o.Key,
-		Cert:            o.Cert,
-		ReadBufferSize:  o.ReadBufferSize,
-		WriteBufferSize: o.WriteBufferSize,
-		MaxMessageSize:  o.MaxMessageSize,
-		ReadDeadline:    o.ReadDeadline,
-		WriteDeadline:   o.WriteDeadline,
-		RPMLimit:        o.RPMLimit,
-	}
-}

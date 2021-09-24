@@ -18,14 +18,6 @@ type Etcd struct {
 	BasePath string `alias:"basepath" default:"/services/baa"`
 }
 
-// Clone etcd
-func (etcd Etcd) Clone() *Etcd {
-	return &Etcd{
-		Addr:     etcd.Addr,
-		BasePath: etcd.BasePath,
-	}
-}
-
 // RPCXRegisterPlugin rpcx
 func (etcd *Etcd) RPCXRegisterPlugin(servcieAddr string) (*serverplugin.EtcdV3RegisterPlugin, error) {
 	r := &serverplugin.EtcdV3RegisterPlugin{

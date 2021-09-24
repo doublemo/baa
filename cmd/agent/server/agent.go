@@ -28,24 +28,27 @@ type Config struct {
 
 	// Http http(s) 监听端口
 	// 利用http实现信息GET/POST, webscoket 也会这个端口甚而上实现
-	Http *conf.Http `alias:"http"`
+	Http conf.Http `alias:"http"`
 
 	// Websocket 将支持WebSocket服务
-	Websocket *conf.Webscoket `alias:"websocket"`
+	Websocket conf.Webscoket `alias:"websocket"`
 
 	// Socket 将支持tcp流服务
-	Socket *conf.Scoket `alias:"socket"`
+	Socket conf.Scoket `alias:"socket"`
 
-	Router *agent.RouterConfig `alias:"router"`
+	Router agent.RouterConfig `alias:"router"`
 
 	// RPC rpc
-	RPC *conf.RPC `alias:"rpc"`
+	RPC conf.RPC `alias:"rpc"`
 
 	// Etcd etcd
-	Etcd *conf.Etcd `alias:"etcd"`
+	Etcd conf.Etcd `alias:"etcd"`
 
 	//Webrtc  webrtc config
 	Webrtc webrtc.WebRTCConfig `alias:"webrtc"`
+
+	// Nats
+	Nats conf.Nats `alias:"nats"`
 }
 
 type Agent struct {
@@ -82,7 +85,7 @@ func (s *Agent) Start() error {
 	agent.SetLogger(logger)
 
 	// 服务发现
-	if err := sd.Init(o.MachineID, o.Etcd.Clone(), o.RPC.Clone()); err != nil {
+	if err := sd.Init(o.MachineID, o.Etcd, o.RPC); err != nil {
 		return err
 	}
 
@@ -94,10 +97,13 @@ func (s *Agent) Start() error {
 		return err
 	}
 
+	o.Nats.Name = o.MachineID
+
 	// 注册运行服务
-	s.actors.Add(s.mustProcessActor(agent.NewSocketProcessActor(o.Socket.Clone())), true)
-	s.actors.Add(s.mustProcessActor(agent.NewWebsocketProcessActor(o.Websocket.Clone())), true)
-	s.actors.Add(s.mustProcessActor(agent.NewRPCServerActor(o.RPC.Clone())), true)
+	s.actors.Add(s.mustProcessActor(agent.NewNatsProcessActor(o.Nats)), true)
+	s.actors.Add(s.mustProcessActor(agent.NewSocketProcessActor(o.Socket)), true)
+	s.actors.Add(s.mustProcessActor(agent.NewWebsocketProcessActor(o.Websocket)), true)
+	s.actors.Add(s.mustProcessActor(agent.NewRPCServerActor(o.RPC)), true)
 	s.actors.Add(s.mustProcessActor(agent.NewServiceDiscoveryProcessActor()), true)
 	return s.actors.Run()
 }

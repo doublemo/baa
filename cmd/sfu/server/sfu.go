@@ -26,13 +26,13 @@ type Config struct {
 	Domain string `alias:"domain"`
 
 	// Etcd etcd
-	Etcd *conf.Etcd `alias:"etcd"`
+	Etcd conf.Etcd `alias:"etcd"`
 
 	// RPC rpc
-	RPC *conf.RPC `alias:"rpc"`
+	RPC conf.RPC `alias:"rpc"`
 
 	// SFU ion-sfu
-	SFU *sfu.Configuration `alias:"sfu"`
+	SFU sfu.Configuration `alias:"sfu"`
 }
 
 type SFU struct {
@@ -70,13 +70,13 @@ func (s *SFU) Start() error {
 	sfu.InitRouter()
 
 	// 服务发现
-	if err := sd.Init(o.MachineID, o.Etcd.Clone(), o.RPC.Clone()); err != nil {
+	if err := sd.Init(o.MachineID, o.Etcd, o.RPC); err != nil {
 		return err
 	}
 
 	// 注册运行服务
 	//s.actors.Add(s.mustProcessActor(sfu.NewRPCXServerActor(o.RPC.Clone(), o.Etcd.Clone(), o.SFU)), true)
-	s.actors.Add(s.mustProcessActor(sfu.NewServerActor(o.RPC.Clone(), o.SFU)), true)
+	s.actors.Add(s.mustProcessActor(sfu.NewServerActor(o.RPC, o.SFU)), true)
 	s.actors.Add(s.mustProcessActor(sfu.NewServiceDiscoveryProcessActor()), true)
 	return s.actors.Run()
 }

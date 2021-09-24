@@ -22,7 +22,7 @@ var (
 )
 
 // NewServer 创建GRPC server
-func NewServer(c *conf.RPC) (*grpc.Server, error) {
+func NewServer(c conf.RPC) (*grpc.Server, error) {
 	opts := []grpc.ServerOption{}
 	if len(c.Key) > 0 && len(c.Salt) > 0 {
 		cert, err := tls.LoadX509KeyPair(c.Salt, c.Key)
@@ -40,7 +40,7 @@ func NewServer(c *conf.RPC) (*grpc.Server, error) {
 	return grpc.NewServer(opts...), nil
 }
 
-func ensureValidToken(config *conf.RPC) grpc.UnaryServerInterceptor {
+func ensureValidToken(config conf.RPC) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
@@ -64,7 +64,7 @@ func ensureValidToken(config *conf.RPC) grpc.UnaryServerInterceptor {
 }
 
 //func(srv interface{}, ss ServerStream, info *StreamServerInfo, handler StreamHandler)
-func ensureStreamValidToken(config *conf.RPC) grpc.StreamServerInterceptor {
+func ensureStreamValidToken(config conf.RPC) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		md, ok := metadata.FromIncomingContext(ss.Context())
 		if !ok {

@@ -1,0 +1,22 @@
+package conf
+
+// Nats nats-io
+type Nats struct {
+	// Name 订阅客户端名称
+	Name string `alias:"-"`
+
+	// Urls 集群连接地址
+	Urls []string `alias:"urls"`
+
+	// MaxReconnects 最大重连次数
+	MaxReconnects int `alias:"maxreconnects" default:"100"`
+
+	// ReconnectWait 重连等待时间 秒为单位
+	ReconnectWait int `alias:"reconnectwait" default:"1"`
+
+	// ReconnectJitter 设置重连抖动时间 数组1 为非tls连接/毫秒 数组2 tls /秒
+	ReconnectJitter []int `alias:"reconnectjitter"`
+
+	// PingInterval ping 秒
+	PingInterval int `alias:"pingInterval" default:"300"`
+}

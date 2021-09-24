@@ -19,7 +19,7 @@ type (
 )
 
 // newSFUServer 创建sfu 服务器
-func newSFUServer(config *Configuration) *ionsfu.SFU {
+func newSFUServer(config Configuration) *ionsfu.SFU {
 	var ionsfuConfig ionsfu.Config
 	{
 		ionsfuConfig.SFU.Ballast = config.Ballast

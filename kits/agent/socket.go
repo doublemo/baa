@@ -14,7 +14,7 @@ import (
 )
 
 // NewSocketProcessActor 创建socket服务
-func NewSocketProcessActor(config *conf.Scoket) (*os.ProcessActor, error) {
+func NewSocketProcessActor(config conf.Scoket) (*os.ProcessActor, error) {
 	var wg sync.WaitGroup
 	exitChan := make(chan struct{})
 	s := coresnet.NewSocket2()
@@ -26,6 +26,7 @@ func NewSocketProcessActor(config *conf.Scoket) (*os.ProcessActor, error) {
 			wg.Done()
 			session.RemovePeer(p)
 			sRouter.Destroy(p)
+			dRouter.Destroy(p)
 		})
 
 		peer.Use(midPeer.NewRPMLimiter(config.RPMLimit, Logger()))

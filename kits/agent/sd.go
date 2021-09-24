@@ -16,6 +16,7 @@ func NewServiceDiscoveryProcessActor() (*os.ProcessActor, error) {
 			Logger().Log("transport", "registrar", "on", sd.Endpoint().Marshal())
 			registrar.Register()
 			<-ch
+			registrar.Deregister()
 			return nil
 		},
 		Interrupt: func(err error) {
@@ -27,7 +28,6 @@ func NewServiceDiscoveryProcessActor() (*os.ProcessActor, error) {
 
 		Close: func() {
 			close(ch)
-			registrar.Deregister()
 			Logger().Log("transport", "registrar", "on", "shutdown")
 		},
 	}, nil

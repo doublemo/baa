@@ -94,7 +94,7 @@ func (s *baseserver) BidirectionalStreaming(stream corespb.Service_Bidirectional
 }
 
 // NewServerActor 创建rpc服务
-func NewServerActor(config *conf.RPC, sfuConfig *Configuration) (*os.ProcessActor, error) {
+func NewServerActor(config conf.RPC, sfuConfig Configuration) (*os.ProcessActor, error) {
 	lis, err := net.Listen("tcp", config.Addr)
 	if err != nil {
 		return nil, err

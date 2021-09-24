@@ -15,7 +15,7 @@ import (
 	midPeer "github.com/doublemo/baa/kits/agent/middlewares/peer"
 	"github.com/doublemo/baa/kits/agent/proto"
 	"github.com/doublemo/baa/kits/agent/proto/pb"
-	mrouter "github.com/doublemo/baa/kits/agent/router"
+	"github.com/doublemo/baa/kits/agent/router"
 	"github.com/doublemo/baa/kits/agent/session"
 	grpcproto "github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
@@ -23,8 +23,11 @@ import (
 )
 
 var (
-	sRouter = mrouter.New()
-	dRouter = mrouter.New()
+	// sRouter socket/websocket
+	sRouter = router.New()
+
+	// dRouter webrtc datachannel
+	dRouter = router.New()
 )
 
 // RouterConfig 路由配置
@@ -33,7 +36,7 @@ type RouterConfig struct {
 }
 
 // InitRouter init
-func InitRouter(config *RouterConfig) {
+func InitRouter(config RouterConfig) {
 	// Register grpc load balance
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceSFU.Name, config.ServiceSFU.Group, sd.Endpointer()))
 
@@ -100,6 +103,10 @@ func handleBinaryMessage(peer session.Peer, frame []byte) (coresproto.Response, 
 		resp.SeqID(req.SID())
 	}
 
+	if err == router.ErrNotFoundRouter {
+		return proto.NewResponseBytes(req.Cmd, errcode.Bad(&corespb.Response{Command: req.Command().Int32()}, errcode.ErrCommandInvalid)), nil
+	}
+
 	return resp, err
 }
 
@@ -112,6 +119,10 @@ func handleFromDataChannelBinaryMessage(peer session.Peer, frame []byte) (coresp
 	resp, err := dRouter.Handler(peer, req)
 	if resp != nil {
 		resp.SeqID(req.SID())
+	}
+
+	if err == router.ErrNotFoundRouter {
+		return proto.NewResponseBytes(req.Cmd, errcode.Bad(&corespb.Response{Command: req.Command().Int32()}, errcode.ErrCommandInvalid)), nil
 	}
 
 	return resp, err
@@ -127,7 +138,6 @@ func agentRouter(peer session.Peer, req coresproto.Request) (coresproto.Response
 
 	case proto.HeartbeaterCommand:
 	}
-
 	return nil, nil
 }
 

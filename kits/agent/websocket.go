@@ -16,7 +16,7 @@ import (
 )
 
 // NewWebsocketProcessActor 创建Websocket
-func NewWebsocketProcessActor(config *conf.Webscoket) (*os.ProcessActor, error) {
+func NewWebsocketProcessActor(config conf.Webscoket) (*os.ProcessActor, error) {
 	r := mux.NewRouter()
 	var webSocketUpgrader websocket.Upgrader
 	{
@@ -73,7 +73,7 @@ func NewWebsocketProcessActor(config *conf.Webscoket) (*os.ProcessActor, error) 
 	}, nil
 }
 
-func serveWebsocket(w http.ResponseWriter, req *http.Request, upgrader websocket.Upgrader, config *conf.Webscoket, wg *sync.WaitGroup, exitChan chan struct{}) {
+func serveWebsocket(w http.ResponseWriter, req *http.Request, upgrader websocket.Upgrader, config conf.Webscoket, wg *sync.WaitGroup, exitChan chan struct{}) {
 	conn, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
 		log.Error(Logger()).Log("error", err)
@@ -87,6 +87,7 @@ func serveWebsocket(w http.ResponseWriter, req *http.Request, upgrader websocket
 		wg.Done()
 		session.RemovePeer(p)
 		sRouter.Destroy(p)
+		dRouter.Destroy(p)
 	})
 
 	peer.Use(midPeer.NewRPMLimiter(config.RPMLimit, Logger()))
