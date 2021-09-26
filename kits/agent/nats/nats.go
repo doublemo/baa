@@ -1,6 +1,7 @@
 package nats
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -28,12 +29,20 @@ func Connect(config conf.Nats, logger coreslog.Logger) error {
 		opts = append(opts, nats.ReconnectJitter(time.Duration(config.ReconnectJitter[0])*time.Millisecond, time.Duration(config.ReconnectJitter[1])*time.Second))
 	}
 
-	opts = append(opts, nats.DisconnectHandler(func(c *nats.Conn) {
-		log.Warn(logger).Log("nats", "disconnect", "addr", c.ConnectedAddr())
-	}))
-
 	opts = append(opts, nats.ReconnectHandler(func(c *nats.Conn) {
 		log.Info(logger).Log("nats", "reconnect", "addr", c.ConnectedAddr())
+	}))
+
+	opts = append(opts, nats.ClosedHandler(func(c *nats.Conn) {
+		if err := c.LastError(); err != nil {
+			log.Error(logger).Log("nats", "reconnect", "error", err)
+		}
+	}))
+
+	opts = append(opts, nats.DisconnectErrHandler(func(c *nats.Conn, e error) {
+		if e != nil {
+			log.Error(logger).Log("nats", "disconnected", "error", fmt.Sprintf("Disconnected due to:%v, will attempt reconnects for %ds", err, config.ReconnectWait))
+		}
 	}))
 
 	nc, err = nats.Connect(strings.Join(config.Urls, ","), opts...)
@@ -53,6 +62,7 @@ func Connect(config conf.Nats, logger coreslog.Logger) error {
 	if err := nc.LastError(); err != nil {
 		return err
 	}
+
 	return nil
 }
 

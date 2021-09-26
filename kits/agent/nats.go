@@ -36,7 +36,7 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 						return nil
 					}
 
-					fmt.Println("----msg--:", string(msg.Data))
+					onFromNatsMessage(msg)
 
 				case <-exitChan:
 					return nil
@@ -51,4 +51,9 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 			close(exitChan)
 		},
 	}, nil
+}
+
+// onFromNatsMessage 处理来至nats订阅的消息
+func onFromNatsMessage(msg *natsgo.Msg) {
+	fmt.Println("from nats message:", string(msg.Data))
 }

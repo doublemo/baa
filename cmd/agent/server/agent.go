@@ -1,7 +1,9 @@
 package server
 
 import (
+	"errors"
 	"math/rand"
+	"regexp"
 	"time"
 
 	log "github.com/doublemo/baa/cores/log/level"
@@ -95,6 +97,12 @@ func (s *Agent) Start() error {
 	// webrtc
 	if err := webrtc.Init(o.Webrtc); err != nil {
 		return err
+	}
+
+	// 检查机器码信息
+	r, _ := regexp.Compile(`^[a-zA-Z]{1}\w+(\.\w+)+$`)
+	if !r.MatchString(o.MachineID) {
+		return errors.New("Invalid machineID:" + o.MachineID + ", eg:agent1.cn.sc.cd")
 	}
 
 	o.Nats.Name = o.MachineID

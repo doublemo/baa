@@ -9,7 +9,7 @@ type Nats struct {
 	Urls []string `alias:"urls"`
 
 	// MaxReconnects 最大重连次数
-	MaxReconnects int `alias:"maxreconnects" default:"100"`
+	MaxReconnects int `alias:"maxreconnects" default:"600"`
 
 	// ReconnectWait 重连等待时间 秒为单位
 	ReconnectWait int `alias:"reconnectwait" default:"1"`
