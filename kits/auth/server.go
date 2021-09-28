@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 )
@@ -12,7 +11,6 @@ type baseServer struct {
 }
 
 func (s *baseServer) Call(ctx context.Context, req *corespb.Request) (*corespb.Response, error) {
-	fmt.Println("call:", req)
 	return r.Handler(req)
 }
 
