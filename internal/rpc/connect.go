@@ -11,7 +11,7 @@ import (
 )
 
 // NewConnect 创建连接
-func NewConnect(c *conf.RPCClient) (*grpc.ClientConn, error) {
+func NewConnect(c conf.RPCClient) (*grpc.ClientConn, error) {
 	opts := []grpc.DialOption{
 		grpc.WithDefaultServiceConfig(makePolicy(c)), // This sets the initial balancing policy.
 	}
@@ -33,9 +33,12 @@ func NewConnect(c *conf.RPCClient) (*grpc.ClientConn, error) {
 	return grpc.Dial(fmt.Sprintf("%s:///%s", c.Name, c.Group), opts...)
 }
 
-func makePolicy(c *conf.RPCClient) string {
+func makePolicy(c conf.RPCClient) string {
 	return `{
 		"loadBalancingPolicy": "round_robin",
+		"healthCheckConfig":{
+			"serviceName" :""
+		},
 		"methodConfig": [{
 			"name": [{"service": "sfu"}],
 			"waitForReady": true,

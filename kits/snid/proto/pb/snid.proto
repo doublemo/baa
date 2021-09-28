@@ -1,0 +1,14 @@
+syntax = "proto3";
+package pb;
+option go_package = "github.com/doublemo/baa/kits/snid/proto/pb";
+
+message SNID {
+   message Request {
+      string K = 1;
+      int32 N = 2;
+   }
+
+   message Reply {
+      repeated uint64 Values = 1;
+   }
+}

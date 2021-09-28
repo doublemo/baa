@@ -49,5 +49,23 @@ type (
 
 		// ServiceSecurityKey 服务之通信认证
 		ServiceSecurityKey string `alias:"sskey"`
+
+		// pool 池
+		Pool RPCPool
+	}
+
+	// RPCPool 池设置
+	RPCPool struct {
+		// Init 初始池中实例数量
+		Init int `alias:"init" default:"1"`
+
+		// Capacity 池最大容量
+		Capacity int `alias:"capacity" default:"1"`
+
+		// IdleTimeout 空闲超时/ 单位m
+		IdleTimeout int `alias:"idleTimeout" default:"1"`
+
+		// MaxLife 最大生命周期
+		MaxLife int `alias:"maxlife" default:"1"`
 	}
 )

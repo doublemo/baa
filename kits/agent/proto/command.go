@@ -7,6 +7,7 @@ import (
 const (
 	Agent coresproto.Command = 1
 	SFU   coresproto.Command = 2
+	Auth  coresproto.Command = 3
 )
 
 const (

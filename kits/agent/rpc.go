@@ -8,6 +8,7 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/rpc"
 	"google.golang.org/grpc/channelz/service"
+	_ "google.golang.org/grpc/health"
 )
 
 // NewRPCServerActor 创建RPC服务
