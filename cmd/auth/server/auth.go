@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"regexp"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/auth"
+	"github.com/doublemo/baa/kits/auth/dao"
 )
 
 type Config struct {
@@ -38,6 +40,8 @@ type Config struct {
 
 	// Router 路由
 	Router auth.RouterConfig `alias:"router"`
+
+	Database conf.DBMySQLConfig `alias:"db"`
 }
 
 type Authentication struct {
@@ -72,6 +76,10 @@ func (s *Authentication) Start() error {
 	// 设置日志
 	Logger(o.Runmode)
 	auth.SetLogger(logger)
+
+	if err := dao.Open(o.Database); err != nil {
+		return fmt.Errorf("MySQL: %v", err)
+	}
 
 	// 服务发现
 	if err := sd.Init(o.MachineID, o.Etcd, o.RPC); err != nil {

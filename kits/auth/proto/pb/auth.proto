@@ -3,26 +3,24 @@ package pb;
 option go_package = "github.com/doublemo/baa/kits/auth/proto/pb";
 
 message Authentication {
-   enum Scheme {
-      SchemeAccount = 0;
-      SchemePhone   = 1;
-      SchemeWeiXin  = 2;
-      SchemeQr      = 3;
-   }
-
-   message Account {
-      string Username = 1;
-      string Password = 2;
-   }
-
-   message Login {
-      Scheme Scheme = 1;
-      oneof Payload {
-         Account Account = 2;
+   message Form {
+      message Account {
+         string Username = 1;
+         string Password = 2;
       }
-   }
 
-   message Register{
+      message Login {
+         string Scheme = 1;
+         oneof Payload {
+            Account Account = 2;
+         }
+      }
 
+      message Register{
+         string Scheme = 1;
+         oneof Payload {
+            Account Account = 2;
+         }
+      }
    }
 }
