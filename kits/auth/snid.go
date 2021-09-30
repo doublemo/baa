@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/rpc"
 	snproto "github.com/doublemo/baa/kits/snid/proto"
+	snpb "github.com/doublemo/baa/kits/snid/proto/pb"
+	grpcproto "github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 )
 
@@ -87,4 +90,32 @@ func (r *snidRouter) createPool() (*grpcpool.Pool, error) {
 
 func newSnidRouter(c conf.RPCClient) *snidRouter {
 	return &snidRouter{c: c}
+}
+
+func getSNID(num int32) ([]uint64, error) {
+	frame := snpb.SNID_Request{N: num}
+	b, _ := grpcproto.Marshal(&frame)
+	resp, err := ir.Handler(&corespb.Request{Command: internalSnidRouter, Payload: b})
+	if err != nil {
+		return nil, err
+	}
+
+	switch payload := resp.Payload.(type) {
+	case *corespb.Response_Content:
+		resp := snpb.SNID_Reply{}
+		if err := grpcproto.Unmarshal(payload.Content, &resp); err != nil {
+			return nil, err
+		}
+
+		if len(resp.Values) != int(num) {
+			return nil, errors.New("errorSNIDLen")
+		}
+
+		return resp.Values, nil
+
+	case *corespb.Response_Error:
+		return nil, errors.New(payload.Error.Message)
+	}
+
+	return nil, errors.New("snid failed")
 }

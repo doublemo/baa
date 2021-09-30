@@ -1,19 +1,25 @@
 package dao
 
 import (
+	"strings"
 	"time"
 
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 	"gorm.io/plugin/dbresolver"
 )
 
-var db *gorm.DB
+var (
+	db        *gorm.DB
+	rdb       redis.UniversalClient
+	rdbPrefix string
+)
 
 // Open 打开数据库
-func Open(c conf.DBMySQLConfig) error {
+func Open(c conf.DBMySQLConfig, rc conf.Redis) error {
 	gormConfig := &gorm.Config{}
 	if c.TablePrefix != "" {
 		gormConfig.NamingStrategy = schema.NamingStrategy{
@@ -89,10 +95,29 @@ func Open(c conf.DBMySQLConfig) error {
 
 	// 迁移
 	db.AutoMigrate(&Accounts{})
-	return nil
+
+	// 连接redis
+	rdbPrefix = rc.Prefix
+	rdb, err = rc.Connect()
+	return err
 }
 
 // DB 获取数据库
 func DB() *gorm.DB {
 	return db
+}
+
+// RDB 获取redis数据库
+func RDB() redis.UniversalClient {
+	return rdb
+}
+
+// RDBNamer 创建redis key
+func RDBNamer(name ...string) string {
+	prefix := rdbPrefix
+	if prefix != "" {
+		prefix += ":"
+	}
+
+	return prefix + strings.Join(name, ":")
 }

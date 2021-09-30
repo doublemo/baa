@@ -7,16 +7,40 @@ import (
 
 var (
 	// ErrCommandInvalid 非法的调用命令号
-	ErrCommandInvalid = types.NewErrCode(1, "Invalid call command code in request")
+	ErrCommandInvalid = types.NewErrCode(30001, "Invalid call command code in request")
 
-	// ErrorInvalidProtoVersion 错误的协议
-	ErrorInvalidProtoVersion = types.NewErrCode(2, "Invalid  call proto version in request")
+	// ErrPhoneNumberInvalid 非法的手机号码
+	ErrPhoneNumberInvalid = types.NewErrCode(30002, "Phone number is invalid")
 
-	// ErrorInvalidSEQID 错误的消息ID
-	ErrorInvalidSEQID = types.NewErrCode(3, "Invalid call sequence id in request")
+	// ErrVerificationCodeIncorrect 错误的验证码
+	ErrVerificationCodeIncorrect = types.NewErrCode(30003, "Verification code is incorrect")
+
+	// ErrVerificationCodeExists 电话验证码已经存在
+	ErrVerificationCodeExists = types.NewErrCode(30004, "Verification code is already sended")
+
+	// ErrVerificationCodeCouldntCreated 电话验证码无法创建
+	ErrVerificationCodeCouldntCreated = types.NewErrCode(30005, "Phone verification couldn't be created")
+
+	// ErrAccountExpired 账户已经过期
+	ErrAccountExpired = types.NewErrCode(30006, "The Account is expired")
+
+	// ErrAccountDisabled 账户已经被禁用
+	ErrAccountDisabled = types.NewErrCode(30007, "The Account is disabled")
+
+	// ErrAccountIDInvalid 非法账户ID
+	ErrAccountIDInvalid = types.NewErrCode(30008, "Account ID is invalid")
+
+	// ErrAccountNameLettersInvalid 非法账户名称
+	ErrAccountNameLettersInvalid = types.NewErrCode(30009, "The name contains illegal characters. The account name can only contain: A-Z 0-9 and Chinese characters. Special symbols support:@ . _")
+
+	// ErrPasswordLettersInvalid 密码字符无效
+	ErrPasswordLettersInvalid = types.NewErrCode(30010, "The password must contain uppercase and lowercase letters, numbers or punctuation, and must be %d-%d digits long.")
+
+	// ErrAccountIsExists 账户名称已经存在
+	ErrAccountIsExists = types.NewErrCode(30006, "The Account is exist")
 
 	// ErrInternalServer 服务器内部错误
-	ErrInternalServer = types.NewErrCode(500, "Internal Server Error")
+	ErrInternalServer = types.NewErrCode(30500, "Internal Server Error")
 )
 
 // Bad 错误处理

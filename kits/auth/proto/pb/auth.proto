@@ -4,23 +4,55 @@ option go_package = "github.com/doublemo/baa/kits/auth/proto/pb";
 
 message Authentication {
    message Form {
-      message Account {
+      message AccountInfo {
+         string ID  = 1;
+         string UnionID = 2;
+      }
+
+      message LoginAccount {
          string Username = 1;
          string Password = 2;
+      }
+
+      message MobilePhoneSMSCode {
+         string Phone = 1;
+         string  Code = 2;
       }
 
       message Login {
          string Scheme = 1;
          oneof Payload {
-            Account Account = 2;
+            LoginAccount Account = 2;
+            MobilePhoneSMSCode SMS = 3;
          }
+      }
+
+      message LoginRelpy {
+         string Scheme = 1;
+         AccountInfo Account = 2;
       }
 
       message Register{
          string Scheme = 1;
          oneof Payload {
-            Account Account = 2;
+            RegisterAcount Account = 2;
+            MobilePhoneSMSCode SMS = 3;
          }
+      }
+
+      message RegisterReply {
+         string Scheme = 1;
+         oneof Payload {
+            MobilePhoneSMSCode SMS = 2;
+            AccountInfo Account = 3;
+         }
+      }
+
+      message RegisterAcount {
+         string Username = 1;
+         string Password = 2;
+         string Phone    = 3;
+         string PhoneCode =4;
       }
    }
 }
