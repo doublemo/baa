@@ -39,6 +39,9 @@ var (
 	// ErrAccountIsExists 账户名称已经存在
 	ErrAccountIsExists = types.NewErrCode(30006, "The Account is exist")
 
+	// ErrUsernameOrPasswordIncorrect 账户名或密码错误
+	ErrUsernameOrPasswordIncorrect = types.NewErrCode(30007, "Username or Password is incorrect")
+
 	// ErrInternalServer 服务器内部错误
 	ErrInternalServer = types.NewErrCode(30500, "Internal Server Error")
 )

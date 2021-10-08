@@ -12,11 +12,33 @@ message Authentication {
       message LoginAccount {
          string Username = 1;
          string Password = 2;
+         oneof ValidationCodes {
+            ValidationCodes.Phone Phone = 3;
+            ValidationCodes.Code  Code = 4;
+         }
+      }
+
+      message ValidationCodes{
+         message Phone {
+            string Phone = 1;
+            string Code = 2;
+         }
+
+         message Code {
+            string Code = 1;
+         }
       }
 
       message MobilePhoneSMSCode {
          string Phone = 1;
-         string  Code = 2;
+         string Code = 2;
+         int32 ReplayAt = 3;
+         int32 ExpireAt = 4;
+      }
+
+      message LoginPhone {
+         string Phone = 1;
+         string Code = 2;
       }
 
       message Login {
@@ -24,12 +46,16 @@ message Authentication {
          oneof Payload {
             LoginAccount Account = 2;
             MobilePhoneSMSCode SMS = 3;
+            LoginPhone Phone = 4;
          }
       }
 
-      message LoginRelpy {
+      message LoginReply {
          string Scheme = 1;
-         AccountInfo Account = 2;
+         oneof Payload {
+            AccountInfo Account = 2;
+            MobilePhoneSMSCode SMS = 3;
+         }
       }
 
       message Register{

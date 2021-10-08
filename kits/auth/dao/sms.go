@@ -13,13 +13,18 @@ import (
 const defaultSMSKey = "sms"
 
 // GenerateSMSCode 创建验证码
-func GenerateSMSCode(phone string, codeLen int, expire time.Duration) (string, error) {
+func GenerateSMSCode(phone string, codeLen int, expire time.Duration, subkey ...string) (string, error) {
 	code, vcode, err := generateSMSVerificationCode(codeLen, expire)
 	if err != nil {
 		return "", err
 	}
 
-	namer := RDBNamer(defaultSMSKey, phone)
+	skey := ""
+	if len(subkey) >= 1 {
+		skey = subkey[0]
+	}
+
+	namer := RDBNamer(defaultSMSKey, phone, skey)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	ret := rdb.Set(ctx, namer, vcode, expire)
@@ -31,8 +36,13 @@ func GenerateSMSCode(phone string, codeLen int, expire time.Duration) (string, e
 }
 
 // RemoveSMSCode 删除验证码
-func RemoveSMSCode(phone string) error {
-	namer := RDBNamer(defaultSMSKey, phone)
+func RemoveSMSCode(phone string, subkey ...string) error {
+	skey := ""
+	if len(subkey) >= 1 {
+		skey = subkey[0]
+	}
+
+	namer := RDBNamer(defaultSMSKey, phone, skey)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	ret := rdb.Del(ctx, namer)
@@ -40,8 +50,13 @@ func RemoveSMSCode(phone string) error {
 }
 
 // GetSMSCode 获取验证码
-func GetSMSCode(phone string) (string, error) {
-	namer := RDBNamer(defaultSMSKey, phone)
+func GetSMSCode(phone string, subkey ...string) (string, error) {
+	skey := ""
+	if len(subkey) >= 1 {
+		skey = subkey[0]
+	}
+
+	namer := RDBNamer(defaultSMSKey, phone, skey)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	ret := rdb.Get(ctx, namer)

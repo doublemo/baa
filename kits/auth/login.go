@@ -12,7 +12,6 @@ import (
 	"github.com/doublemo/baa/kits/auth/dao"
 	"github.com/doublemo/baa/kits/auth/errcode"
 	"github.com/doublemo/baa/kits/auth/proto/pb"
-	snpb "github.com/doublemo/baa/kits/snid/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -42,27 +41,173 @@ type (
 		// IDSecret 用户ID加密key 16位
 		IDSecret string `alias:"idSecret" default:"7581BDD8E8DA3839"`
 
+		// LoginTypesOfValidationCodes 验证代码的类型
+		LoginTypesOfValidationCodes int `alias:"loginTypesOfValidationCodes" default:"0"`
+
 		// SMS 短信配置
 		SMS SMSConfig
 	}
 )
 
 func login(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
-	frame := snpb.SNID_Request{
-		N: 99,
+	var frame pb.Authentication_Form_Login
+	{
+		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+			return nil, err
+		}
 	}
 
-	b, _ := grpcproto.Marshal(&frame)
-	resp, err := ir.Handler(&corespb.Request{Command: internalSnidRouter, Payload: b})
+	switch payload := frame.Payload.(type) {
+	case *pb.Authentication_Form_Login_Account:
+		return loginAccount(req, &frame, payload, c)
+
+	case *pb.Authentication_Form_Login_Phone:
+
+	case *pb.Authentication_Form_Login_SMS:
+		return loginMobliePhoneSMSSend(req, &frame, payload, c)
+	}
+
+	return nil, errors.New("InvalidProtoType")
+}
+
+func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, form *pb.Authentication_Form_Login_Account, c LRConfig) (*corespb.Response, error) {
+	w := &corespb.Response{
+		Command: req.Command,
+	}
+
+	// ^[\u4e00-\u9fa5]
+	reg := regexp.MustCompile(`^[a-z0-9A-Z\p{Han}]+([\.|_|@][a-z0-9A-Z\p{Han}]+)*$`)
+	if !reg.MatchString(form.Account.Username) {
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
+	}
+
+	if !isValidPassword(form.Account.Password, c.PasswordMinLen, c.PasswordMaxLen) {
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
+	}
+
+	if c.LoginTypesOfValidationCodes != 0 && !isValidValidationCodes(form, c) {
+		return errcode.Bad(w, errcode.ErrVerificationCodeIncorrect), nil
+	}
+
+	account, err := dao.GetAccoutsBySchemeAName(reqFrame.Scheme, form.Account.Username)
 	if err != nil {
-		return nil, err
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
 	}
 
-	switch payload := resp.Payload.(type) {
-	case *corespb.Response_Content:
-		fmt.Println(payload)
+	err = bcrypt.CompareHashAndPassword([]byte(account.Secret), []byte(form.Account.Username))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
 	}
-	return resp, nil
+
+	if account.Status != 0 {
+		return errcode.Bad(w, errcode.ErrAccountDisabled), nil
+	}
+
+	if account.ExpiresAt != 0 && account.ExpiresAt < time.Now().Unix() {
+		return errcode.Bad(w, errcode.ErrAccountExpired), nil
+	}
+
+	accountID, err := id.Encrypt(account.ID, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	unionID, err := id.Encrypt(account.UnionID, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	resp := &pb.Authentication_Form_LoginReply{
+		Scheme: reqFrame.Scheme,
+		Payload: &pb.Authentication_Form_LoginReply_Account{
+			Account: &pb.Authentication_Form_AccountInfo{
+				ID:      accountID,
+				UnionID: unionID,
+			},
+		},
+	}
+
+	b, _ := grpcproto.Marshal(resp)
+	w.Payload = &corespb.Response_Content{Content: b}
+	return w, nil
+}
+
+func isValidValidationCodes(form *pb.Authentication_Form_Login_Account, c LRConfig) bool {
+	switch payload := form.Account.ValidationCodes.(type) {
+	case *pb.Authentication_Form_LoginAccount_Phone:
+		return isValidValidationCodesPhone(payload.Phone.Phone, payload.Phone.Code, c)
+	case *pb.Authentication_Form_LoginAccount_Code:
+		// todo code
+	}
+	return false
+}
+
+func isValidValidationCodesPhone(phone string, code string, c LRConfig) bool {
+	vcode, err := dao.GetSMSCode(phone, "login")
+	if err != nil {
+		return false
+	}
+
+	mcode, expire, err := dao.ParseSMSVerificationCode(vcode, c.SMS.CodeMaxLen)
+	if err != nil {
+		return false
+	}
+
+	if time.Now().Unix() > expire || code != mcode {
+		return false
+	}
+
+	dao.RemoveSMSCode(phone, "login")
+	return true
+}
+
+func loginMobliePhoneSMSSend(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, sms *pb.Authentication_Form_Login_SMS, c LRConfig) (*corespb.Response, error) {
+	w := &corespb.Response{
+		Command: req.Command,
+	}
+
+	regular := "^(1[3-9])\\d{9}$"
+	reg := regexp.MustCompile(regular)
+	if !reg.MatchString(sms.SMS.Phone) {
+		return errcode.Bad(w, errcode.ErrPhoneNumberInvalid), nil
+	}
+
+	vcode, err := dao.GetSMSCode(sms.SMS.Phone, "login")
+	if err == nil {
+		_, expire, err := dao.ParseSMSVerificationCode(vcode, c.SMS.CodeMaxLen)
+		if err != nil {
+			return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+		}
+
+		expireAt := expire - int64(c.SMS.CodeExpireAt)
+		if time.Now().Sub(time.Unix(expireAt, 0)).Seconds() < float64(c.SMS.CodeReplayAt) {
+			return errcode.Bad(w, errcode.ErrVerificationCodeExists), nil
+		}
+
+		dao.RemoveSMSCode(sms.SMS.Phone, "login")
+	}
+
+	code, err := dao.GenerateSMSCode(sms.SMS.Phone, c.SMS.CodeMaxLen, time.Duration(c.SMS.CodeExpireAt)*time.Second, "login")
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	// todo sms api
+	fmt.Println("code:", code)
+	resp := &pb.Authentication_Form_LoginReply{
+		Scheme: reqFrame.Scheme,
+		Payload: &pb.Authentication_Form_LoginReply_SMS{
+			SMS: &pb.Authentication_Form_MobilePhoneSMSCode{
+				Phone:    sms.SMS.Phone,
+				ReplayAt: int32(time.Duration(c.SMS.CodeReplayAt) * time.Second),
+				ExpireAt: int32(time.Duration(c.SMS.CodeExpireAt) * time.Second),
+			},
+		},
+	}
+
+	b, _ := grpcproto.Marshal(resp)
+	w.Payload = &corespb.Response_Content{Content: b}
+	return w, nil
 }
 
 func register(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
@@ -98,7 +243,7 @@ func registerMobliePhoneSMSSend(req *corespb.Request, reqFrame *pb.Authenticatio
 		return errcode.Bad(w, errcode.ErrPhoneNumberInvalid), nil
 	}
 
-	vcode, err := dao.GetSMSCode(sms.SMS.Phone)
+	vcode, err := dao.GetSMSCode(sms.SMS.Phone, "register")
 	if err == nil {
 		_, expire, err := dao.ParseSMSVerificationCode(vcode, c.SMS.CodeMaxLen)
 		if err != nil {
@@ -110,10 +255,10 @@ func registerMobliePhoneSMSSend(req *corespb.Request, reqFrame *pb.Authenticatio
 			return errcode.Bad(w, errcode.ErrVerificationCodeExists), nil
 		}
 
-		dao.RemoveSMSCode(sms.SMS.Phone)
+		dao.RemoveSMSCode(sms.SMS.Phone, "register")
 	}
 
-	code, err := dao.GenerateSMSCode(sms.SMS.Phone, c.SMS.CodeMaxLen, time.Duration(c.SMS.CodeExpireAt)*time.Second)
+	code, err := dao.GenerateSMSCode(sms.SMS.Phone, c.SMS.CodeMaxLen, time.Duration(c.SMS.CodeExpireAt)*time.Second, "register")
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
@@ -123,7 +268,11 @@ func registerMobliePhoneSMSSend(req *corespb.Request, reqFrame *pb.Authenticatio
 	resp := &pb.Authentication_Form_RegisterReply{
 		Scheme: reqFrame.Scheme,
 		Payload: &pb.Authentication_Form_RegisterReply_SMS{
-			SMS: &pb.Authentication_Form_MobilePhoneSMSCode{Phone: sms.SMS.Phone},
+			SMS: &pb.Authentication_Form_MobilePhoneSMSCode{
+				Phone:    sms.SMS.Phone,
+				ReplayAt: int32(time.Duration(c.SMS.CodeReplayAt) * time.Second),
+				ExpireAt: int32(time.Duration(c.SMS.CodeExpireAt) * time.Second),
+			},
 		},
 	}
 
