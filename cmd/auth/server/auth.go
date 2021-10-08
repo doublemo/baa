@@ -42,6 +42,9 @@ type Config struct {
 	Router auth.RouterConfig `alias:"router"`
 
 	Database conf.DBMySQLConfig `alias:"db"`
+
+	// Redis
+	Redis conf.Redis `alias:"redis"`
 }
 
 type Authentication struct {
@@ -77,7 +80,7 @@ func (s *Authentication) Start() error {
 	Logger(o.Runmode)
 	auth.SetLogger(logger)
 
-	if err := dao.Open(o.Database); err != nil {
+	if err := dao.Open(o.Database, o.Redis); err != nil {
 		return fmt.Errorf("MySQL: %v", err)
 	}
 

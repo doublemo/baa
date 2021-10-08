@@ -93,6 +93,10 @@ func newSnidRouter(c conf.RPCClient) *snidRouter {
 }
 
 func getSNID(num int32) ([]uint64, error) {
+	if num > 10 {
+		return nil, errors.New("the number cannot be greater then 10")
+	}
+
 	frame := snpb.SNID_Request{N: num}
 	b, _ := grpcproto.Marshal(&frame)
 	resp, err := ir.Handler(&corespb.Request{Command: internalSnidRouter, Payload: b})

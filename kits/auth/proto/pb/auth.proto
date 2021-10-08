@@ -37,6 +37,7 @@ message Authentication {
          oneof Payload {
             RegisterAcount Account = 2;
             MobilePhoneSMSCode SMS = 3;
+            RegisterCheckUsername CheckUsername = 4;
          }
       }
 
@@ -45,6 +46,7 @@ message Authentication {
          oneof Payload {
             MobilePhoneSMSCode SMS = 2;
             AccountInfo Account = 3;
+            RegisterCheckUsernameReply CheckUsername = 4;
          }
       }
 
@@ -53,6 +55,14 @@ message Authentication {
          string Password = 2;
          string Phone    = 3;
          string PhoneCode =4;
+      }
+
+      message RegisterCheckUsername {
+         string Username = 1;
+      }
+
+      message RegisterCheckUsernameReply {
+         bool OK = 1;
       }
    }
 }

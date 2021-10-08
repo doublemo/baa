@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/xtea"
 )
 
-// Encrypt 加密ID
+// Encrypt 加密ID key 长度必须为16byte
 func Encrypt(uid uint64, key []byte) (string, error) {
 	cipher, err := xtea.NewCipher(key)
 	if err != nil {

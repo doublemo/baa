@@ -22,7 +22,9 @@ var (
 // RouterConfig 路由配置
 type RouterConfig struct {
 	ServiceSNID conf.RPCClient `alias:"snid"`
-	SMS         SMSConfig      `alias:"sms"`
+
+	//LR  登录注册配置信息
+	LR LRConfig `alias:"lr"`
 }
 
 // InitRouter init
@@ -32,7 +34,7 @@ func InitRouter(config RouterConfig) {
 
 	// 注册处理请求
 	r.HandleFunc(proto.LoginCommand, func(r *corespb.Request) (*corespb.Response, error) {
-		return login(r, config.SMS)
+		return login(r, config.LR)
 	})
 
 	// 注册内部使用路由

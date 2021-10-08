@@ -7,6 +7,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/doublemo/baa/cores/crypto/id"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/kits/auth/dao"
 	"github.com/doublemo/baa/kits/auth/errcode"
@@ -17,25 +18,36 @@ import (
 	"gorm.io/gorm"
 )
 
-// SMSConfig 短信验证码配置
-type SMSConfig struct {
-	// CodeMaxLen 短信验证码长度
-	CodeMaxLen int `alias:"codeMaxLen" default:"4"`
+type (
+	// SMSConfig 短信验证码配置
+	SMSConfig struct {
+		// CodeMaxLen 短信验证码长度
+		CodeMaxLen int `alias:"codeMaxLen" default:"4"`
 
-	// CodeExpireAt 短信验证有效期 (秒)
-	CodeExpireAt int `alias:"codeExpireAt" default:"300"`
+		// CodeExpireAt 短信验证有效期 (秒)
+		CodeExpireAt int `alias:"codeExpireAt" default:"300"`
 
-	// CodeReplayAt 短信重发时间 (秒)
-	CodeReplayAt int `alias:"codeReplayAt" default:"60"`
+		// CodeReplayAt 短信重发时间 (秒)
+		CodeReplayAt int `alias:"codeReplayAt" default:"60"`
+	}
 
-	// PasswordMinLen 密码最少字符
-	PasswordMinLen int `alias:"passwordMinLen" default:"8"`
+	// LRConfig 登录注册配置信息
+	LRConfig struct {
+		// PasswordMinLen 密码最少字符
+		PasswordMinLen int `alias:"passwordMinLen" default:"8"`
 
-	// PasswordMaxLen 密码最大字符
-	PasswordMaxLen int `alias:"passwordMaxLen" default:"16"`
-}
+		// PasswordMaxLen 密码最大字符
+		PasswordMaxLen int `alias:"passwordMaxLen" default:"16"`
 
-func login(req *corespb.Request, c SMSConfig) (*corespb.Response, error) {
+		// IDSecret 用户ID加密key 16位
+		IDSecret string `alias:"idSecret" default:"7581BDD8E8DA3839"`
+
+		// SMS 短信配置
+		SMS SMSConfig
+	}
+)
+
+func login(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
 	frame := snpb.SNID_Request{
 		N: 99,
 	}
@@ -53,7 +65,7 @@ func login(req *corespb.Request, c SMSConfig) (*corespb.Response, error) {
 	return resp, nil
 }
 
-func register(req *corespb.Request, c SMSConfig) (*corespb.Response, error) {
+func register(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
 	var frame pb.Authentication_Form_Register
 	{
 		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
@@ -67,12 +79,15 @@ func register(req *corespb.Request, c SMSConfig) (*corespb.Response, error) {
 
 	case *pb.Authentication_Form_Register_SMS:
 		return registerMobliePhoneSMSSend(req, &frame, payload, c)
+
+	case *pb.Authentication_Form_Register_CheckUsername:
+		return registerCheckUsername(req, &frame, payload, c)
 	}
 
 	return nil, errors.New("InvalidProtoType")
 }
 
-func registerMobliePhoneSMSSend(req *corespb.Request, reqFrame *pb.Authentication_Form_Register, sms *pb.Authentication_Form_Register_SMS, c SMSConfig) (*corespb.Response, error) {
+func registerMobliePhoneSMSSend(req *corespb.Request, reqFrame *pb.Authentication_Form_Register, sms *pb.Authentication_Form_Register_SMS, c LRConfig) (*corespb.Response, error) {
 	w := &corespb.Response{
 		Command: req.Command,
 	}
@@ -85,20 +100,20 @@ func registerMobliePhoneSMSSend(req *corespb.Request, reqFrame *pb.Authenticatio
 
 	vcode, err := dao.GetSMSCode(sms.SMS.Phone)
 	if err == nil {
-		_, expire, err := dao.ParseSMSVerificationCode(vcode, c.CodeMaxLen)
+		_, expire, err := dao.ParseSMSVerificationCode(vcode, c.SMS.CodeMaxLen)
 		if err != nil {
 			return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 		}
 
-		expireAt := expire - int64(c.CodeExpireAt)
-		if time.Now().Sub(time.Unix(expireAt, 0)).Seconds() < float64(c.CodeReplayAt) {
+		expireAt := expire - int64(c.SMS.CodeExpireAt)
+		if time.Now().Sub(time.Unix(expireAt, 0)).Seconds() < float64(c.SMS.CodeReplayAt) {
 			return errcode.Bad(w, errcode.ErrVerificationCodeExists), nil
 		}
 
 		dao.RemoveSMSCode(sms.SMS.Phone)
 	}
 
-	code, err := dao.GenerateSMSCode(sms.SMS.Phone, c.CodeMaxLen, time.Duration(c.CodeExpireAt)*time.Second)
+	code, err := dao.GenerateSMSCode(sms.SMS.Phone, c.SMS.CodeMaxLen, time.Duration(c.SMS.CodeExpireAt)*time.Second)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
@@ -117,7 +132,7 @@ func registerMobliePhoneSMSSend(req *corespb.Request, reqFrame *pb.Authenticatio
 	return w, nil
 }
 
-func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Register, r *pb.Authentication_Form_Register_Account, c SMSConfig) (*corespb.Response, error) {
+func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Register, r *pb.Authentication_Form_Register_Account, c LRConfig) (*corespb.Response, error) {
 	w := &corespb.Response{
 		Command: req.Command,
 	}
@@ -137,7 +152,7 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 		return errcode.Bad(w, errcode.ErrPhoneNumberInvalid), nil
 	}
 
-	if len(r.Account.PhoneCode) != c.CodeMaxLen {
+	if len(r.Account.PhoneCode) != c.SMS.CodeMaxLen {
 		return errcode.Bad(w, errcode.ErrVerificationCodeIncorrect), nil
 	}
 
@@ -146,7 +161,7 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
 
-	code, expire, err := dao.ParseSMSVerificationCode(vcode, c.CodeMaxLen)
+	code, expire, err := dao.ParseSMSVerificationCode(vcode, c.SMS.CodeMaxLen)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrVerificationCodeIncorrect, err.Error()), nil
 	}
@@ -180,17 +195,66 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 		Secret:  string(password),
 	}
 
-	dao.DB().Create(&accounts)
+	result := dao.DB().Create(&accounts)
+	if result.Error != nil || result.RowsAffected != 1 {
+		return errcode.Bad(w, errcode.ErrInternalServer, result.Error.Error()), nil
+	}
+
+	accountID, err := id.Encrypt(accounts.ID, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	unionID, err := id.Encrypt(accounts.UnionID, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
 	resp := &pb.Authentication_Form_RegisterReply{
 		Scheme: reqFrame.Scheme,
 		Payload: &pb.Authentication_Form_RegisterReply_Account{
 			Account: &pb.Authentication_Form_AccountInfo{
-				ID:      "accounts.ID",
-				UnionID: "accounts.UnionID",
+				ID:      accountID,
+				UnionID: unionID,
 			},
 		},
 	}
 
+	b, _ := grpcproto.Marshal(resp)
+	w.Payload = &corespb.Response_Content{Content: b}
+	return w, nil
+}
+
+func registerCheckUsername(req *corespb.Request, reqFrame *pb.Authentication_Form_Register, r *pb.Authentication_Form_Register_CheckUsername, c LRConfig) (*corespb.Response, error) {
+	w := &corespb.Response{
+		Command: req.Command,
+	}
+
+	reply := pb.Authentication_Form_RegisterReply_CheckUsername{
+		CheckUsername: &pb.Authentication_Form_RegisterCheckUsernameReply{
+			OK: false,
+		},
+	}
+
+	resp := &pb.Authentication_Form_RegisterReply{
+		Scheme: reqFrame.Scheme,
+	}
+
+	// ^[\u4e00-\u9fa5]
+	reg := regexp.MustCompile(`^[a-z0-9A-Z\p{Han}]+([\.|_|@][a-z0-9A-Z\p{Han}]+)*$`)
+	if !reg.MatchString(r.CheckUsername.Username) {
+		resp.Payload = &reply
+		b, _ := grpcproto.Marshal(resp)
+		w.Payload = &corespb.Response_Content{Content: b}
+		return w, nil
+	}
+
+	_, err := dao.GetAccoutsBySchemeAName(reqFrame.Scheme, r.CheckUsername.Username)
+	if err == gorm.ErrRecordNotFound {
+		reply.CheckUsername.OK = true
+	}
+
+	resp.Payload = &reply
 	b, _ := grpcproto.Marshal(resp)
 	w.Payload = &corespb.Response_Content{Content: b}
 	return w, nil
