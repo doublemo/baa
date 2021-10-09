@@ -76,6 +76,7 @@ func (s *SnowflakeID) Start() error {
 	snid.SetLogger(logger)
 
 	// 服务发现
+	o.RPC.Name = snid.ServiceName
 	if err := sd.Init(o.MachineID, o.Etcd, o.RPC); err != nil {
 		return err
 	}

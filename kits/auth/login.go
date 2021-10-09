@@ -8,9 +8,16 @@ import (
 	"unicode"
 
 	"github.com/doublemo/baa/cores/crypto/id"
+	log "github.com/doublemo/baa/cores/log/level"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/helper"
+	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/kits/agent"
+	agentproto "github.com/doublemo/baa/kits/agent/proto"
+	agentpb "github.com/doublemo/baa/kits/agent/proto/pb"
 	"github.com/doublemo/baa/kits/auth/dao"
 	"github.com/doublemo/baa/kits/auth/errcode"
+	"github.com/doublemo/baa/kits/auth/nats"
 	"github.com/doublemo/baa/kits/auth/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 	"golang.org/x/crypto/bcrypt"
@@ -41,8 +48,14 @@ type (
 		// IDSecret 用户ID加密key 16位
 		IDSecret string `alias:"idSecret" default:"7581BDD8E8DA3839"`
 
+		// TokenSecret 用户ID加密key 32位
+		TokenSecret string `alias:"tokenSecret" default:"7581BDD8E8DA38397581BDD8E8DA3839"`
+
 		// LoginTypesOfValidationCodes 验证代码的类型
 		LoginTypesOfValidationCodes int `alias:"loginTypesOfValidationCodes" default:"0"`
+
+		// TokenExpireAt token有效期 单位 s
+		TokenExpireAt int `alias:"tokenExpireAt" default:"3600"`
 
 		// SMS 短信配置
 		SMS SMSConfig
@@ -62,6 +75,7 @@ func login(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
 		return loginAccount(req, &frame, payload, c)
 
 	case *pb.Authentication_Form_Login_Phone:
+		// todo
 
 	case *pb.Authentication_Form_Login_SMS:
 		return loginMobliePhoneSMSSend(req, &frame, payload, c)
@@ -73,6 +87,19 @@ func login(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
 func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, form *pb.Authentication_Form_Login_Account, c LRConfig) (*corespb.Response, error) {
 	w := &corespb.Response{
 		Command: req.Command,
+	}
+
+	if req.Header == nil {
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
+	}
+
+	var peerID string
+	if m, ok := req.Header["PeerID"]; ok {
+		peerID = m
+	}
+
+	if peerID == "" {
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
 	}
 
 	// ^[\u4e00-\u9fa5]
@@ -107,23 +134,28 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 		return errcode.Bad(w, errcode.ErrAccountExpired), nil
 	}
 
-	accountID, err := id.Encrypt(account.ID, []byte(c.IDSecret))
-	if err != nil {
-		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	// 防止相同账户重复登录
+	if peerID == account.PeerID && account.PeerID != "" {
+		kickedOut(account.PeerID)
 	}
 
-	unionID, err := id.Encrypt(account.UnionID, []byte(c.IDSecret))
+	// 更新
+	db := dao.DB()
+	if db == nil {
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
+	}
+
+	db.Model(account).Updates(&dao.Accounts{PeerID: peerID})
+
+	accountInfo, err := makeAuthenticationFormAccountInfo(account, c)
 	if err != nil {
-		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, err.Error()), nil
 	}
 
 	resp := &pb.Authentication_Form_LoginReply{
 		Scheme: reqFrame.Scheme,
 		Payload: &pb.Authentication_Form_LoginReply_Account{
-			Account: &pb.Authentication_Form_AccountInfo{
-				ID:      accountID,
-				UnionID: unionID,
-			},
+			Account: accountInfo,
 		},
 	}
 
@@ -435,4 +467,74 @@ func isValidPassword(str string, minLen, maxLen int) bool {
 		}
 	}
 	return (isUpper && isLower) && (isNumber || isSpecial)
+}
+
+func makeAuthenticationFormAccountInfo(account *dao.Accounts, c LRConfig) (*pb.Authentication_Form_AccountInfo, error) {
+	accountID, err := id.Encrypt(account.ID, []byte(c.IDSecret))
+	if err != nil {
+		return nil, err
+	}
+
+	unionID, err := id.Encrypt(account.UnionID, []byte(c.IDSecret))
+	if err != nil {
+		return nil, err
+	}
+
+	userID, err := id.Encrypt(account.UserID, []byte(c.IDSecret))
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := helper.GenerateToken(account.ID, account.UnionID, time.Duration(c.TokenExpireAt)*time.Second, []byte(c.TokenSecret))
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.Authentication_Form_AccountInfo{
+		ID:      accountID,
+		UnionID: unionID,
+		UserID:  userID,
+		Token:   token,
+	}, nil
+}
+
+// kickedOut 踢出用户
+func kickedOut(peerID string) {
+	endpointer := sd.Endpointer()
+	if endpointer == nil {
+		return
+	}
+
+	endpoints, err := endpointer.Endpoints()
+	if err != nil {
+		log.Error(Logger()).Log("action", "kickedOut", "error", err)
+		return
+	}
+
+	nc := nats.Conn()
+	if nc == nil {
+		return
+	}
+
+	frame := agentpb.Agent_KickedOut{
+		PeerID: []string{peerID},
+	}
+
+	frameBytes, _ := grpcproto.Marshal(&frame)
+	w := corespb.Response{
+		Command: agentproto.KickedOutCommand.Int32(),
+		Payload: &corespb.Response_Content{Content: frameBytes},
+		Header:  make(map[string]string),
+	}
+
+	w.Header["service"] = ServiceName
+	w.Header["addr"] = sd.Endpoint().Addr()
+	wBytes, _ := grpcproto.Marshal(&w)
+	for _, endpoint := range endpoints {
+		if endpoint.Name() != agent.ServiceName {
+			continue
+		}
+
+		nc.Publish(endpoint.ID(), wBytes)
+	}
 }

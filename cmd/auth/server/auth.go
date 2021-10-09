@@ -85,6 +85,7 @@ func (s *Authentication) Start() error {
 	}
 
 	// 服务发现
+	o.RPC.Name = auth.ServiceName
 	if err := sd.Init(o.MachineID, o.Etcd, o.RPC); err != nil {
 		return err
 	}

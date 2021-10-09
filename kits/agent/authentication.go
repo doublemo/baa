@@ -6,14 +6,18 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/doublemo/baa/cores/log/level"
 	grpcpool "github.com/doublemo/baa/cores/pool/grpc"
 	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/rpc"
+	"github.com/doublemo/baa/kits/agent/errcode"
 	"github.com/doublemo/baa/kits/agent/proto"
 	"github.com/doublemo/baa/kits/agent/session"
-	"github.com/doublemo/baa/kits/sfu/errcode"
+	authproto "github.com/doublemo/baa/kits/auth/proto"
+	authpb "github.com/doublemo/baa/kits/auth/proto/pb"
+	grpcproto "github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 )
 
@@ -55,10 +59,13 @@ func (r *authenticationRouter) Serve(peer session.Peer, req coresproto.Request) 
 		Command: req.SubCommand().Int32(),
 		Payload: req.Body(),
 	})
+
 	if err != nil {
 		return proto.NewResponseBytes(req.Command(), errcode.Bad(&corespb.Response{Command: req.SubCommand().Int32()}, errcode.ErrInternalServer, grpc.ErrorDesc(err))), nil
 	}
 
+	// 处理登录后缓存用户信息
+	r.onLogin(peer, resp)
 	w := proto.NewResponseBytes(req.Command(), resp)
 	return w, nil
 }
@@ -99,6 +106,36 @@ func (r *authenticationRouter) createPool() (*grpcpool.Pool, error) {
 
 // Destroy 清理
 func (r *authenticationRouter) Destroy(peer session.Peer) {
+}
+
+func (r *authenticationRouter) onLogin(peer session.Peer, w *corespb.Response) {
+	if w.Command == authproto.LoginCommand.Int32() {
+		return
+	}
+
+	var content []byte
+	switch payload := w.Payload.(type) {
+	case *corespb.Response_Content:
+		content = payload.Content
+	default:
+		return
+	}
+
+	var frame authpb.Authentication_Form_LoginReply
+	{
+		if err := grpcproto.Unmarshal(content, &frame); err != nil {
+			log.Error(Logger()).Log("action", "onLogin", "error", err)
+			return
+		}
+	}
+
+	switch payload := frame.Payload.(type) {
+	case *authpb.Authentication_Form_LoginReply_Account:
+		peer.SetParams("AccountID", payload.Account.ID)
+		peer.SetParams("AccountUnionID", payload.Account.UnionID)
+	default:
+		return
+	}
 }
 
 func newAuthenticationRouter(config conf.RPCClient) *authenticationRouter {

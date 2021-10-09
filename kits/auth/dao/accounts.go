@@ -16,6 +16,7 @@ type Accounts struct {
 	Secret    string
 	Status    int
 	ExpiresAt int64
+	PeerID    string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`

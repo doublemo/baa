@@ -7,6 +7,8 @@ message Authentication {
       message AccountInfo {
          string ID  = 1;
          string UnionID = 2;
+         string UserID = 3;
+         string Token = 4;
       }
 
       message LoginAccount {

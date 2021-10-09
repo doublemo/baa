@@ -19,4 +19,7 @@ const (
 
 	// HeartbeaterCommand 心跳
 	HeartbeaterCommand coresproto.Command = 3
+
+	// KickedOutCommand 踢掉玩家
+	KickedOutCommand coresproto.Command = 4
 )

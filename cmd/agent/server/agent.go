@@ -87,6 +87,7 @@ func (s *Agent) Start() error {
 	agent.SetLogger(logger)
 
 	// 服务发现
+	o.RPC.Name = agent.ServiceName
 	if err := sd.Init(o.MachineID, o.Etcd, o.RPC); err != nil {
 		return err
 	}

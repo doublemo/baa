@@ -7,6 +7,9 @@ import (
 	"github.com/doublemo/baa/internal/sd"
 )
 
+// ServiceName 服务名称
+const ServiceName string = "snid"
+
 // NewServiceDiscoveryProcessActor 创建服务发现
 func NewServiceDiscoveryProcessActor() (*os.ProcessActor, error) {
 	registrar := etcdv3.NewRegistrar(sd.Client(), etcdv3.Service{Prefix: sd.Prefix(), Endpoint: sd.Endpoint()})

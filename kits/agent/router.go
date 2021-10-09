@@ -28,6 +28,9 @@ var (
 
 	// dRouter webrtc datachannel
 	dRouter = router.New()
+
+	// nRouter nats Subscribe
+	nRouter = router.New()
 )
 
 // RouterConfig 路由配置

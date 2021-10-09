@@ -25,4 +25,8 @@ message Agent {
             }
         }
     }
+
+    message KickedOut {
+        repeated string PeerID = 1;
+    }
 }

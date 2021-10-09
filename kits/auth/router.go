@@ -33,6 +33,10 @@ func InitRouter(config RouterConfig) {
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceSNID.Name, config.ServiceSNID.Group, sd.Endpointer()))
 
 	// 注册处理请求
+	r.HandleFunc(proto.RegisterCommand, func(r *corespb.Request) (*corespb.Response, error) {
+		return register(r, config.LR)
+	})
+
 	r.HandleFunc(proto.LoginCommand, func(r *corespb.Request) (*corespb.Response, error) {
 		return login(r, config.LR)
 	})
