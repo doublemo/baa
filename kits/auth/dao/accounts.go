@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"errors"
 	"time"
 
 	"gorm.io/gorm"
@@ -35,4 +36,30 @@ func GetAccoutsBySchemeAName(scheme, name string) (*Accounts, error) {
 	}
 
 	return accounts, nil
+}
+
+func CreateAccount(accounts *Accounts) error {
+	if db == nil {
+		return gorm.ErrInvalidDB
+	}
+
+	r := db.Create(accounts)
+	if r.Error != nil {
+		return r.Error
+	}
+
+	if r.RowsAffected != 1 {
+		return errors.New("CreateFailed")
+	}
+
+	return nil
+}
+
+func UpdatesAccount(accounts *Accounts) (int64, error) {
+	if db == nil {
+		return 0, gorm.ErrInvalidDB
+	}
+
+	r := db.Model(accounts).Updates(accounts)
+	return r.RowsAffected, r.Error
 }

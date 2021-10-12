@@ -80,7 +80,7 @@
       var localVideo = document.getElementById("local-video");
       var remoteVideoV = document.getElementById("remote-video");
       var remotesDiv = document.getElementById("remotes");
-      var ws = new baa.Socket("ws://localhost:9093/websocket");
+      var ws = new baa.Socket("ws://localhost:19020/ws");
       ws.use(new baa.BytesMiddleware());
 
       const streams = {};
@@ -150,6 +150,7 @@
 
       var channel;
       ws.onConnect = function() {
+        alert("ok");
            // init rc4
           //  var rc4 = new baa.Rc4Middleware();
           //  ws.use(rc4);

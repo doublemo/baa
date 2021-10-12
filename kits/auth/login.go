@@ -135,17 +135,14 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	}
 
 	// 防止相同账户重复登录
-	if peerID == account.PeerID && account.PeerID != "" {
+	if peerID != account.PeerID && account.PeerID != "" {
 		kickedOut(account.PeerID)
 	}
 
 	// 更新
-	db := dao.DB()
-	if db == nil {
-		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
+	if _, err := dao.UpdatesAccount(&dao.Accounts{PeerID: peerID}); err != nil {
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, err.Error()), nil
 	}
-
-	db.Model(account).Updates(&dao.Accounts{PeerID: peerID})
 
 	accountInfo, err := makeAuthenticationFormAccountInfo(account, c)
 	if err != nil {
@@ -376,9 +373,9 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 		Secret:  string(password),
 	}
 
-	result := dao.DB().Create(&accounts)
-	if result.Error != nil || result.RowsAffected != 1 {
-		return errcode.Bad(w, errcode.ErrInternalServer, result.Error.Error()), nil
+	err = dao.CreateAccount(&accounts)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
 
 	accountID, err := id.Encrypt(accounts.ID, []byte(c.IDSecret))
@@ -521,15 +518,15 @@ func kickedOut(peerID string) {
 	}
 
 	frameBytes, _ := grpcproto.Marshal(&frame)
-	w := corespb.Response{
+	r := corespb.Request{
 		Command: agentproto.KickedOutCommand.Int32(),
-		Payload: &corespb.Response_Content{Content: frameBytes},
+		Payload: frameBytes,
 		Header:  make(map[string]string),
 	}
 
-	w.Header["service"] = ServiceName
-	w.Header["addr"] = sd.Endpoint().Addr()
-	wBytes, _ := grpcproto.Marshal(&w)
+	r.Header["service"] = ServiceName
+	r.Header["addr"] = sd.Endpoint().Addr()
+	wBytes, _ := grpcproto.Marshal(&r)
 	for _, endpoint := range endpoints {
 		if endpoint.Name() != agent.ServiceName {
 			continue

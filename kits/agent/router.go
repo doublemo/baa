@@ -30,7 +30,7 @@ var (
 	dRouter = router.New()
 
 	// nRouter nats Subscribe
-	nRouter = router.New()
+	nRouter = router.NewCoresPB()
 )
 
 // RouterConfig 路由配置
@@ -51,6 +51,9 @@ func InitRouter(config RouterConfig) {
 	sRouter.Handle(proto.Auth, newAuthenticationRouter(config.ServiceAuth))
 
 	// 注册处理datachannel来的请求
+
+	// 注册处理nats订阅的请求
+	nRouter.HandleFunc(proto.KickedOutCommand, kickedOut)
 }
 
 func onMessage(peer session.Peer, msg session.PeerMessagePayload) error {
@@ -191,4 +194,35 @@ func handshake(peer session.Peer, req coresproto.Request) (coresproto.Response, 
 
 	peer.Use(midPeer.NewRC4(encoder, decoder))
 	return resp, err
+}
+
+func kickedOut(req *corespb.Request) (*corespb.Response, error) {
+	var frame pb.Agent_KickedOut
+	{
+		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+			return nil, err
+		}
+	}
+
+	w := &coresproto.ResponseBytes{
+		Ver:    1,
+		Cmd:    proto.Agent,
+		SubCmd: proto.KickedOutCommand,
+		SID:    1,
+	}
+
+	for _, id := range frame.PeerID {
+		if m, ok := session.GetPeer(id); ok {
+
+			frame := pb.Agent_KickedOut{
+				PeerID: []string{id},
+			}
+
+			w.Content, _ = grpcproto.Marshal(&frame)
+			resp, _ := w.Marshal()
+			m.Send(session.PeerMessagePayload{Data: resp})
+			m.Close()
+		}
+	}
+	return nil, nil
 }

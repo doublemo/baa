@@ -1,8 +1,6 @@
 package agent
 
 import (
-	"fmt"
-
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/os"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
@@ -58,7 +56,7 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 
 // onFromNatsMessage 处理来至nats订阅的消息
 func onFromNatsMessage(msg *natsgo.Msg) {
-	var frame corespb.Response
+	var frame corespb.Request
 	{
 		if err := grpcproto.Unmarshal(msg.Data, &frame); err != nil {
 			log.Error(Logger()).Log("action", "onFromNatsMessage", "error", err, "frame", msg.Data)
@@ -66,11 +64,9 @@ func onFromNatsMessage(msg *natsgo.Msg) {
 		}
 	}
 
-	switch payload := frame.Payload.(type) {
-	case *corespb.Response_Content:
-		fmt.Println(payload.Content)
-
-	case *corespb.Response_Error:
+	_, err := nRouter.Handler(&frame)
+	if err != nil {
+		log.Error(Logger()).Log("action", "Handler", "error", err, "frame", frame.Command)
 		return
 	}
 }
