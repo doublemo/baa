@@ -38,6 +38,20 @@ func GetAccoutsBySchemeAName(scheme, name string) (*Accounts, error) {
 	return accounts, nil
 }
 
+func GetAccoutsByPeerID(id string) (*Accounts, error) {
+	if db == nil {
+		return nil, gorm.ErrInvalidDB
+	}
+
+	accounts := &Accounts{}
+	tx := db.Where("peer_id = ?", id).First(accounts)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return accounts, nil
+}
+
 func CreateAccount(accounts *Accounts) error {
 	if db == nil {
 		return gorm.ErrInvalidDB
@@ -55,11 +69,11 @@ func CreateAccount(accounts *Accounts) error {
 	return nil
 }
 
-func UpdatesAccount(accounts *Accounts) (int64, error) {
+func UpdatesAccountByID(id uint64, col string, value interface{}) (int64, error) {
 	if db == nil {
 		return 0, gorm.ErrInvalidDB
 	}
 
-	r := db.Model(accounts).Updates(accounts)
+	r := db.Model(&Accounts{}).Where("id = ?", id).Update(col, value)
 	return r.RowsAffected, r.Error
 }

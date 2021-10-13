@@ -41,6 +41,8 @@ func InitRouter(config RouterConfig) {
 		return login(r, config.LR)
 	})
 
+	r.HandleFunc(proto.OfflineCommand, offline)
+
 	// 注册内部使用路由
 	ir.Handle(internalSnidRouter, newSnidRouter(config.ServiceSNID))
 }

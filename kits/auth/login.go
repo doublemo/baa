@@ -58,7 +58,7 @@ type (
 		TokenExpireAt int `alias:"tokenExpireAt" default:"3600"`
 
 		// SMS 短信配置
-		SMS SMSConfig
+		SMS SMSConfig `alias:"sms"`
 	}
 )
 
@@ -94,7 +94,7 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	}
 
 	var peerID string
-	if m, ok := req.Header["PeerID"]; ok {
+	if m, ok := req.Header["PeerId"]; ok {
 		peerID = m
 	}
 
@@ -121,9 +121,9 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(account.Secret), []byte(form.Account.Username))
+	err = bcrypt.CompareHashAndPassword([]byte(account.Secret), []byte(form.Account.Password))
 	if err != nil {
-		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, err.Error()), nil
 	}
 
 	if account.Status != 0 {
@@ -140,7 +140,7 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	}
 
 	// 更新
-	if _, err := dao.UpdatesAccount(&dao.Accounts{PeerID: peerID}); err != nil {
+	if _, err := dao.UpdatesAccountByID(account.ID, "peer_id", peerID); err != nil {
 		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, err.Error()), nil
 	}
 
@@ -322,7 +322,7 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 	}
 
 	if !isValidPassword(r.Account.Password, c.PasswordMinLen, c.PasswordMaxLen) {
-		return errcode.Bad(w, errcode.ErrAccountNameLettersInvalid, fmt.Sprintf(errcode.ErrAccountNameLettersInvalid.Error(), c.PasswordMinLen, c.PasswordMaxLen)), nil
+		return errcode.Bad(w, errcode.ErrPasswordLettersInvalid, fmt.Sprintf(errcode.ErrPasswordLettersInvalid.Error(), c.PasswordMinLen, c.PasswordMaxLen)), nil
 	}
 
 	reg = regexp.MustCompile("^(1[3-9])\\d{9}$")
@@ -334,7 +334,7 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 		return errcode.Bad(w, errcode.ErrVerificationCodeIncorrect), nil
 	}
 
-	vcode, err := dao.GetSMSCode(r.Account.Phone)
+	vcode, err := dao.GetSMSCode(r.Account.Phone, "register")
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
@@ -348,7 +348,7 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 		return errcode.Bad(w, errcode.ErrVerificationCodeIncorrect), nil
 	}
 
-	dao.RemoveSMSCode(r.Account.Phone)
+	dao.RemoveSMSCode(r.Account.Phone, "register")
 	_, err = dao.GetAccoutsBySchemeAName(reqFrame.Scheme, r.Account.Username)
 	if err != gorm.ErrRecordNotFound {
 		return errcode.Bad(w, errcode.ErrAccountIsExists), nil
@@ -359,7 +359,7 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
 
-	password, err := bcrypt.GenerateFromPassword([]byte(r.Account.Password), 16)
+	password, err := bcrypt.GenerateFromPassword([]byte(r.Account.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
@@ -431,7 +431,7 @@ func registerCheckUsername(req *corespb.Request, reqFrame *pb.Authentication_For
 	if err == gorm.ErrRecordNotFound {
 		reply.CheckUsername.OK = true
 	}
-
+	fmt.Println("reply.CheckUsername.OK:", reply.CheckUsername.OK, err)
 	resp.Payload = &reply
 	b, _ := grpcproto.Marshal(resp)
 	w.Payload = &corespb.Response_Content{Content: b}

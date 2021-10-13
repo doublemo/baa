@@ -99,6 +99,6 @@ require (
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	gorm.io/driver/mysql v1.1.2 // indirect
-	gorm.io/gorm v1.21.15 // indirect
+	gorm.io/gorm v1.21.16 // indirect
 	gorm.io/plugin/dbresolver v1.1.0 // indirect
 )

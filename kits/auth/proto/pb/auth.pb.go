@@ -992,6 +992,147 @@ func (x *Authentication_Form_RegisterCheckUsernameReply) GetOK() bool {
 	return false
 }
 
+type Authentication_Form_Logout struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Payload:
+	//	*Authentication_Form_Logout_ID
+	//	*Authentication_Form_Logout_Token
+	//	*Authentication_Form_Logout_PeerID
+	Payload isAuthentication_Form_Logout_Payload `protobuf_oneof:"Payload"`
+}
+
+func (x *Authentication_Form_Logout) Reset() {
+	*x = Authentication_Form_Logout{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_auth_proto_pb_auth_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Authentication_Form_Logout) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Authentication_Form_Logout) ProtoMessage() {}
+
+func (x *Authentication_Form_Logout) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_auth_proto_pb_auth_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Authentication_Form_Logout.ProtoReflect.Descriptor instead.
+func (*Authentication_Form_Logout) Descriptor() ([]byte, []int) {
+	return file_kits_auth_proto_pb_auth_proto_rawDescGZIP(), []int{0, 0, 12}
+}
+
+func (m *Authentication_Form_Logout) GetPayload() isAuthentication_Form_Logout_Payload {
+	if m != nil {
+		return m.Payload
+	}
+	return nil
+}
+
+func (x *Authentication_Form_Logout) GetID() string {
+	if x, ok := x.GetPayload().(*Authentication_Form_Logout_ID); ok {
+		return x.ID
+	}
+	return ""
+}
+
+func (x *Authentication_Form_Logout) GetToken() string {
+	if x, ok := x.GetPayload().(*Authentication_Form_Logout_Token); ok {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *Authentication_Form_Logout) GetPeerID() string {
+	if x, ok := x.GetPayload().(*Authentication_Form_Logout_PeerID); ok {
+		return x.PeerID
+	}
+	return ""
+}
+
+type isAuthentication_Form_Logout_Payload interface {
+	isAuthentication_Form_Logout_Payload()
+}
+
+type Authentication_Form_Logout_ID struct {
+	ID string `protobuf:"bytes,1,opt,name=ID,proto3,oneof"`
+}
+
+type Authentication_Form_Logout_Token struct {
+	Token string `protobuf:"bytes,2,opt,name=Token,proto3,oneof"`
+}
+
+type Authentication_Form_Logout_PeerID struct {
+	PeerID string `protobuf:"bytes,3,opt,name=PeerID,proto3,oneof"`
+}
+
+func (*Authentication_Form_Logout_ID) isAuthentication_Form_Logout_Payload() {}
+
+func (*Authentication_Form_Logout_Token) isAuthentication_Form_Logout_Payload() {}
+
+func (*Authentication_Form_Logout_PeerID) isAuthentication_Form_Logout_Payload() {}
+
+type Authentication_Form_LogoutReply struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ID string `protobuf:"bytes,1,opt,name=ID,proto3" json:"ID,omitempty"`
+}
+
+func (x *Authentication_Form_LogoutReply) Reset() {
+	*x = Authentication_Form_LogoutReply{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_auth_proto_pb_auth_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Authentication_Form_LogoutReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Authentication_Form_LogoutReply) ProtoMessage() {}
+
+func (x *Authentication_Form_LogoutReply) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_auth_proto_pb_auth_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Authentication_Form_LogoutReply.ProtoReflect.Descriptor instead.
+func (*Authentication_Form_LogoutReply) Descriptor() ([]byte, []int) {
+	return file_kits_auth_proto_pb_auth_proto_rawDescGZIP(), []int{0, 0, 13}
+}
+
+func (x *Authentication_Form_LogoutReply) GetID() string {
+	if x != nil {
+		return x.ID
+	}
+	return ""
+}
+
 type Authentication_Form_ValidationCodes_Phone struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1004,7 +1145,7 @@ type Authentication_Form_ValidationCodes_Phone struct {
 func (x *Authentication_Form_ValidationCodes_Phone) Reset() {
 	*x = Authentication_Form_ValidationCodes_Phone{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_auth_proto_pb_auth_proto_msgTypes[14]
+		mi := &file_kits_auth_proto_pb_auth_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1017,7 +1158,7 @@ func (x *Authentication_Form_ValidationCodes_Phone) String() string {
 func (*Authentication_Form_ValidationCodes_Phone) ProtoMessage() {}
 
 func (x *Authentication_Form_ValidationCodes_Phone) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_auth_proto_pb_auth_proto_msgTypes[14]
+	mi := &file_kits_auth_proto_pb_auth_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1058,7 +1199,7 @@ type Authentication_Form_ValidationCodes_Code struct {
 func (x *Authentication_Form_ValidationCodes_Code) Reset() {
 	*x = Authentication_Form_ValidationCodes_Code{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_auth_proto_pb_auth_proto_msgTypes[15]
+		mi := &file_kits_auth_proto_pb_auth_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1071,7 +1212,7 @@ func (x *Authentication_Form_ValidationCodes_Code) String() string {
 func (*Authentication_Form_ValidationCodes_Code) ProtoMessage() {}
 
 func (x *Authentication_Form_ValidationCodes_Code) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_auth_proto_pb_auth_proto_msgTypes[15]
+	mi := &file_kits_auth_proto_pb_auth_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1099,8 +1240,8 @@ var File_kits_auth_proto_pb_auth_proto protoreflect.FileDescriptor
 var file_kits_auth_proto_pb_auth_proto_rawDesc = []byte{
 	0x0a, 0x1d, 0x6b, 0x69, 0x74, 0x73, 0x2f, 0x61, 0x75, 0x74, 0x68, 0x2f, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x2f, 0x70, 0x62, 0x2f, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
-	0x02, 0x70, 0x62, 0x22, 0x95, 0x0e, 0x0a, 0x0e, 0x41, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69,
-	0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x1a, 0x82, 0x0e, 0x0a, 0x04, 0x46, 0x6f, 0x72, 0x6d, 0x1a,
+	0x02, 0x70, 0x62, 0x22, 0x8d, 0x0f, 0x0a, 0x0e, 0x41, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69,
+	0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x1a, 0xfa, 0x0e, 0x0a, 0x04, 0x46, 0x6f, 0x72, 0x6d, 0x1a,
 	0x65, 0x0a, 0x0b, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x0e,
 	0x0a, 0x02, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x49, 0x44, 0x12, 0x18,
 	0x0a, 0x07, 0x55, 0x6e, 0x69, 0x6f, 0x6e, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
@@ -1212,11 +1353,18 @@ var file_kits_auth_proto_pb_auth_proto_rawDesc = []byte{
 	0x01, 0x28, 0x09, 0x52, 0x08, 0x55, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x1a, 0x2c, 0x0a,
 	0x1a, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x55, 0x73,
 	0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x12, 0x0e, 0x0a, 0x02, 0x4f,
-	0x4b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x02, 0x4f, 0x4b, 0x42, 0x2c, 0x5a, 0x2a, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f, 0x75, 0x62, 0x6c, 0x65,
-	0x6d, 0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x6b, 0x69, 0x74, 0x73, 0x2f, 0x61, 0x75, 0x74, 0x68,
-	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x4b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x02, 0x4f, 0x4b, 0x1a, 0x57, 0x0a, 0x06, 0x4c,
+	0x6f, 0x67, 0x6f, 0x75, 0x74, 0x12, 0x10, 0x0a, 0x02, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x48, 0x00, 0x52, 0x02, 0x49, 0x44, 0x12, 0x16, 0x0a, 0x05, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x05, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12,
+	0x18, 0x0a, 0x06, 0x50, 0x65, 0x65, 0x72, 0x49, 0x44, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x48,
+	0x00, 0x52, 0x06, 0x50, 0x65, 0x65, 0x72, 0x49, 0x44, 0x42, 0x09, 0x0a, 0x07, 0x50, 0x61, 0x79,
+	0x6c, 0x6f, 0x61, 0x64, 0x1a, 0x1d, 0x0a, 0x0b, 0x4c, 0x6f, 0x67, 0x6f, 0x75, 0x74, 0x52, 0x65,
+	0x70, 0x6c, 0x79, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x02, 0x49, 0x44, 0x42, 0x2c, 0x5a, 0x2a, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x6d, 0x2f, 0x64, 0x6f, 0x75, 0x62, 0x6c, 0x65, 0x6d, 0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x6b,
+	0x69, 0x74, 0x73, 0x2f, 0x61, 0x75, 0x74, 0x68, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70,
+	0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1231,7 +1379,7 @@ func file_kits_auth_proto_pb_auth_proto_rawDescGZIP() []byte {
 	return file_kits_auth_proto_pb_auth_proto_rawDescData
 }
 
-var file_kits_auth_proto_pb_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_kits_auth_proto_pb_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_kits_auth_proto_pb_auth_proto_goTypes = []interface{}{
 	(*Authentication)(nil),                                 // 0: pb.Authentication
 	(*Authentication_Form)(nil),                            // 1: pb.Authentication.Form
@@ -1247,12 +1395,14 @@ var file_kits_auth_proto_pb_auth_proto_goTypes = []interface{}{
 	(*Authentication_Form_RegisterAcount)(nil),             // 11: pb.Authentication.Form.RegisterAcount
 	(*Authentication_Form_RegisterCheckUsername)(nil),      // 12: pb.Authentication.Form.RegisterCheckUsername
 	(*Authentication_Form_RegisterCheckUsernameReply)(nil), // 13: pb.Authentication.Form.RegisterCheckUsernameReply
-	(*Authentication_Form_ValidationCodes_Phone)(nil),      // 14: pb.Authentication.Form.ValidationCodes.Phone
-	(*Authentication_Form_ValidationCodes_Code)(nil),       // 15: pb.Authentication.Form.ValidationCodes.Code
+	(*Authentication_Form_Logout)(nil),                     // 14: pb.Authentication.Form.Logout
+	(*Authentication_Form_LogoutReply)(nil),                // 15: pb.Authentication.Form.LogoutReply
+	(*Authentication_Form_ValidationCodes_Phone)(nil),      // 16: pb.Authentication.Form.ValidationCodes.Phone
+	(*Authentication_Form_ValidationCodes_Code)(nil),       // 17: pb.Authentication.Form.ValidationCodes.Code
 }
 var file_kits_auth_proto_pb_auth_proto_depIdxs = []int32{
-	14, // 0: pb.Authentication.Form.LoginAccount.Phone:type_name -> pb.Authentication.Form.ValidationCodes.Phone
-	15, // 1: pb.Authentication.Form.LoginAccount.Code:type_name -> pb.Authentication.Form.ValidationCodes.Code
+	16, // 0: pb.Authentication.Form.LoginAccount.Phone:type_name -> pb.Authentication.Form.ValidationCodes.Phone
+	17, // 1: pb.Authentication.Form.LoginAccount.Code:type_name -> pb.Authentication.Form.ValidationCodes.Code
 	3,  // 2: pb.Authentication.Form.Login.Account:type_name -> pb.Authentication.Form.LoginAccount
 	5,  // 3: pb.Authentication.Form.Login.SMS:type_name -> pb.Authentication.Form.MobilePhoneSMSCode
 	6,  // 4: pb.Authentication.Form.Login.Phone:type_name -> pb.Authentication.Form.LoginPhone
@@ -1446,7 +1596,7 @@ func file_kits_auth_proto_pb_auth_proto_init() {
 			}
 		}
 		file_kits_auth_proto_pb_auth_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Authentication_Form_ValidationCodes_Phone); i {
+			switch v := v.(*Authentication_Form_Logout); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1458,6 +1608,30 @@ func file_kits_auth_proto_pb_auth_proto_init() {
 			}
 		}
 		file_kits_auth_proto_pb_auth_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Authentication_Form_LogoutReply); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_auth_proto_pb_auth_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Authentication_Form_ValidationCodes_Phone); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_auth_proto_pb_auth_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Authentication_Form_ValidationCodes_Code); i {
 			case 0:
 				return &v.state
@@ -1493,13 +1667,18 @@ func file_kits_auth_proto_pb_auth_proto_init() {
 		(*Authentication_Form_RegisterReply_Account)(nil),
 		(*Authentication_Form_RegisterReply_CheckUsername)(nil),
 	}
+	file_kits_auth_proto_pb_auth_proto_msgTypes[14].OneofWrappers = []interface{}{
+		(*Authentication_Form_Logout_ID)(nil),
+		(*Authentication_Form_Logout_Token)(nil),
+		(*Authentication_Form_Logout_PeerID)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_kits_auth_proto_pb_auth_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

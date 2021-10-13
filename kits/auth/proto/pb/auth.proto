@@ -92,5 +92,17 @@ message Authentication {
       message RegisterCheckUsernameReply {
          bool OK = 1;
       }
+
+      message Logout {
+         oneof Payload {
+            string ID = 1;
+            string Token = 2;
+            string PeerID = 3;
+         }
+      }
+
+      message LogoutReply {
+         string ID = 1;
+      }
    }
 }

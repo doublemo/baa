@@ -28,16 +28,26 @@ type authenticationRouter struct {
 }
 
 func (r *authenticationRouter) Serve(peer session.Peer, req coresproto.Request) (coresproto.Response, error) {
-	var err error
-	r.mutex.RLock()
-	p := r.pool
-	r.mutex.RUnlock()
+	resp, err := r.call(&corespb.Request{
+		Header:  map[string]string{"PeerId": peer.ID(), "seqno": strconv.FormatUint(uint64(req.SID()), 10)},
+		Command: req.SubCommand().Int32(),
+		Payload: req.Body(),
+	})
 
-	if p == nil {
-		p, err = r.createPool()
-		if err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return proto.NewResponseBytes(req.Command(), errcode.Bad(&corespb.Response{Command: req.SubCommand().Int32()}, errcode.ErrInternalServer, grpc.ErrorDesc(err))), nil
+	}
+
+	// 处理登录后缓存用户信息
+	r.onLogin(peer, resp)
+	w := proto.NewResponseBytes(req.Command(), resp)
+	return w, nil
+}
+
+func (r *authenticationRouter) call(req *corespb.Request) (*corespb.Response, error) {
+	p, err := r.createPool()
+	if err != nil {
+		return nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -54,23 +64,17 @@ func (r *authenticationRouter) Serve(peer session.Peer, req coresproto.Request) 
 		cancel2()
 	}()
 
-	resp, err := client.Call(ctx2, &corespb.Request{
-		Header:  map[string]string{"PeerId": peer.ID(), "seqno": strconv.FormatUint(uint64(req.SID()), 10)},
-		Command: req.SubCommand().Int32(),
-		Payload: req.Body(),
-	})
-
-	if err != nil {
-		return proto.NewResponseBytes(req.Command(), errcode.Bad(&corespb.Response{Command: req.SubCommand().Int32()}, errcode.ErrInternalServer, grpc.ErrorDesc(err))), nil
-	}
-
-	// 处理登录后缓存用户信息
-	r.onLogin(peer, resp)
-	w := proto.NewResponseBytes(req.Command(), resp)
-	return w, nil
+	return client.Call(ctx2, req)
 }
 
 func (r *authenticationRouter) createPool() (*grpcpool.Pool, error) {
+	r.mutex.RLock()
+	if r.pool != nil {
+		r.mutex.RUnlock()
+		return r.pool, nil
+	}
+	r.mutex.RUnlock()
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -106,6 +110,26 @@ func (r *authenticationRouter) createPool() (*grpcpool.Pool, error) {
 
 // Destroy 清理
 func (r *authenticationRouter) Destroy(peer session.Peer) {
+	accountID, ok := peer.Params("AccountID")
+	if !ok {
+		return
+	}
+
+	// 处理玩家离线
+	frame := authpb.Authentication_Form_Logout{
+		Payload: &authpb.Authentication_Form_Logout_PeerID{PeerID: peer.ID()},
+	}
+
+	body, _ := grpcproto.Marshal(&frame)
+	_, err := r.call(&corespb.Request{
+		Header:  map[string]string{"PeerId": peer.ID(), "AccountID": accountID.(string)},
+		Command: authproto.OfflineCommand.Int32(),
+		Payload: body,
+	})
+
+	if err != nil {
+		log.Error(Logger()).Log("action", "Destroy", "error", err)
+	}
 }
 
 func (r *authenticationRouter) onLogin(peer session.Peer, w *corespb.Response) {

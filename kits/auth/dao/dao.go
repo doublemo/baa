@@ -27,7 +27,7 @@ func Open(c conf.DBMySQLConfig, rc conf.Redis) error {
 		}
 	}
 
-	db, err := gorm.Open(mysql.New(mysql.Config{
+	db0, err := gorm.Open(mysql.New(mysql.Config{
 		DSN:                       c.DNS,
 		SkipInitializeWithVersion: c.SkipInitializeWithVersion,
 		DefaultStringSize:         c.DefaultStringSize,
@@ -41,7 +41,7 @@ func Open(c conf.DBMySQLConfig, rc conf.Redis) error {
 		return err
 	}
 
-	mdb, err := db.DB()
+	mdb, err := db0.DB()
 	if err != nil {
 		return err
 	}
@@ -50,6 +50,7 @@ func Open(c conf.DBMySQLConfig, rc conf.Redis) error {
 	mdb.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
 	mdb.SetMaxIdleConns(c.MaxIdleConns)
 	mdb.SetMaxOpenConns(c.MaxOpenConns)
+	db = db0
 
 	if len(c.Resolver) > 0 {
 		var res *dbresolver.DBResolver
