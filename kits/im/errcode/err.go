@@ -6,14 +6,8 @@ import (
 )
 
 var (
-	// ErrMaxIDNumber 请求ID数量过大
-	ErrMaxIDNumber = types.NewErrCode(40001, "Invalid call number in request")
-
-	// ErrKeyIsEmpty redis key等于空
-	ErrKeyIsEmpty = types.NewErrCode(40002, "key is empty")
-
 	// ErrInternalServer 服务器内部错误
-	ErrInternalServer = types.NewErrCode(40500, "Internal Server Error")
+	ErrInternalServer = types.NewErrCode(30500, "Internal Server Error")
 )
 
 // Bad 错误处理

@@ -4,11 +4,13 @@ import (
 	"errors"
 	"math/rand"
 	"regexp"
+	"strconv"
 	"time"
 
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/net"
 	"github.com/doublemo/baa/cores/os"
+	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/agent"
@@ -87,8 +89,15 @@ func (s *Agent) Start() error {
 	agent.SetLogger(logger)
 
 	// 服务发现
-	o.RPC.Name = agent.ServiceName
-	if err := sd.Init(o.MachineID, o.Etcd, o.RPC); err != nil {
+	endpoint := coressd.NewEndpoint(o.MachineID, agent.ServiceName, o.RPC.Addr)
+	endpoint.Set("group", o.RPC.Group)
+	endpoint.Set("weight", strconv.Itoa(o.RPC.Weight))
+	endpoint.Set("domain", o.Domain)
+	endpoint.Set("ip", o.LocalIP)
+	endpoint.Set("socket", o.Socket.Addr)
+	endpoint.Set("http", o.Http.Addr)
+	endpoint.Set("websocket", o.Websocket.Addr)
+	if err := sd.Init(o.Etcd, endpoint); err != nil {
 		return err
 	}
 
@@ -112,6 +121,7 @@ func (s *Agent) Start() error {
 	s.actors.Add(s.mustProcessActor(agent.NewNatsProcessActor(o.Nats)), true)
 	s.actors.Add(s.mustProcessActor(agent.NewSocketProcessActor(o.Socket)), true)
 	s.actors.Add(s.mustProcessActor(agent.NewWebsocketProcessActor(o.Websocket)), true)
+	s.actors.Add(s.mustProcessActor(agent.NewHttpProcessActor(o.Http, o.Router)), true)
 	s.actors.Add(s.mustProcessActor(agent.NewRPCServerActor(o.RPC)), true)
 	s.actors.Add(s.mustProcessActor(agent.NewServiceDiscoveryProcessActor()), true)
 	return s.actors.Run()

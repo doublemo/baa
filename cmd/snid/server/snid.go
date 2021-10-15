@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"math/rand"
 	"regexp"
+	"strconv"
 	"time"
 
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/net"
 	"github.com/doublemo/baa/cores/os"
+	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/snid"
@@ -76,8 +78,12 @@ func (s *SnowflakeID) Start() error {
 	snid.SetLogger(logger)
 
 	// 服务发现
-	o.RPC.Name = snid.ServiceName
-	if err := sd.Init(o.MachineID, o.Etcd, o.RPC); err != nil {
+	endpoint := coressd.NewEndpoint(o.MachineID, snid.ServiceName, o.RPC.Addr)
+	endpoint.Set("group", o.RPC.Group)
+	endpoint.Set("weight", strconv.Itoa(o.RPC.Weight))
+	endpoint.Set("domain", o.Domain)
+	endpoint.Set("ip", o.LocalIP)
+	if err := sd.Init(o.Etcd, endpoint); err != nil {
 		return err
 	}
 

@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"math/rand"
 	"regexp"
+	"strconv"
 	"time"
 
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/net"
 	"github.com/doublemo/baa/cores/os"
+	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/auth"
@@ -85,8 +87,16 @@ func (s *Authentication) Start() error {
 	}
 
 	// 服务发现
-	o.RPC.Name = auth.ServiceName
-	if err := sd.Init(o.MachineID, o.Etcd, o.RPC); err != nil {
+	endpoint := coressd.NewEndpoint(o.MachineID, auth.ServiceName, o.RPC.Addr)
+	endpoint.Set("group", o.RPC.Group)
+	endpoint.Set("weight", strconv.Itoa(o.RPC.Weight))
+	endpoint.Set("domain", o.Domain)
+	endpoint.Set("ip", o.LocalIP)
+	if err := sd.Init(o.Etcd, endpoint); err != nil {
+		return err
+	}
+
+	if err := sd.Init(o.Etcd, endpoint); err != nil {
 		return err
 	}
 

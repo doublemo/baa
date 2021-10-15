@@ -33,22 +33,27 @@ var (
 	nRouter = router.NewCoresPB()
 )
 
-// RouterConfig 路由配置
-type RouterConfig struct {
-	ServiceSFU  conf.RPCClient `alias:"sfu"`
-	ServiceAuth conf.RPCClient `alias:"auth"`
-}
+type (
+	// RouterConfig 路由配置
+	RouterConfig struct {
+		ServiceSFU   conf.RPCClient     `alias:"sfu"`
+		ServiceAuth  conf.RPCClient     `alias:"auth"`
+		ServiceSnid  conf.RPCClient     `alias:"snid"`
+		HttpConfigV1 HttpRouterV1Config `alias:"httpv1"`
+	}
+)
 
 // InitRouter init
 func InitRouter(config RouterConfig) {
 	// Register grpc load balance
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceSFU.Name, config.ServiceSFU.Group, sd.Endpointer()))
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceAuth.Name, config.ServiceAuth.Group, sd.Endpointer()))
+	resolver.Register(coressd.NewResolverBuilder(config.ServiceSnid.Name, config.ServiceSnid.Group, sd.Endpointer()))
 
 	// 注册处理socket/websocket来的请求
 	sRouter.HandleFunc(proto.Agent, agentRouter)
-	sRouter.Handle(proto.SFU, newSFURouter(config.ServiceSFU))
-	sRouter.Handle(proto.Auth, newAuthenticationRouter(config.ServiceAuth))
+	sRouter.Handle(proto.SFU, router.NewStream(config.ServiceSFU, Logger(), sfuHookOnReceive))
+	sRouter.Handle(proto.Auth, router.NewCall(config.ServiceAuth, Logger(), authenticationHookAfter, authenticationHookDestroy))
 
 	// 注册处理datachannel来的请求
 

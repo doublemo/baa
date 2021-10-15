@@ -8,6 +8,7 @@ const (
 	Agent coresproto.Command = 1
 	SFU   coresproto.Command = 2
 	Auth  coresproto.Command = 3
+	SNID  coresproto.Command = 4
 )
 
 const (

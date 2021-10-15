@@ -8,6 +8,8 @@ import (
 	"github.com/doublemo/baa/kits/snid/dao"
 	"github.com/doublemo/baa/kits/snid/errcode"
 	"github.com/doublemo/baa/kits/snid/proto/pb"
+	"github.com/doublemo/baa/kits/snid/router"
+	"github.com/golang/protobuf/jsonpb"
 	grpcproto "github.com/golang/protobuf/proto"
 )
 
@@ -25,8 +27,8 @@ type (
 		// MachineBits 机器码位
 		MachineBits uint `alias:"machinebits" default:"10"`
 
-		// StartTime UUID产生的开始时间，为纳秒
-		StartTime int64 `alias:"starttime" default:"1551839574000000000"`
+		// StartTime UUID产生的开始时间，为纳秒 (2^41-1)/(1000 * 60 * 60 * 24 * 365) = 69
+		StartTime int64 `alias:"starttime" default:"1634140800000000000"`
 	}
 
 	snid struct {
@@ -90,6 +92,40 @@ func (sn *snid) Serve(req *corespb.Request) (*corespb.Response, error) {
 
 	b, _ := grpcproto.Marshal(resp)
 	w.Payload = &corespb.Response_Content{Content: b}
+	return w, nil
+}
+
+func (sn *snid) ServeHTTP(req *corespb.Request) (*corespb.Response, error) {
+	var frame pb.SNID_Request
+	{
+		if err := jsonpb.UnmarshalString(string(req.Payload), &frame); err != nil {
+			return nil, err
+		}
+	}
+
+	w := &corespb.Response{Command: req.Command}
+	if req.Header != nil {
+		w.Header = req.Header
+	}
+
+	num := frame.N
+	if num < 1 {
+		num = 1
+	} else if num > 100 {
+		return errcode.Bad(w, errcode.ErrMaxIDNumber), nil
+	}
+
+	resp := &pb.SNID_Reply{
+		Values: make([]uint64, num),
+	}
+
+	for i := 0; i < int(num); i++ {
+		resp.Values[i] = sn.Read()
+	}
+
+	jsonpbM := &jsonpb.Marshaler{}
+	b, _ := jsonpbM.MarshalToString(resp)
+	w.Payload = &corespb.Response_Content{Content: []byte(b)}
 	return w, nil
 }
 
@@ -159,8 +195,13 @@ func newSnid(c snidConfig) *snid {
 }
 
 func autoincrementID(req *corespb.Request) (*corespb.Response, error) {
+	if router.IsHTTP(req) {
+		return autoincrementIDToHTTP(req)
+	}
+
 	var frame pb.SNID_Request
 	{
+
 		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
 			return nil, err
 		}
@@ -193,5 +234,45 @@ func autoincrementID(req *corespb.Request) (*corespb.Response, error) {
 
 	b, _ := grpcproto.Marshal(resp)
 	w.Payload = &corespb.Response_Content{Content: b}
+	return w, nil
+}
+
+func autoincrementIDToHTTP(req *corespb.Request) (*corespb.Response, error) {
+	var frame pb.SNID_Request
+	{
+
+		if err := jsonpb.UnmarshalString(string(req.Payload), &frame); err != nil {
+			return nil, err
+		}
+	}
+
+	w := &corespb.Response{Command: req.Command}
+	if req.Header != nil {
+		w.Header = req.Header
+	}
+
+	if frame.K == "" {
+		return errcode.Bad(w, errcode.ErrKeyIsEmpty), nil
+	}
+
+	num := frame.N
+	if num < 1 {
+		num = 1
+	} else if num > 100 {
+		return errcode.Bad(w, errcode.ErrMaxIDNumber), nil
+	}
+
+	values, err := dao.AutoincrementID(frame.K, int64(num))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	resp := &pb.SNID_Reply{
+		Values: values,
+	}
+
+	jsonpbM := &jsonpb.Marshaler{}
+	b, _ := jsonpbM.MarshalToString(resp)
+	w.Payload = &corespb.Response_Content{Content: []byte(b)}
 	return w, nil
 }

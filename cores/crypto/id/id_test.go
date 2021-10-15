@@ -4,7 +4,7 @@ import "testing"
 
 func TestID(t *testing.T) {
 	var uid uint64
-	uid = 789565555
+	uid = 2
 	data, err := Encrypt(uid, []byte("7581BDD8E8DA3839"))
 	if err != nil {
 		t.Fatal(err)
@@ -18,4 +18,6 @@ func TestID(t *testing.T) {
 	if v != uid {
 		t.Fatal("不相等")
 	}
+
+	t.Log("Code", data)
 }

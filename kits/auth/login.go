@@ -144,6 +144,7 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, err.Error()), nil
 	}
 
+	account.PeerID = peerID
 	accountInfo, err := makeAuthenticationFormAccountInfo(account, c)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, err.Error()), nil
@@ -222,7 +223,7 @@ func loginMobliePhoneSMSSend(req *corespb.Request, reqFrame *pb.Authentication_F
 	}
 
 	// todo sms api
-	fmt.Println("code:", code)
+	log.Debug(Logger()).Log("action", "sms-login", "code", code)
 	resp := &pb.Authentication_Form_LoginReply{
 		Scheme: reqFrame.Scheme,
 		Payload: &pb.Authentication_Form_LoginReply_SMS{
@@ -293,7 +294,7 @@ func registerMobliePhoneSMSSend(req *corespb.Request, reqFrame *pb.Authenticatio
 	}
 
 	// todo sms api
-	fmt.Println("code:", code)
+	log.Debug(Logger()).Log("action", "sms-register", "code", code)
 	resp := &pb.Authentication_Form_RegisterReply{
 		Scheme: reqFrame.Scheme,
 		Payload: &pb.Authentication_Form_RegisterReply_SMS{
@@ -482,7 +483,7 @@ func makeAuthenticationFormAccountInfo(account *dao.Accounts, c LRConfig) (*pb.A
 		return nil, err
 	}
 
-	token, err := helper.GenerateToken(account.ID, account.UnionID, time.Duration(c.TokenExpireAt)*time.Second, []byte(c.TokenSecret))
+	token, err := helper.GenerateToken(account.ID, account.UnionID, account.PeerID, time.Duration(c.TokenExpireAt)*time.Second, []byte(c.TokenSecret))
 	if err != nil {
 		return nil, err
 	}

@@ -24,6 +24,9 @@ type Http struct {
 
 	// SSLCert 证书
 	Cert string `alias:"cert"`
+
+	// CORS 是否跨域
+	CORS bool `alias:"cors" default:"false"`
 }
 
 // Clone Http

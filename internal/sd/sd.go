@@ -2,7 +2,6 @@ package sd
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/doublemo/baa/cores/sd"
@@ -39,7 +38,7 @@ func Prefix() string {
 }
 
 // Init 初始化节点信息
-func Init(machineID string, etcd conf.Etcd, rpc conf.RPC) error {
+func Init(etcd conf.Etcd, e sd.Endpoint) error {
 	config := etcdv3.Config{
 		Addrs:         etcd.Addr,
 		DialTimeout:   3 * time.Second,
@@ -60,11 +59,6 @@ func Init(machineID string, etcd conf.Etcd, rpc conf.RPC) error {
 	client = c
 	prefix = etcd.BasePath
 	endpointer = sd.NewEndpointer(instancer)
-
-	if rpc.Name != "" && rpc.Addr != "" {
-		endpoint = sd.NewEndpoint(machineID, rpc.Name, rpc.Addr)
-		endpoint.Set("group", rpc.Group)
-		endpoint.Set("weight", strconv.Itoa(rpc.Weight))
-	}
+	endpoint = e
 	return nil
 }

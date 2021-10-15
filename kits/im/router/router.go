@@ -2,7 +2,6 @@ package router
 
 import (
 	"errors"
-	"strings"
 	"sync"
 
 	coresproto "github.com/doublemo/baa/cores/proto"
@@ -19,9 +18,6 @@ type (
 	Handler interface {
 		// Serve 处理请求
 		Serve(*corespb.Request) (*corespb.Response, error)
-
-		// ServeHTTP 处理网关转发来的HTTP请求
-		ServeHTTP(*corespb.Request) (*corespb.Response, error)
 	}
 
 	// HandlerFunc 路由处理函数
@@ -36,10 +32,6 @@ type (
 
 // Serve calls f(w, r).
 func (f HandlerFunc) Serve(req *corespb.Request) (*corespb.Response, error) {
-	return f(req)
-}
-
-func (f HandlerFunc) ServeHTTP(req *corespb.Request) (*corespb.Response, error) {
 	return f(req)
 }
 
@@ -64,11 +56,6 @@ func (r *Router) Handler(req *corespb.Request) (*corespb.Response, error) {
 	if !ok {
 		return nil, ErrNotFoundRouter
 	}
-
-	if IsHTTP(req) {
-		return route.ServeHTTP(req)
-	}
-
 	return route.Serve(req)
 }
 
@@ -77,13 +64,4 @@ func New() *Router {
 	return &Router{
 		m: make(map[coresproto.Command]Handler),
 	}
-}
-
-// IsHTTP 检查是否为网关转的http请求
-func IsHTTP(req *corespb.Request) bool {
-	if m, ok := req.Header["Content-Type"]; ok && strings.ToLower(m) == "json" {
-		return true
-	}
-
-	return false
 }

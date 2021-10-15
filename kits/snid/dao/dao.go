@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/doublemo/baa/internal/conf"
@@ -17,7 +18,7 @@ var (
 	dbPrefix string
 )
 
-// OpenDB 打开leveldb
+// OpenDB redis
 func OpenDB(c conf.Redis) (err error) {
 	dbPrefix = c.Prefix
 	db, err = c.Connect()
@@ -29,13 +30,14 @@ func DB() redis.UniversalClient {
 	return db
 }
 
-func makeAutoincrementIDKey(name string) string {
+// RDBNamer 创建redis key
+func RDBNamer(name ...string) string {
 	prefix := dbPrefix
 	if prefix != "" {
 		prefix += ":"
 	}
 
-	return prefix + defaultAutoincrementKey + ":" + name
+	return prefix + strings.Join(name, ":")
 }
 
 func AutoincrementID(key string, num int64) ([]uint64, error) {
@@ -46,7 +48,7 @@ func AutoincrementID(key string, num int64) ([]uint64, error) {
 		num = 1
 	}
 
-	ret := db.IncrBy(ctx, makeAutoincrementIDKey(key), num)
+	ret := db.IncrBy(ctx, RDBNamer(defaultAutoincrementKey, key), num)
 	err := ret.Err()
 	if err != nil {
 		return nil, err
@@ -64,5 +66,6 @@ func AutoincrementID(key string, num int64) ([]uint64, error) {
 		values[j] = i + 1
 		j++
 	}
+
 	return values, nil
 }
