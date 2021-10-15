@@ -5,10 +5,10 @@ import (
 	"time"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/kits/snid/dao"
 	"github.com/doublemo/baa/kits/snid/errcode"
 	"github.com/doublemo/baa/kits/snid/proto/pb"
-	"github.com/doublemo/baa/kits/snid/router"
 	"github.com/golang/protobuf/jsonpb"
 	grpcproto "github.com/golang/protobuf/proto"
 )

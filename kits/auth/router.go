@@ -4,9 +4,9 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/auth/proto"
-	"github.com/doublemo/baa/kits/auth/router"
 	"google.golang.org/grpc/resolver"
 )
 

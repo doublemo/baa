@@ -1,8 +1,8 @@
 package snid
 
 import (
+	"github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/kits/snid/proto"
-	"github.com/doublemo/baa/kits/snid/router"
 )
 
 var (

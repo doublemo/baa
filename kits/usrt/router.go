@@ -1,11 +1,8 @@
-package im
+package usrt
 
 import (
-	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/router"
-	"github.com/doublemo/baa/internal/sd"
-	"google.golang.org/grpc/resolver"
 )
 
 const (
@@ -25,10 +22,10 @@ type RouterConfig struct {
 // InitRouter init
 func InitRouter(config RouterConfig) {
 	// Register grpc load balance
-	resolver.Register(coressd.NewResolverBuilder(config.ServiceSNID.Name, config.ServiceSNID.Group, sd.Endpointer()))
+	//resolver.Register(coressd.NewResolverBuilder(config.ServiceSNID.Name, config.ServiceSNID.Group, sd.Endpointer()))
 
 	// 注册处理请求
 
 	// 注册内部使用路由
-	ir.Handle(internalSnidRouter, newSnidRouter(config.ServiceSNID))
+	//ir.Handle(internalSnidRouter, newSnidRouter(config.ServiceSNID))
 }

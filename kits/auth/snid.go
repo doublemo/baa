@@ -54,6 +54,10 @@ func (r *snidRouter) Serve(req *corespb.Request) (*corespb.Response, error) {
 	return resp, err
 }
 
+func (r *snidRouter) ServeHTTP(req *corespb.Request) (*corespb.Response, error) {
+	return nil, errors.New("notsupported")
+}
+
 func (r *snidRouter) createPool() (*grpcpool.Pool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
