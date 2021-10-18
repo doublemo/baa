@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -73,7 +74,9 @@ func (r *Call) Serve(peer session.Peer, req coresproto.Request) (coresproto.Resp
 		return proto.NewResponseBytes(req.Command(), errcode.Bad(&corespb.Response{Command: req.SubCommand().Int32()}, errcode.ErrInternalServer, grpc.ErrorDesc(err))), nil
 	}
 
+	fmt.Println("x99->", r.onAfterCall.Load())
 	if handler, ok := r.onAfterCall.Load().(func(session.Peer, *corespb.Response) error); ok && handler != nil {
+		fmt.Println("x99->222", handler)
 		if err := handler(peer, resp); err != nil {
 			return nil, err
 		}

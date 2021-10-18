@@ -15,9 +15,6 @@ type Token struct {
 	// UnionID 联合ID
 	UnionID uint64
 
-	// PeerID 网关PeerID
-	PeerID string
-
 	// Expires session过期时间
 	Expires int64
 
@@ -25,10 +22,10 @@ type Token struct {
 }
 
 // GenerateToken 创建token string
-func GenerateToken(id, unionID uint64, peerID string, expireat time.Duration, secret []byte) (string, error) {
+func GenerateToken(id, unionID uint64, expireat time.Duration, secret []byte) (string, error) {
 	tk := token.NewTK(secret)
 	expires := time.Now().Add(expireat)
-	return tk.Encrypt(&Token{ID: id, UnionID: unionID, PeerID: peerID, Expires: expires.Unix(), T: rand.Int31()})
+	return tk.Encrypt(&Token{ID: id, UnionID: unionID, Expires: expires.Unix(), T: rand.Int31()})
 }
 
 // ParseToken 解析token

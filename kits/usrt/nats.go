@@ -1,11 +1,12 @@
 package usrt
 
 import (
-	"fmt"
-
+	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/os"
+	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/kits/im/nats"
+	grpcproto "github.com/golang/protobuf/proto"
 	natsgo "github.com/nats-io/nats.go"
 )
 
@@ -55,5 +56,17 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 
 // onFromNatsMessage 处理来至nats订阅的消息
 func onFromNatsMessage(msg *natsgo.Msg) {
-	fmt.Println("from nats message:", string(msg.Data))
+	var frame corespb.Request
+	{
+		if err := grpcproto.Unmarshal(msg.Data, &frame); err != nil {
+			log.Error(Logger()).Log("action", "onFromNatsMessage", "error", err, "frame", msg.Data)
+			return
+		}
+	}
+
+	_, err := nr.Handler(&frame)
+	if err != nil {
+		log.Error(Logger()).Log("action", "Handler", "error", err, "frame", frame.Command)
+		return
+	}
 }

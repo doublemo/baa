@@ -10,6 +10,7 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/rpc"
+	"github.com/doublemo/baa/kits/snid"
 	snproto "github.com/doublemo/baa/kits/snid/proto"
 	snpb "github.com/doublemo/baa/kits/snid/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
@@ -49,7 +50,6 @@ func (r *snidRouter) Serve(req *corespb.Request) (*corespb.Response, error) {
 	}()
 
 	client := corespb.NewServiceClient(conn.ClientConn)
-	req.Command = snproto.SnowflakeCommand.Int32()
 	resp, err := client.Call(ctx2, req)
 	return resp, err
 }
@@ -103,7 +103,7 @@ func getSNID(num int32) ([]uint64, error) {
 
 	frame := snpb.SNID_Request{N: num}
 	b, _ := grpcproto.Marshal(&frame)
-	resp, err := ir.Handler(&corespb.Request{Command: internalSnidRouter, Payload: b})
+	resp, err := muxRouter.Handler(snid.ServiceName, &corespb.Request{Command: snproto.SnowflakeCommand.Int32(), Payload: b})
 	if err != nil {
 		return nil, err
 	}

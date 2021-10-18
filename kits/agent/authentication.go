@@ -43,7 +43,7 @@ func authenticationHookDestroy(r *router.Call) {
 }
 
 func onLogin(peer session.Peer, w *corespb.Response) {
-	if w.Command == authproto.LoginCommand.Int32() {
+	if w.Command != authproto.LoginCommand.Int32() {
 		return
 	}
 
@@ -51,6 +51,8 @@ func onLogin(peer session.Peer, w *corespb.Response) {
 	switch payload := w.Payload.(type) {
 	case *corespb.Response_Content:
 		content = payload.Content
+	case *corespb.Response_Error:
+		return
 	default:
 		return
 	}
@@ -67,6 +69,8 @@ func onLogin(peer session.Peer, w *corespb.Response) {
 	case *authpb.Authentication_Form_LoginReply_Account:
 		peer.SetParams("AccountID", payload.Account.ID)
 		peer.SetParams("AccountUnionID", payload.Account.UnionID)
+		peer.SetParams("UserID", payload.Account.UserID)
+		peer.SetParams("Token", payload.Account.Token)
 
 	default:
 		return

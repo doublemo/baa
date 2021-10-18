@@ -4,8 +4,10 @@ import (
 	"errors"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/auth/dao"
 	"github.com/doublemo/baa/kits/auth/proto/pb"
+	usrtpb "github.com/doublemo/baa/kits/usrt/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 )
 
@@ -56,6 +58,7 @@ func offline(r *corespb.Request) (*corespb.Response, error) {
 		return w, nil
 	}
 
+	deleteUserStatus(&usrtpb.USRT_User{ID: accounts.ID, LoginType: accounts.Scheme, Addr: sd.Endpoint().ID()})
 	dao.UpdatesAccountByID(accounts.ID, "peer_id", "")
 	return w, nil
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/doublemo/baa/kits/auth/errcode"
 	"github.com/doublemo/baa/kits/auth/nats"
 	"github.com/doublemo/baa/kits/auth/proto/pb"
+	usrtpb "github.com/doublemo/baa/kits/usrt/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -148,6 +149,12 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	accountInfo, err := makeAuthenticationFormAccountInfo(account, c)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, err.Error()), nil
+	}
+
+	// 更新用户在线状态
+	noc, err := updateUserStatus(&usrtpb.USRT_User{ID: account.ID, LoginType: "password", Addr: sd.Endpoint().ID()})
+	if err != nil || len(noc) > 0 {
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, "change status falied"), nil
 	}
 
 	resp := &pb.Authentication_Form_LoginReply{
@@ -483,7 +490,7 @@ func makeAuthenticationFormAccountInfo(account *dao.Accounts, c LRConfig) (*pb.A
 		return nil, err
 	}
 
-	token, err := helper.GenerateToken(account.ID, account.UnionID, account.PeerID, time.Duration(c.TokenExpireAt)*time.Second, []byte(c.TokenSecret))
+	token, err := helper.GenerateToken(account.ID, account.UnionID, time.Duration(c.TokenExpireAt)*time.Second, []byte(c.TokenSecret))
 	if err != nil {
 		return nil, err
 	}

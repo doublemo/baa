@@ -1,26 +1,25 @@
 syntax = "proto3";
 package pb;
-option go_package = "github.com/doublemo/baa/kits/im/proto/pb";
+option go_package = "github.com/doublemo/baa/kits/usrt/proto/pb";
 
 message USRT {
+    message User {
+        uint64 ID = 1;
+        string LoginType = 2; // 登录平台
+        string Addr      = 3; // 所在网关
+    }
+
     message Status {
         message Request {
             repeated uint64 Values = 1;
         }
 
-        message Reply {
-            map<uint64, string> Values = 1;
+        message Update {
+            repeated User Values = 1;
         }
-    }
-
-
-    message Update {
-        message Request {
-            map<uint64, string> Values = 1;
-        }
-
+        
         message Reply {
-            bool Ok = 1 ;
+            repeated User Values = 1;
         }
     }
 }

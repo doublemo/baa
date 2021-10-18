@@ -16,7 +16,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/doublemo/baa/cmd/snid/server"
+	"github.com/doublemo/baa/cmd/usrt/server"
 	coresos "github.com/doublemo/baa/cores/os"
 )
 
@@ -33,7 +33,7 @@ var (
 )
 
 var usageStr = `
-Usage: Snowflake ID server [options]
+Usage: User's Status real-time server [options]
 Server Options:
 	-c, --config <file>              Configuration file
 	
@@ -49,7 +49,7 @@ func usage() {
 }
 
 func ver() {
-	fmt.Printf("Snowflake ID  server version %s commitid %s builddate %s\n", version, commitid, builddate)
+	fmt.Printf("User's Status real-time server version %s commitid %s builddate %s\n", version, commitid, builddate)
 	os.Exit(0)
 }
 
@@ -65,12 +65,12 @@ func main() {
 		showHelp bool
 	)
 
-	fs := flag.NewFlagSet("snid", flag.ExitOnError)
+	fs := flag.NewFlagSet("usrt", flag.ExitOnError)
 	fs.Usage = usage
 	fs.BoolVar(&showHelp, "h", false, "Show this message.")
 	fs.BoolVar(&showHelp, "help", false, "Show this message.")
-	fs.StringVar(&fp, "c", "conf/snid.conf", "Configuration file")
-	fs.StringVar(&fp, "config", "conf/snid.conf", "Configuration file")
+	fs.StringVar(&fp, "c", "conf/usrt.conf", "Configuration file")
+	fs.StringVar(&fp, "config", "conf/usrt.conf", "Configuration file")
 	fs.BoolVar(&showVersion, "version", false, "Print version information.")
 	fs.BoolVar(&showVersion, "v", false, "Print version information.")
 

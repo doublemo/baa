@@ -5,15 +5,12 @@ import (
 )
 
 const (
-	// LoginCommand 登录
-	LoginCommand coresproto.Command = 1
+	// UpdateUserStatusCommand 更新用户状态
+	UpdateUserStatusCommand coresproto.Command = 1
 
-	// RegisterCommand 注册
-	RegisterCommand coresproto.Command = 2
+	// DeleteUserStatusCommand 删除用户状态
+	DeleteUserStatusCommand coresproto.Command = 2
 
-	// LogoutCommand 退出登录
-	LogoutCommand coresproto.Command = 3
-
-	// OfflineCommand 玩家离线
-	OfflineCommand coresproto.Command = 4
+	// GetUserStatusCommand 获取用户在线信息
+	GetUserStatusCommand coresproto.Command = 3
 )
