@@ -95,7 +95,7 @@ func Open(c conf.DBMySQLConfig, rc conf.Redis) error {
 	}
 
 	// 迁移
-	db.AutoMigrate(&Accounts{})
+	// db.AutoMigrate(&Accounts{})
 
 	// 连接redis
 	rdbPrefix = rc.Prefix

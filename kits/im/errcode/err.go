@@ -6,8 +6,11 @@ import (
 )
 
 var (
+	// ErrInvalidCharacter 包含非法字符
+	ErrInvalidCharacter = types.NewErrCode(50001, "Illegal character")
+
 	// ErrInternalServer 服务器内部错误
-	ErrInternalServer = types.NewErrCode(30500, "Internal Server Error")
+	ErrInternalServer = types.NewErrCode(50500, "Internal Server Error")
 )
 
 // Bad 错误处理

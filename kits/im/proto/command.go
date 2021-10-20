@@ -5,15 +5,15 @@ import (
 )
 
 const (
-	// LoginCommand 登录
-	LoginCommand coresproto.Command = 1
+	// SendCommand 发送聊天信息
+	SendCommand coresproto.Command = 1
 
-	// RegisterCommand 注册
-	RegisterCommand coresproto.Command = 2
+	// PullCommand 拉取聊天信息
+	PullCommand coresproto.Command = 2
 
-	// LogoutCommand 退出登录
-	LogoutCommand coresproto.Command = 3
+	// PushCommand 推送聊天聊天信息
+	PushCommand coresproto.Command = 3
 
-	// OfflineCommand 玩家离线
-	OfflineCommand coresproto.Command = 4
+	// ActionCommand 信息事件
+	ActionCommand coresproto.Command = 4
 )

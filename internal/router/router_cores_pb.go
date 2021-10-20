@@ -44,15 +44,17 @@ func (f HandlerFunc) ServeHTTP(req *corespb.Request) (*corespb.Response, error) 
 }
 
 // Handle 注册接口方式
-func (r *Router) Handle(pattern coresproto.Command, handler Handler) {
+func (r *Router) Handle(pattern coresproto.Command, handler Handler) *Router {
 	r.mutex.Lock()
 	r.m[pattern] = handler
 	r.mutex.Unlock()
+	return r
 }
 
 // HandleFunc 注册函数方式
-func (r *Router) HandleFunc(pattern coresproto.Command, handler func(*corespb.Request) (*corespb.Response, error)) {
+func (r *Router) HandleFunc(pattern coresproto.Command, handler func(*corespb.Request) (*corespb.Response, error)) *Router {
 	r.Handle(pattern, HandlerFunc(handler))
+	return r
 }
 
 // Handler 处理

@@ -1,7 +1,6 @@
 package auth
 
 import (
-	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
@@ -55,12 +54,4 @@ func InitRouter(config RouterConfig) {
 	muxRouter.Handle(usrt.ServiceName, usrtproto.GetUserStatusCommand, usrtr)
 	muxRouter.Handle(usrt.ServiceName, usrtproto.DeleteUserStatusCommand, usrtr)
 	muxRouter.Handle(usrt.ServiceName, usrtproto.UpdateUserStatusCommand, usrtr)
-}
-
-func registerInternalCall(serviceName string, cmd coresproto.Command, handle router.Handler) {
-
-}
-
-func internalCall(serviceName string, cmd coresproto.Command, r *corespb.Request) (*corespb.Response, error) {
-	return nil, nil
 }

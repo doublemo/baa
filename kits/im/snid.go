@@ -10,6 +10,8 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/rpc"
+	"github.com/doublemo/baa/kits/im/cache"
+	"github.com/doublemo/baa/kits/snid"
 	snproto "github.com/doublemo/baa/kits/snid/proto"
 	snpb "github.com/doublemo/baa/kits/snid/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
@@ -49,7 +51,6 @@ func (r *snidRouter) Serve(req *corespb.Request) (*corespb.Response, error) {
 	}()
 
 	client := corespb.NewServiceClient(conn.ClientConn)
-	req.Command = snproto.SnowflakeCommand.Int32()
 	resp, err := client.Call(ctx2, req)
 	return resp, err
 }
@@ -97,13 +98,13 @@ func newSnidRouter(c conf.RPCClient) *snidRouter {
 }
 
 func getSNID(num int32) ([]uint64, error) {
-	if num > 10 {
-		return nil, errors.New("the number cannot be greater then 10")
+	if num > 100 {
+		return nil, errors.New("the number cannot be greater then 100")
 	}
 
 	frame := snpb.SNID_Request{N: num}
 	b, _ := grpcproto.Marshal(&frame)
-	resp, err := ir.Handler(&corespb.Request{Command: internalSnidRouter, Payload: b})
+	resp, err := muxRouter.Handler(snid.ServiceName, &corespb.Request{Command: snproto.SnowflakeCommand.Int32(), Payload: b})
 	if err != nil {
 		return nil, err
 	}
@@ -126,4 +127,18 @@ func getSNID(num int32) ([]uint64, error) {
 	}
 
 	return nil, errors.New("snid failed")
+}
+
+func getSnowflakeID() (uint64, error) {
+	if cache.GetSnowflakeLen() > 0 {
+		return cache.GetSnowflakeID(), nil
+	}
+
+	values, err := getSNID(100)
+	if err != nil {
+		return 0, err
+	}
+
+	cache.ResetSnowflakeID(values...)
+	return cache.GetSnowflakeID(), nil
 }

@@ -2,7 +2,7 @@ package usrt
 
 import (
 	"github.com/doublemo/baa/cores/log"
-	logLocal "github.com/doublemo/baa/kits/im/log"
+	logLocal "github.com/doublemo/baa/kits/usrt/log"
 )
 
 // SetLogger 设置日志

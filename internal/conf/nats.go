@@ -23,6 +23,9 @@ type (
 
 		// Authentication 安全验证
 		Authentication NatsAuthentication `alias:"authentication"`
+
+		// ChanSubscribeBuffer 通道订阅缓冲区大小
+		ChanSubscribeBuffer int `alias:"chanSubscribeBuffer" default:"1"`
 	}
 
 	// NatsAuthentication 安装验证

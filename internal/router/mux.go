@@ -20,10 +20,11 @@ type Mux struct {
 }
 
 // Register 注册路由
-func (m *Mux) Register(name string, r *Router) {
+func (m *Mux) Register(name string, r *Router) *Router {
 	m.mutex.Lock()
 	m.routes[name] = r
 	m.mutex.Unlock()
+	return r
 }
 
 // Handle 向指定路由中注册处理

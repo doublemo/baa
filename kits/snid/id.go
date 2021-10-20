@@ -142,7 +142,9 @@ func (sn *snid) Read() uint64 {
 	t := sn.ts()
 	if t < lastts {
 		t = sn.wait(lastts)
-	} else if lastts == t {
+	}
+
+	if lastts == t {
 		seq = (seq + 1) & sn.seqMask
 		if seq == 0 {
 			t = sn.wait(lastts)

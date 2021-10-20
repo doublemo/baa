@@ -3,5 +3,68 @@ package pb;
 option go_package = "github.com/doublemo/baa/kits/im/proto/pb";
 
 message IM {
-  
+    message Msg {
+        enum ToTypes {
+            ToC = 0;
+            ToG = 1;
+        }
+
+        message Body {
+            uint64 MsgId = 1;
+            uint64 SeqID = 2;
+            string To    = 3;
+            oneof Payload {
+                Content.Text Text = 4;
+                Content.Video Video = 5;
+                Content.Image Image = 6;
+                Content.Voice Voice = 7;
+                Content.File File = 8;
+                Content.Emoticon Emoticon = 9;
+            }
+            string From = 10;
+            string FName = 11;
+            string FHeadImgurl = 12;
+            string FSex = 13;
+            ToTypes ToType = 14;
+        }
+
+        message Content {
+            message Text {
+                string Content = 1;
+            }
+
+            message Video {
+                uint64 ID     = 1; // 
+                int32  Size   = 4; // 图大小
+                bytes  Content= 5; // 缩略图
+                int32  Name   = 6; // 名称
+            }
+
+            message Image {
+                uint64 ID     = 1; // 
+                int32  Width  = 2; // 图宽
+                int32  Height = 3; // 图高
+                int32  Size   = 4; // 图大小
+                bytes  Content= 5; // 缩略图
+                int32  Name   = 6; // 名称
+            }
+
+            message Voice {
+                bytes Content  = 1;
+            }
+
+            message File {
+                uint64 ID     = 1; // 
+                int32  Size   = 2; // 图大小
+                string Types  = 3; // 
+                int32  Name   = 4; // 图大小
+            }
+
+            message Emoticon {
+                bytes   Content  = 1;
+                string  Name     = 2; // 名称
+            }
+        }
+    }
+    
 }

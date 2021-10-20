@@ -1,0 +1,76 @@
+syntax = "proto3";
+package pb;
+option go_package = "github.com/doublemo/baa/kits/imf/proto/pb";
+
+message IMF {
+    message Request {
+        oneof Payload {
+            Content.Text Text = 1;
+            Content.Video Video = 2;
+            Content.Image Image = 3;
+            Content.Voice Voice = 4;
+            Content.File File = 5;
+        }
+
+        uint64 MsgId = 6;
+        string Topic = 7;
+        int32  ToType = 8;
+    }
+
+    message Reply {
+        bool  OK = 1;
+        oneof Payload {
+            Content.Text Text = 2;
+            Content.Video Video = 3;
+            Content.Image Image = 4;
+            Content.Voice Voice = 5;
+            Content.File File = 6;
+        }
+
+        uint64 MsgId = 7;
+        string Topic = 8;
+        int32  ToType = 9;
+    }
+
+    message Content {
+        message Text {
+            string Content = 1;
+        }
+
+        message Video {
+            uint64 ID     = 1; // 
+            int32  Name   = 2; // 名称
+            string Url    = 3;
+        }
+
+        message Image {
+            uint64 ID     = 1; // 
+            bytes  Content= 2; // 缩略图
+            int32  Name   = 3; // 名称
+            string Url    = 4;
+        }
+
+        message Voice {
+            bytes Content  = 1;
+        }
+
+        message File {
+            uint64 ID     = 1; // 
+            string Url    = 2;
+            string Types  = 3; // 
+            int32  Name   = 4; // 图大小
+        }
+    } 
+    message DirtyWords {
+        message Request {
+            oneof Payload {
+                string Add = 1;
+                string Delete = 2;
+            }
+        }
+
+        message Reply {
+            bool  OK = 1;
+        }
+    }
+}

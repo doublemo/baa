@@ -9,6 +9,7 @@ const (
 	SFU   coresproto.Command = 2
 	Auth  coresproto.Command = 3
 	SNID  coresproto.Command = 4
+	IM    coresproto.Command = 5
 )
 
 const (
