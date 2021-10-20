@@ -5,6 +5,7 @@ import (
 	"github.com/doublemo/baa/cores/os"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/imf/nats"
 	grpcproto "github.com/golang/protobuf/proto"
 	natsgo "github.com/nats-io/nats.go"
@@ -86,6 +87,14 @@ func onFromNatsMessage(msg *natsgo.Msg) {
 		return
 
 	case *corespb.Response_Content:
+		header := make(map[string]string)
+		if resp.Header != nil {
+			header = resp.Header
+		}
+
+		header["service"] = ServiceName
+		header["addr"] = sd.Endpoint().Addr()
+		header["id"] = sd.Endpoint().ID()
 		reply, _ := grpcproto.Marshal(&corespb.Request{
 			Command: resp.Command,
 			Header:  resp.Header,
