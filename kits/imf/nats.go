@@ -88,6 +88,7 @@ func onFromNatsMessage(msg *natsgo.Msg) {
 	case *corespb.Response_Content:
 		reply, _ := grpcproto.Marshal(&corespb.Request{
 			Command: resp.Command,
+			Header:  resp.Header,
 			Payload: payload.Content,
 		})
 

@@ -1,8 +1,6 @@
 package im
 
 import (
-	"fmt"
-
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/os"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
@@ -72,8 +70,7 @@ func onFromNatsMessage(msg *natsgo.Msg) {
 			sName = m
 		}
 	}
-	fmt.Println("ftm->", msg)
-	fmt.Println("ftm->", frame)
+
 	resp, err := nrRouter.Handler(sName, &frame)
 	if err != nil {
 		log.Error(Logger()).Log("action", "Handler", "error", err, "frame", frame.Command)
