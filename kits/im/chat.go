@@ -3,9 +3,9 @@ package im
 import (
 	log "github.com/doublemo/baa/cores/log/level"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/nats"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/im/errcode"
-	"github.com/doublemo/baa/kits/im/nats"
 	"github.com/doublemo/baa/kits/im/proto/pb"
 	"github.com/doublemo/baa/kits/imf"
 	imfproto "github.com/doublemo/baa/kits/imf/proto"
@@ -38,7 +38,6 @@ func send(req *corespb.Request, c ChatConfig) (*corespb.Response, error) {
 
 	// 消息送检
 	chatSubmissionInspection(&frame)
-
 	var err error
 	frame.MsgId, err = getSnowflakeID()
 	if err != nil {

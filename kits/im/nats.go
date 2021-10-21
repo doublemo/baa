@@ -3,21 +3,26 @@ package im
 import (
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/os"
+	"github.com/doublemo/baa/cores/pool/worker"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
-	"github.com/doublemo/baa/kits/im/nats"
+	"github.com/doublemo/baa/internal/nats"
 	grpcproto "github.com/golang/protobuf/proto"
 	natsgo "github.com/nats-io/nats.go"
 )
 
 // NewNatsProcessActor nats
 func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
-	if err := nats.Connect(config, Logger()); err != nil {
+	errhandler := natsgo.ErrorHandler(func(c *natsgo.Conn, s *natsgo.Subscription, e error) {
+		log.Error(Logger()).Log("action", "nats.ErrorHandler", "error", e)
+	})
+
+	if err := nats.Connect(config, Logger(), errhandler); err != nil {
 		return nil, err
 	}
 
 	nc := nats.Conn()
-	msgChan := make(chan *natsgo.Msg, 1)
+	msgChan := make(chan *natsgo.Msg, config.ChanSubscribeBuffer)
 	nc.ChanSubscribe(config.Name, msgChan)
 	exitChan := make(chan struct{})
 	return &os.ProcessActor{
@@ -30,14 +35,20 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 			}()
 
 			Logger().Log("transport", "nats", "on", config.Name)
+			workers := worker.New(config.MaxWorkers)
+			fn := func(m *natsgo.Msg) func() {
+				return func() {
+					onFromNatsMessage(m)
+				}
+			}
+
 			for {
 				select {
 				case msg, ok := <-msgChan:
 					if !ok {
 						return nil
 					}
-
-					go onFromNatsMessage(msg)
+					workers.Submit(fn(msg))
 
 				case <-exitChan:
 					return nil

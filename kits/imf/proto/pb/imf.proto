@@ -15,6 +15,8 @@ message IMF {
         uint64 MsgId = 6;
         string Topic = 7;
         int32  ToType = 8;
+        bool   RequiredReply = 9; // 是否必须回复。不管对错都要回复 否则，只有当消息不有问题时才回复
+        uint64 SeqId = 10;
     }
 
     message Reply {
@@ -30,6 +32,7 @@ message IMF {
         uint64 MsgId = 7;
         string Topic = 8;
         int32  ToType = 9;
+        uint64 SeqId = 10;
     }
 
     message Content {

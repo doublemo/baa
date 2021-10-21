@@ -1,11 +1,9 @@
 package im
 
 import (
-	"fmt"
-
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/nats"
 	"github.com/doublemo/baa/internal/sd"
-	"github.com/doublemo/baa/kits/im/nats"
 	"github.com/doublemo/baa/kits/im/proto/pb"
 	"github.com/doublemo/baa/kits/imf"
 	imfproto "github.com/doublemo/baa/kits/imf/proto"
@@ -26,9 +24,10 @@ func msgInspectionReport(frame *pb.IM_Msg_Body) error {
 	}
 
 	msg := imfpb.IMF_Request{
-		MsgId:  frame.MsgId,
-		Topic:  "",
-		ToType: int32(frame.ToType),
+		MsgId:         frame.MsgId,
+		Topic:         "",
+		ToType:        int32(frame.ToType),
+		RequiredReply: false,
 	}
 
 	switch payload := frame.Payload.(type) {
@@ -98,6 +97,6 @@ func handleMsgInspectionReport(req *corespb.Request) (*corespb.Response, error) 
 		}
 	}
 
-	fmt.Println("handleMsgInspectionReport ->", frame)
+	// todo 处理非法的消息
 	return nil, nil
 }

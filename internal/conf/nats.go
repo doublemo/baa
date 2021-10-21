@@ -26,6 +26,9 @@ type (
 
 		// ChanSubscribeBuffer 通道订阅缓冲区大小
 		ChanSubscribeBuffer int `alias:"chanSubscribeBuffer" default:"1"`
+
+		// MaxWorkers 消息处理最大工作池
+		MaxWorkers int `alias:"maxWorkers" default:"1"`
 	}
 
 	// NatsAuthentication 安装验证

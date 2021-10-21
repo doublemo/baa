@@ -3,9 +3,10 @@ package agent
 import (
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/os"
+	"github.com/doublemo/baa/cores/pool/worker"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
-	"github.com/doublemo/baa/kits/agent/nats"
+	"github.com/doublemo/baa/internal/nats"
 	grpcproto "github.com/golang/protobuf/proto"
 	natsgo "github.com/nats-io/nats.go"
 )
@@ -30,6 +31,13 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 			}()
 
 			Logger().Log("transport", "nats", "on", config.Name)
+			workers := worker.New(config.MaxWorkers)
+			fn := func(m *natsgo.Msg) func() {
+				return func() {
+					onFromNatsMessage(m)
+				}
+			}
+
 			for {
 				select {
 				case msg, ok := <-msgChan:
@@ -37,7 +45,7 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 						return nil
 					}
 
-					onFromNatsMessage(msg)
+					workers.Submit(fn(msg))
 
 				case <-exitChan:
 					return nil

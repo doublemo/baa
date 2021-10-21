@@ -2,7 +2,6 @@ package im
 
 import (
 	"fmt"
-	"time"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	coressd "github.com/doublemo/baa/cores/sd"
@@ -57,8 +56,6 @@ func InitRouter(config RouterConfig) {
 		Handle(usrtproto.GetUserStatusCommand, usrtserv).
 		Handle(usrtproto.DeleteUserStatusCommand, usrtserv).
 		Handle(usrtproto.UpdateUserStatusCommand, usrtserv)
-
-	time.AfterFunc(time.Second*10, testSend)
 }
 
 func testSend() {
@@ -79,5 +76,7 @@ func testSend() {
 	}
 
 	req.Payload, _ = grpcproto.Marshal(frame)
-	fmt.Println(r.Handler(req))
+	for i := 0; i < 1; i++ {
+		r.Handler(req)
+	}
 }

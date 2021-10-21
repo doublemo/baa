@@ -17,7 +17,7 @@ var (
 )
 
 // Connect 连接到nats
-func Connect(config conf.Nats, logger coreslog.Logger) error {
+func Connect(config conf.Nats, logger coreslog.Logger, o ...nats.Option) error {
 	var err error
 	opts := make([]nats.Option, 0)
 	opts = append(opts, nats.Name(config.Name))
@@ -25,6 +25,7 @@ func Connect(config conf.Nats, logger coreslog.Logger) error {
 	opts = append(opts, nats.MaxReconnects(config.MaxReconnects))
 	opts = append(opts, nats.ReconnectWait(time.Duration(config.ReconnectWait)*time.Second))
 	opts = append(opts, nats.PingInterval(time.Second*time.Duration(config.PingInterval)))
+
 	if len(config.ReconnectJitter) == 2 {
 		opts = append(opts, nats.ReconnectJitter(time.Duration(config.ReconnectJitter[0])*time.Millisecond, time.Duration(config.ReconnectJitter[1])*time.Second))
 	}
@@ -66,6 +67,7 @@ func Connect(config conf.Nats, logger coreslog.Logger) error {
 		opts = append(opts, o)
 	}
 
+	opts = append(opts, o...)
 	nc, err = nats.Connect(strings.Join(config.Urls, ","), opts...)
 	if err != nil {
 		return err

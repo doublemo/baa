@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/doublemo/baa/cores/os"
+	"github.com/doublemo/baa/cores/pool/worker"
 	"github.com/doublemo/baa/internal/conf"
-	"github.com/doublemo/baa/kits/auth/nats"
+	"github.com/doublemo/baa/internal/nats"
 	natsgo "github.com/nats-io/nats.go"
 )
 
@@ -29,6 +30,12 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 			}()
 
 			Logger().Log("transport", "nats", "on", config.Name)
+			workers := worker.New(config.MaxWorkers)
+			fn := func(m *natsgo.Msg) func() {
+				return func() {
+					onFromNatsMessage(m)
+				}
+			}
 			for {
 				select {
 				case msg, ok := <-msgChan:
@@ -36,7 +43,7 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 						return nil
 					}
 
-					onFromNatsMessage(msg)
+					workers.Submit(fn(msg))
 
 				case <-exitChan:
 					return nil

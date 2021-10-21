@@ -24,12 +24,12 @@ func InitRouter(c FilterConfig) {
 	// Register grpc load balance
 
 	// 注册处理请求
-	r.HandleFunc(proto.CheckCommand, func(req *corespb.Request) (*corespb.Response, error) { return check(req, c) })
+	r.HandleFunc(proto.CheckCommand, func(req *corespb.Request) (*corespb.Response, error) { return checkFromRPC(req, c) })
 
 	// 订阅处理
 	nr.HandleFunc(proto.ReloadCommand, reloadDictionary)
 	nr.HandleFunc(proto.DirtyWordsCommand, dirtyWords)
-	nr.HandleFunc(proto.CheckCommand, func(req *corespb.Request) (*corespb.Response, error) { return check(req, c) })
+	nr.HandleFunc(proto.CheckCommand, func(req *corespb.Request) (*corespb.Response, error) { return checkFromNats(req, c) })
 
 }
 
