@@ -2,6 +2,7 @@ package im
 
 import (
 	"fmt"
+	"time"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	coressd "github.com/doublemo/baa/cores/sd"
@@ -56,6 +57,8 @@ func InitRouter(config RouterConfig) {
 		Handle(usrtproto.GetUserStatusCommand, usrtserv).
 		Handle(usrtproto.DeleteUserStatusCommand, usrtserv).
 		Handle(usrtproto.UpdateUserStatusCommand, usrtserv)
+
+	time.AfterFunc(time.Second*10, testSend)
 }
 
 func testSend() {
@@ -67,16 +70,44 @@ func testSend() {
 
 	frame := &pb.IM_Msg_Body{
 		SeqID:       1,
-		To:          "xxxx",
+		To:          "2FRx9KAc-Jw",
 		Payload:     &pb.IM_Msg_Body_Text{Text: &pb.IM_Msg_Content_Text{Content: "你是不是个SB, 狗日的"}},
-		From:        "test",
+		From:        "2FRx9KAc-Jw",
 		FName:       "test",
 		FHeadImgurl: "1233",
 		FSex:        "1",
+		ToType:      pb.IM_Msg_ToC,
 	}
 
 	req.Payload, _ = grpcproto.Marshal(frame)
-	for i := 0; i < 1; i++ {
-		r.Handler(req)
-	}
+	r.Handler(req)
+
+	//fmt.Println(id.Encrypt(344722248029966338, []byte("7581BDD8E8DA3839")))
+	// snserv := newSnidRouter(conf.RPCClient{
+	// 	Name:               "snid",
+	// 	Weight:             10,
+	// 	Group:              "prod",
+	// 	Salt:               "certs/x509/ca_cert.pem",
+	// 	Key:                "x.test.example.com",
+	// 	ServiceSecurityKey: "baa",
+	// 	Pool: conf.RPCPool{
+	// 		Init:        1,
+	// 		Capacity:    10,
+	// 		IdleTimeout: 1,
+	// 		MaxLife:     1,
+	// 	},
+	// })
+	// muxRouter.Register(snid.ServiceName, router.New()).
+	// 	Handle(snproto.SnowflakeCommand, snserv).
+	// 	Handle(snproto.AutoincrementCommand, snserv)
+
+	// for i := 0; i < 1000; i++ {
+	// 	//r.Handler(req)
+	// 	go func(idx int) {
+	// 		for x := 0; x < 1; x++ {
+	// 			getSnowflakeID()
+	// 		}
+	// 	}(i)
+	// 	time.Sleep(time.Millisecond * 100)
+	// }
 }

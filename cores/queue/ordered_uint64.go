@@ -17,7 +17,7 @@ type (
 	// OrderedUint64 有序uint64队列
 	OrderedUint64 struct {
 		queue orderedUint64Queue
-		sync.RWMutex
+		sync.Mutex
 	}
 )
 
@@ -63,8 +63,8 @@ func (pq *orderedUint64Queue) update(item *priorityItem, value interface{}, prio
 
 // Pop 弹出
 func (p *OrderedUint64) Pop() uint64 {
-	p.RLock()
-	defer p.RUnlock()
+	p.Lock()
+	defer p.Unlock()
 	if p.queue.Len() < 1 {
 		return 0
 	}
@@ -84,8 +84,8 @@ func (p *OrderedUint64) Push(values ...uint64) {
 
 // Len 长度
 func (p *OrderedUint64) Len() int {
-	p.RLock()
-	defer p.RUnlock()
+	p.Lock()
+	defer p.Unlock()
 	return p.queue.Len()
 }
 

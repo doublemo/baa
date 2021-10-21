@@ -98,7 +98,7 @@ func newSnidRouter(c conf.RPCClient) *snidRouter {
 }
 
 func getSNID(num int32) ([]uint64, error) {
-	if num > 100 {
+	if num > 1000 {
 		return nil, errors.New("the number cannot be greater then 100")
 	}
 
@@ -134,11 +134,10 @@ func getSnowflakeID() (uint64, error) {
 		return cache.GetSnowflakeID(), nil
 	}
 
-	values, err := getSNID(100)
+	values, err := getSNID(1000)
 	if err != nil {
 		return 0, err
 	}
-
 	cache.ResetSnowflakeID(values...)
 	return cache.GetSnowflakeID(), nil
 }

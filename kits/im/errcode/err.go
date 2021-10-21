@@ -9,6 +9,12 @@ var (
 	// ErrInvalidCharacter 包含非法字符
 	ErrInvalidCharacter = types.NewErrCode(50001, "Illegal character")
 
+	// ErrInvalidUserIdToken 无效用户ID
+	ErrInvalidUserIdToken = types.NewErrCode(50002, "Invalid user id token in request")
+
+	// ErrInvalidTopicToken 无效用户ID
+	ErrInvalidTopicToken = types.NewErrCode(50003, "Invalid topic token in request")
+
 	// ErrInternalServer 服务器内部错误
 	ErrInternalServer = types.NewErrCode(50500, "Internal Server Error")
 )

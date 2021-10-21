@@ -78,7 +78,7 @@ func (sn *snid) Serve(req *corespb.Request) (*corespb.Response, error) {
 	num := frame.N
 	if num < 1 {
 		num = 1
-	} else if num > 100 {
+	} else if num > 1000 {
 		return errcode.Bad(w, errcode.ErrMaxIDNumber), nil
 	}
 
@@ -221,7 +221,7 @@ func autoincrementID(req *corespb.Request) (*corespb.Response, error) {
 	num := frame.N
 	if num < 1 {
 		num = 1
-	} else if num > 100 {
+	} else if num > 1000 {
 		return errcode.Bad(w, errcode.ErrMaxIDNumber), nil
 	}
 

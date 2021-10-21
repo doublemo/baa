@@ -1,10 +1,14 @@
 package im
 
 import (
+	"fmt"
+
+	"github.com/doublemo/baa/cores/crypto/id"
 	log "github.com/doublemo/baa/cores/log/level"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/nats"
 	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/kits/im/dao"
 	"github.com/doublemo/baa/kits/im/errcode"
 	"github.com/doublemo/baa/kits/im/proto/pb"
 	"github.com/doublemo/baa/kits/imf"
@@ -16,6 +20,12 @@ import (
 
 // ChatConfig 聊天配置
 type ChatConfig struct {
+
+	// TopicsSecret 聊天主题加密key 16位
+	TopicsSecret string `alias:"topicsSecret" default:"7581BDD8E8DA3839"`
+
+	// IDSecret 用户ID 加密key 16位
+	IDSecret string `alias:"idSecret" default:"7581BDD8E8DA3839"`
 }
 
 func send(req *corespb.Request, c ChatConfig) (*corespb.Response, error) {
@@ -37,7 +47,7 @@ func send(req *corespb.Request, c ChatConfig) (*corespb.Response, error) {
 	}
 
 	// 消息送检
-	chatSubmissionInspection(&frame)
+	//chatSubmissionInspection(&frame)
 	var err error
 	frame.MsgId, err = getSnowflakeID()
 	if err != nil {
@@ -52,6 +62,44 @@ func send(req *corespb.Request, c ChatConfig) (*corespb.Response, error) {
 }
 
 func sendtoC(req *corespb.Request, frame *pb.IM_Msg_Body, c ChatConfig) (*corespb.Response, error) {
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  req.Header,
+	}
+
+	// 检查是否是好友
+	topicId, err := id.Decrypt(frame.To, []byte(c.TopicsSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInvalidTopicToken, err.Error()), nil
+	}
+
+	fromUserId, err := id.Decrypt(frame.From, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInvalidUserIdToken, err.Error()), nil
+	}
+
+	fmt.Println(topicId, fromUserId)
+	topic := fmt.Sprintf("%d_%d", frame.ToType, topicId)
+	// 开始存储数据
+
+	bytes, _ := grpcproto.Marshal(frame)
+	dao.SaveMsgtoRedis(topic, bytes)
+
+	//
+	res, err := dao.GetMsgFromRedis(topic)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(res)
+	m := pb.IM_Msg_Body{}
+	for _, vv := range res {
+		if err := grpcproto.Unmarshal([]byte(vv), &m); err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println(m, vv)
+		}
+	}
 	return nil, nil
 }
 
@@ -77,7 +125,7 @@ func chatSubmissionInspection(frame *pb.IM_Msg_Body) error {
 
 	msg := imfpb.IMF_Request{
 		MsgId:  frame.MsgId,
-		Topic:  "",
+		Topic:  frame.To,
 		ToType: int32(frame.ToType),
 	}
 
