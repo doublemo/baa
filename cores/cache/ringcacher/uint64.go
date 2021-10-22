@@ -1,4 +1,4 @@
-package qcacher
+package ringcacher
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/doublemo/baa/cores/queue"
 )
 
-// Uint64Cacher 64位数字缓存
+// Uint64Cacher 64位数字缓存 RingCacher
 type Uint64Cacher struct {
 	reserveCacher []*queue.OrderedUint64
 	cacher        *queue.OrderedUint64

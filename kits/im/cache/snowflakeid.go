@@ -3,11 +3,11 @@ package cache
 import (
 	"context"
 
-	"github.com/doublemo/baa/cores/cache/qcacher"
+	"github.com/doublemo/baa/cores/cache/ringcacher"
 )
 
 var (
-	snowflakeCacher *qcacher.Uint64Cacher
+	snowflakeCacher *ringcacher.Uint64Cacher
 )
 
 // GetSnowflakeID 获取ID

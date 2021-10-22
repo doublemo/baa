@@ -73,8 +73,6 @@ func sendtoC(req *corespb.Request, frame *pb.IM_Msg_Body, c ChatConfig) (*coresp
 		Header:  req.Header,
 	}
 
-	return w, nil
-
 	// 检查是否是好友
 	topicId, err := id.Decrypt(frame.To, []byte(c.TopicsSecret))
 	if err != nil {

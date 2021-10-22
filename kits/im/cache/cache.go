@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"github.com/doublemo/baa/cores/cache/qcacher"
+	"github.com/doublemo/baa/cores/cache/ringcacher"
 )
 
 // CacherConfig 缓存配置
@@ -26,6 +26,6 @@ func Init(c CacherConfig) {
 		c.SnowflakeMaxQueueNumber = 2
 	}
 
-	snowflakeCacher = qcacher.NewUint64Cacher(c.SnowflakeQueueSize, c.SnowflakeMaxQueueNumber, c.SnowflakeMaxWorkers, c.MaxBuffer)
+	snowflakeCacher = ringcacher.NewUint64Cacher(c.SnowflakeQueueSize, c.SnowflakeMaxQueueNumber, c.SnowflakeMaxWorkers, c.MaxBuffer)
 	snowflakeCacher.Start()
 }

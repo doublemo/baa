@@ -3,7 +3,6 @@ package im
 import (
 	"context"
 	"fmt"
-	"sync/atomic"
 	"time"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
@@ -43,13 +42,6 @@ func InitRouter(config RouterConfig) {
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceSNID.Name, config.ServiceSNID.Group, sd.Endpointer()))
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceUSRT.Name, config.ServiceUSRT.Group, sd.Endpointer()))
 
-	// cache
-	var mx int32
-	cache.SnowflakeCacherOnFill(func(i int) ([]uint64, error) {
-		fmt.Println("req------------->", atomic.AddInt32(&mx, 1))
-		return getSNID(int32(i))
-	})
-
 	// 注册处理请求
 	r.HandleFunc(proto.SendCommand, func(req *corespb.Request) (*corespb.Response, error) { return send(req, config.Chat) })
 
@@ -61,6 +53,9 @@ func InitRouter(config RouterConfig) {
 	muxRouter.Register(snid.ServiceName, router.New()).
 		Handle(snproto.SnowflakeCommand, snserv).
 		Handle(snproto.AutoincrementCommand, snserv)
+
+	// cache
+	cache.SnowflakeCacherOnFill(func(i int) ([]uint64, error) { return getSNID(int32(i)) })
 
 	usrtserv := newUSRTRouter(config.ServiceUSRT)
 	muxRouter.Register(usrt.ServiceName, router.New()).
