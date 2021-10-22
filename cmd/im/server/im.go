@@ -15,6 +15,7 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/im"
+	"github.com/doublemo/baa/kits/im/cache"
 	"github.com/doublemo/baa/kits/im/dao"
 )
 
@@ -44,6 +45,9 @@ type Config struct {
 
 	// Router 路由
 	Router im.RouterConfig `alias:"router"`
+
+	// Cache 缓存
+	Cache cache.CacherConfig `alias:"cache"`
 
 	// Nats
 	Nats conf.Nats `alias:"nats"`
@@ -101,6 +105,9 @@ func (s *IM) Start() error {
 	if err := dao.Open(o.Database, o.Redis); err != nil {
 		return fmt.Errorf("redis: %v", err)
 	}
+
+	// 缓存
+	cache.Init(o.Cache)
 
 	// 路由
 	im.InitRouter(o.Router)

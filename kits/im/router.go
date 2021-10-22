@@ -1,7 +1,9 @@
 package im
 
 import (
+	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
@@ -9,6 +11,7 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/kits/im/cache"
 	"github.com/doublemo/baa/kits/im/proto"
 	"github.com/doublemo/baa/kits/im/proto/pb"
 	"github.com/doublemo/baa/kits/imf"
@@ -39,6 +42,13 @@ func InitRouter(config RouterConfig) {
 	// Register grpc load balance
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceSNID.Name, config.ServiceSNID.Group, sd.Endpointer()))
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceUSRT.Name, config.ServiceUSRT.Group, sd.Endpointer()))
+
+	// cache
+	var mx int32
+	cache.SnowflakeCacherOnFill(func(i int) ([]uint64, error) {
+		fmt.Println("req------------->", atomic.AddInt32(&mx, 1))
+		return getSNID(int32(i))
+	})
 
 	// 注册处理请求
 	r.HandleFunc(proto.SendCommand, func(req *corespb.Request) (*corespb.Response, error) { return send(req, config.Chat) })
@@ -80,7 +90,7 @@ func testSend() {
 	}
 
 	req.Payload, _ = grpcproto.Marshal(frame)
-	r.Handler(req)
+	//r.Handler(req)
 
 	//fmt.Println(id.Encrypt(344722248029966338, []byte("7581BDD8E8DA3839")))
 	// snserv := newSnidRouter(conf.RPCClient{
@@ -101,13 +111,25 @@ func testSend() {
 	// 	Handle(snproto.SnowflakeCommand, snserv).
 	// 	Handle(snproto.AutoincrementCommand, snserv)
 
-	// for i := 0; i < 1000; i++ {
-	// 	//r.Handler(req)
-	// 	go func(idx int) {
-	// 		for x := 0; x < 1; x++ {
-	// 			getSnowflakeID()
-	// 		}
-	// 	}(i)
-	// 	time.Sleep(time.Millisecond * 100)
-	// }
+	for i := 0; i < 1000; i++ {
+		//r.Handler(req)
+		go func(idx int) {
+			for x := 0; x < 10; x++ {
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+				id, err := cache.GetSnowflakeID(ctx)
+				cancel()
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				if id < 1 {
+					panic("id zero")
+				}
+
+				fmt.Println("id-->", id)
+			}
+		}(i)
+
+		//time.Sleep(time.Millisecond * 1)
+	}
 }

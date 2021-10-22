@@ -10,7 +10,6 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/rpc"
-	"github.com/doublemo/baa/kits/im/cache"
 	"github.com/doublemo/baa/kits/snid"
 	snproto "github.com/doublemo/baa/kits/snid/proto"
 	snpb "github.com/doublemo/baa/kits/snid/proto/pb"
@@ -127,17 +126,4 @@ func getSNID(num int32) ([]uint64, error) {
 	}
 
 	return nil, errors.New("snid failed")
-}
-
-func getSnowflakeID() (uint64, error) {
-	if cache.GetSnowflakeLen() > 0 {
-		return cache.GetSnowflakeID(), nil
-	}
-
-	values, err := getSNID(1000)
-	if err != nil {
-		return 0, err
-	}
-	cache.ResetSnowflakeID(values...)
-	return cache.GetSnowflakeID(), nil
 }

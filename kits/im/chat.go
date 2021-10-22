@@ -1,13 +1,16 @@
 package im
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/doublemo/baa/cores/crypto/id"
 	log "github.com/doublemo/baa/cores/log/level"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/nats"
 	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/kits/im/cache"
 	"github.com/doublemo/baa/kits/im/dao"
 	"github.com/doublemo/baa/kits/im/errcode"
 	"github.com/doublemo/baa/kits/im/proto/pb"
@@ -49,12 +52,15 @@ func send(req *corespb.Request, c ChatConfig) (*corespb.Response, error) {
 	// 消息送检
 	//chatSubmissionInspection(&frame)
 	var err error
-	frame.MsgId, err = getSnowflakeID()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	frame.MsgId, err = cache.GetSnowflakeID(ctx)
 	if err != nil {
+		cancel()
 		log.Error(Logger()).Log("action", "getSnowflakeID", "error", err)
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
 
+	cancel()
 	if frame.ToType == pb.IM_Msg_ToG {
 		return sendtoG(req, &frame, c)
 	}
@@ -66,6 +72,8 @@ func sendtoC(req *corespb.Request, frame *pb.IM_Msg_Body, c ChatConfig) (*coresp
 		Command: req.Command,
 		Header:  req.Header,
 	}
+
+	return w, nil
 
 	// 检查是否是好友
 	topicId, err := id.Decrypt(frame.To, []byte(c.TopicsSecret))

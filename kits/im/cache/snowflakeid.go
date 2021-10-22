@@ -1,26 +1,20 @@
 package cache
 
 import (
-	"github.com/doublemo/baa/cores/queue"
+	"context"
+
+	"github.com/doublemo/baa/cores/cache/qcacher"
 )
 
-var snowflakeCacher *queue.OrderedUint64
-
-func init() {
-	snowflakeCacher = queue.NewOrderedUint64()
-}
+var (
+	snowflakeCacher *qcacher.Uint64Cacher
+)
 
 // GetSnowflakeID 获取ID
-func GetSnowflakeID() uint64 {
-	return snowflakeCacher.Pop()
+func GetSnowflakeID(ctx context.Context) (uint64, error) {
+	return snowflakeCacher.Pop(ctx)
 }
 
-// GetSnowflakeLen 缓存队列长度
-func GetSnowflakeLen() int {
-	return snowflakeCacher.Len()
-}
-
-// ResetSnowflakeID 重置
-func ResetSnowflakeID(values ...uint64) {
-	snowflakeCacher.Push(values...)
+func SnowflakeCacherOnFill(fn func(int) ([]uint64, error)) {
+	snowflakeCacher.OnFill(fn)
 }
