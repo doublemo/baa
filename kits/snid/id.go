@@ -1,10 +1,13 @@
 package snid
 
 import (
+	"context"
+	"time"
+
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/cores/uid"
 	"github.com/doublemo/baa/internal/router"
-	"github.com/doublemo/baa/kits/snid/dao"
+	"github.com/doublemo/baa/kits/snid/cache"
 	"github.com/doublemo/baa/kits/snid/errcode"
 	"github.com/doublemo/baa/kits/snid/proto/pb"
 	"github.com/golang/protobuf/jsonpb"
@@ -113,11 +116,14 @@ func autoincrementID(req *corespb.Request) (*corespb.Response, error) {
 	num := frame.N
 	if num < 1 {
 		num = 1
-	} else if num > 1000 {
+	} else if num > 100 {
 		return errcode.Bad(w, errcode.ErrMaxIDNumber), nil
 	}
 
-	values, err := dao.AutoincrementID(frame.K, int64(num))
+	//values, err := dao.AutoincrementID(frame.K, int64(num))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	values, err := cache.GetUID(ctx, frame.K, int(frame.N))
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
@@ -156,7 +162,11 @@ func autoincrementIDToHTTP(req *corespb.Request) (*corespb.Response, error) {
 		return errcode.Bad(w, errcode.ErrMaxIDNumber), nil
 	}
 
-	values, err := dao.AutoincrementID(frame.K, int64(num))
+	//values, err := dao.AutoincrementID(frame.K, int64(num))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	values, err := cache.GetUID(ctx, frame.K, int(frame.N))
+
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}

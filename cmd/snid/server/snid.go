@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/doublemo/baa/cores/cache/ringcacher"
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/net"
 	"github.com/doublemo/baa/cores/os"
@@ -15,6 +16,7 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/snid"
+	"github.com/doublemo/baa/kits/snid/cache"
 	"github.com/doublemo/baa/kits/snid/dao"
 )
 
@@ -42,6 +44,9 @@ type Config struct {
 
 	// Router 路由
 	Router snid.RouterConfig `alias:"router"`
+
+	// Cache 缓存
+	Cache cache.CacherConfig `alias:"cache"`
 }
 
 type SnowflakeID struct {
@@ -97,6 +102,17 @@ func (s *SnowflakeID) Start() error {
 		return fmt.Errorf("redis: %v", err)
 	}
 
+	// cache
+	o.Cache.UIDNew = func(section string) *ringcacher.Uint64Cacher {
+		r := ringcacher.NewUint64Cacher(o.Cache.AutoUIDQueueSize, o.Cache.AutoUIDMaxQueueNumber, o.Cache.AutoUIDMaxWorkers, o.Cache.AutoUIDMaxBuffer, false)
+		r.OnFill(func(i int) ([]uint64, error) {
+			return dao.AutoincrementID(section, int64(o.Cache.AutoUIDQueueSize))
+		})
+		r.Start()
+		return r
+	}
+	cache.Init(o.Cache)
+
 	// 路由
 	snid.InitRouter(o.Router)
 
@@ -117,7 +133,7 @@ func (s *SnowflakeID) Shutdown() {
 func (s *SnowflakeID) Reload() {}
 
 func (s *SnowflakeID) ServiceName() string {
-	return ""
+	return snid.ServiceName
 }
 
 func (s *SnowflakeID) OtherCommand(cmd int) {

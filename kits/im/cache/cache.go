@@ -26,6 +26,6 @@ func Init(c CacherConfig) {
 		c.SnowflakeMaxQueueNumber = 2
 	}
 
-	snowflakeCacher = ringcacher.NewUint64Cacher(c.SnowflakeQueueSize, c.SnowflakeMaxQueueNumber, c.SnowflakeMaxWorkers, c.MaxBuffer)
+	snowflakeCacher = ringcacher.NewUint64Cacher(c.SnowflakeQueueSize, c.SnowflakeMaxQueueNumber, c.SnowflakeMaxWorkers, c.MaxBuffer, true)
 	snowflakeCacher.Start()
 }

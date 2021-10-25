@@ -3,6 +3,7 @@ package ringcacher
 import (
 	"context"
 	"errors"
+	"sort"
 	"sync"
 	"sync/atomic"
 
@@ -11,12 +12,14 @@ import (
 )
 
 // Uint64Cacher 64位数字缓存 RingCacher
+// 环形缓存当同步时才能保存所有缓存数组队列中的ID是为有序的,否则只能保证单个队列为有序
 type Uint64Cacher struct {
 	reserveCacher []*queue.OrderedUint64
 	cacher        *queue.OrderedUint64
 	maxCacheQueue int
 	queueSize     int
 	fillfn        atomic.Value
+	async         bool
 	requestChan   chan struct{}
 	replyChan     chan uint64
 	closeChan     chan struct{}
@@ -56,26 +59,28 @@ func (s *Uint64Cacher) read() uint64 {
 		return s.cacher.Pop()
 	}
 
-	var id uint64
-	if cacheLen >= 1 {
-		id = s.cacher.Pop()
-	} else {
-		s.mutex.Lock()
-		s.cacher = s.reserveCacher[0]
-		s.reserveCacher = s.reserveCacher[1:]
-		s.mutex.Unlock()
-	}
-
 	s.mutex.Lock()
 	reserveCacherLen = len(s.reserveCacher)
 	maxCacheQueue := s.maxCacheQueue
 	s.mutex.Unlock()
 
+	var id uint64
+	if cacheLen >= 1 {
+		id = s.cacher.Pop()
+	} else {
+		if reserveCacherLen > 0 {
+			s.mutex.Lock()
+			s.cacher = s.reserveCacher[0]
+			s.reserveCacher = s.reserveCacher[1:]
+			s.mutex.Unlock()
+		} else if s.async {
+			id = s.readSync()
+		}
+	}
+
 	if reserveCacherLen < maxCacheQueue {
 		m := maxCacheQueue - reserveCacherLen
-		for i := 0; i < m; i++ {
-			s.workers.Submit(fill(s))
-		}
+		s.task(m, s.async)
 	}
 
 	if id > 0 {
@@ -87,6 +92,39 @@ func (s *Uint64Cacher) read() uint64 {
 		return s.readSync()
 	}
 	return id
+}
+
+func (s *Uint64Cacher) task(num int, async bool) {
+	if async {
+		for i := 0; i < num; i++ {
+			s.workers.Submit(fill(s))
+		}
+
+		return
+	}
+
+	s.workers.SubmitWait(func() {
+		for i := 0; i < num; i++ {
+			fill(s)()
+		}
+	})
+
+	// sort
+	s.mutex.Lock()
+	sort.Slice(s.reserveCacher, func(i, j int) bool {
+		a := s.reserveCacher[i].Pop()
+		b := s.reserveCacher[j].Pop()
+
+		s.reserveCacher[i].Push(a)
+		s.reserveCacher[j].Push(b)
+		return a < b
+	})
+
+	if s.cacher.Len() < 1 {
+		s.cacher = s.reserveCacher[0]
+		s.reserveCacher = s.reserveCacher[1:]
+	}
+	s.mutex.Unlock()
 }
 
 func (s *Uint64Cacher) readSync() uint64 {
@@ -114,9 +152,7 @@ func (s *Uint64Cacher) OnFill(fn func(int) ([]uint64, error)) {
 
 	if reserveCacherLen < maxCacheQueue {
 		m := maxCacheQueue - reserveCacherLen
-		for i := 0; i < m; i++ {
-			s.workers.Submit(fill(s))
-		}
+		s.task(m, s.async)
 	}
 }
 
@@ -169,12 +205,13 @@ func fill(sr *Uint64Cacher) func() {
 	}
 }
 
-func NewUint64Cacher(cacheQueueSize, maxCacheQueue, maxWorkers, maxBuffer int) *Uint64Cacher {
+func NewUint64Cacher(cacheQueueSize, maxCacheQueue, maxWorkers, maxBuffer int, async bool) *Uint64Cacher {
 	sr := &Uint64Cacher{
 		reserveCacher: make([]*queue.OrderedUint64, 0),
 		cacher:        queue.NewOrderedUint64(),
 		maxCacheQueue: maxCacheQueue,
 		queueSize:     cacheQueueSize,
+		async:         async,
 		requestChan:   make(chan struct{}, maxBuffer),
 		replyChan:     make(chan uint64, maxBuffer),
 		closeChan:     make(chan struct{}),
