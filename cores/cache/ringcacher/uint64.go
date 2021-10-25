@@ -11,6 +11,12 @@ import (
 	"github.com/doublemo/baa/cores/queue"
 )
 
+const (
+	// defaultCheckQueueRate 当前缓存主队列小于指定百分比后,将检查后续备用队列
+	// 是否小于最大队列,如果小于则调用补充队列方法
+	defaultCheckQueueRate float32 = 30
+)
+
 // Uint64Cacher 64位数字缓存 RingCacher
 // 环形缓存当同步时才能保存所有缓存数组队列中的ID是为有序的,否则只能保证单个队列为有序
 type Uint64Cacher struct {
@@ -50,7 +56,7 @@ func (s *Uint64Cacher) read() uint64 {
 	}
 
 	cacheLen := s.cacher.Len()
-	rate := int(float32(s.queueSize) * 0.3)
+	rate := int(float32(s.queueSize) * (defaultCheckQueueRate / 100))
 	if rate < 1 {
 		rate = 1
 	}
