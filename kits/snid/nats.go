@@ -1,4 +1,4 @@
-package agent
+package snid
 
 import (
 	log "github.com/doublemo/baa/cores/log/level"
@@ -13,12 +13,16 @@ import (
 
 // NewNatsProcessActor nats
 func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
-	if err := nats.Connect(config, Logger()); err != nil {
+	errhandler := natsgo.ErrorHandler(func(c *natsgo.Conn, s *natsgo.Subscription, e error) {
+		log.Error(Logger()).Log("action", "nats.ErrorHandler", "error", e)
+	})
+
+	if err := nats.Connect(config, Logger(), errhandler); err != nil {
 		return nil, err
 	}
 
 	nc := nats.Conn()
-	msgChan := make(chan *natsgo.Msg, 1)
+	msgChan := make(chan *natsgo.Msg, config.ChanSubscribeBuffer)
 	nc.ChanSubscribe(config.Name, msgChan)
 	exitChan := make(chan struct{})
 	return &os.ProcessActor{
@@ -44,7 +48,6 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 					if !ok {
 						return nil
 					}
-
 					workers.Submit(fn(msg))
 
 				case <-exitChan:
@@ -72,14 +75,19 @@ func onFromNatsMessage(msg *natsgo.Msg) {
 		}
 	}
 
+	sName := ServiceName
 	requiredReply := false
 	if frame.Header != nil {
+		if m, ok := frame.Header["service"]; ok {
+			sName = m
+		}
+
 		if m, ok := frame.Header["required-reply"]; ok && m == "true" {
 			requiredReply = true
 		}
 	}
 
-	resp, err := nRouter.Handler(&frame)
+	resp, err := nrRouter.Handler(sName, &frame)
 	if err != nil {
 		log.Error(Logger()).Log("action", "Handler", "error", err, "frame", frame.Command)
 		return

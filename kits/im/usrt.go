@@ -3,6 +3,7 @@ package im
 import (
 	"context"
 	"errors"
+	"strconv"
 	"sync"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/doublemo/baa/internal/nats"
 	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/kits/im/cache"
 	usrt "github.com/doublemo/baa/kits/usrt"
 	usrtproto "github.com/doublemo/baa/kits/usrt/proto"
 	usrtpb "github.com/doublemo/baa/kits/usrt/proto/pb"
@@ -191,4 +193,50 @@ func getUserStatus(noCache bool, values ...uint64) ([]*usrtpb.USRT_User, error) 
 		return nil, errors.New(payload.Error.Message)
 	}
 	return nil, errors.New("usrt failed")
+}
+
+func getCacheUserStatus(noCache bool, values ...uint64) (map[uint64]map[string]string, error) {
+	data := make(map[uint64]map[string]string, 0)
+	noCacheData := make([]uint64, 0)
+
+	if !noCache {
+		for _, value := range values {
+			if m, ok := cache.Get(namerUserStatus(value)); ok && m != nil {
+				if m0, ok := m.(map[string]string); ok {
+					data[value] = m0
+					continue
+				}
+			}
+			noCacheData = append(noCacheData, value)
+		}
+	} else {
+		noCacheData = values
+	}
+
+	if len(noCacheData) < 1 {
+		return data, nil
+	}
+
+	retValues, err := getUserStatus(noCache, noCacheData...)
+	if err != nil {
+		return nil, err
+	}
+
+	newData := make(map[uint64]map[string]string, 0)
+	for _, value := range retValues {
+		if _, ok := newData[value.ID]; !ok {
+			newData[value.ID] = make(map[string]string)
+		}
+		newData[value.ID][value.Type] = value.Value
+	}
+
+	for id, value := range newData {
+		data[id] = value
+		cache.Set(namerUserStatus(id), value, 0)
+	}
+	return data, nil
+}
+
+func namerUserStatus(id uint64) string {
+	return "userstatus_" + strconv.FormatUint(id, 10)
 }

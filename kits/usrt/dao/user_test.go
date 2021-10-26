@@ -8,24 +8,24 @@ import (
 )
 
 func TestUserStatusChange(t *testing.T) {
-	err := Open(conf.Redis{Addr: []string{"127.0.0.1:6379"}, Prefix: "dao_test"}, CacherConfig{})
+	err := Open(conf.Redis{Addr: []string{"127.0.0.1:6379"}, Prefix: "baa:usrt"}, CacherConfig{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	data := []*pb.USRT_User{
-		&pb.USRT_User{ID: 1, LoginType: "android", Addr: "agent01.ac.cb"},
-		&pb.USRT_User{ID: 1, LoginType: "macos", Addr: "agent02.ac.cb"},
-		&pb.USRT_User{ID: 1, LoginType: "pc", Addr: "agent03.ac.cb"},
-		&pb.USRT_User{ID: 1, LoginType: "iphone", Addr: "agent04.ac.cb"},
-		&pb.USRT_User{ID: 2, LoginType: "android", Addr: "agent01.ac.cb"},
-		&pb.USRT_User{ID: 3, LoginType: "android", Addr: "agent01.ac.cb"},
-		&pb.USRT_User{ID: 4, LoginType: "android", Addr: "agent01.ac.cb"},
-		&pb.USRT_User{ID: 4, LoginType: "macos", Addr: "agent01.ac.cb"},
-		&pb.USRT_User{ID: 5, LoginType: "android", Addr: "agent01.ac.cb"},
-		&pb.USRT_User{ID: 5, LoginType: "macos", Addr: "agent02.ac.cb"},
-		&pb.USRT_User{ID: 5, LoginType: "pc", Addr: "agent03.ac.cb"},
-		&pb.USRT_User{ID: 5, LoginType: "iphone", Addr: "agent04.ac.cb"},
+		&pb.USRT_User{ID: 344722248029966338, Type: "android", Value: "agent1.cn.sc.cd"},
+		&pb.USRT_User{ID: 344722248029966338, Type: "macos", Value: "agent1.cn.sc.cd"},
+		&pb.USRT_User{ID: 344722248029966338, Type: "pc", Value: "agent1.cn.sc.cd"},
+		&pb.USRT_User{ID: 344722248029966338, Type: "iphone", Value: "agent1.cn.sc.cd"},
+		&pb.USRT_User{ID: 344722248029966338, Type: "snid", Value: "snid1.cn.sc.cd"},
+		&pb.USRT_User{ID: 344722248029966338, Type: "im", Value: "im1.cn.sc.cd"},
+		&pb.USRT_User{ID: 344709394144956418, Type: "android", Value: "agent1.cn.sc.cd"},
+		&pb.USRT_User{ID: 344709394144956418, Type: "macos", Value: "agent1.cn.sc.cd"},
+		&pb.USRT_User{ID: 344709394144956418, Type: "pc", Value: "agent1.cn.sc.cd"},
+		&pb.USRT_User{ID: 344709394144956418, Type: "iphone", Value: "agent1.cn.sc.cd"},
+		&pb.USRT_User{ID: 344709394144956418, Type: "snid", Value: "snid1.cn.sc.cd"},
+		&pb.USRT_User{ID: 344709394144956418, Type: "im", Value: "im1.cn.sc.cd"},
 	}
 
 	if noCompleted, err := UpdateStatusByUser(data...); err != nil || len(noCompleted) > 0 {
@@ -35,7 +35,7 @@ func TestUserStatusChange(t *testing.T) {
 	t.Log(GetStatueCacheByUser(4, 5))
 	t.Log(GetStatueCacheByUser(4, 5, 1, 2))
 
-	if err := RemoveStatusByUser(data...); err != nil {
-		t.Fatal(err)
-	}
+	// if err := RemoveStatusByUser(data...); err != nil {
+	// 	t.Fatal(err)
+	// }
 }

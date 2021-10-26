@@ -3,41 +3,23 @@ package pb;
 option go_package = "github.com/doublemo/baa/kits/im/proto/pb";
 
 message IM {
-    message Msg {
-        enum ToTypes {
+    message Msg { 
+        enum Group {
             ToC = 0;
             ToG = 1;
         }
 
-        message Body {
-            uint64 MsgId = 1;
-            uint64 SeqID = 2;
-            string To    = 3;
-            oneof Payload {
-                Content.Text Text = 4;
-                Content.Video Video = 5;
-                Content.Image Image = 6;
-                Content.Voice Voice = 7;
-                Content.File File = 8;
-                Content.Emoticon Emoticon = 9;
-            }
-            string From = 10;
-            string FName = 11;
-            string FHeadImgurl = 12;
-            string FSex = 13;
-            ToTypes ToType = 14;
-        }
-
-        message Content {
+        message ContentType {
             message Text {
                 string Content = 1;
             }
 
             message Video {
-                uint64 ID     = 1; // 
-                int32  Size   = 4; // 图大小
-                bytes  Content= 5; // 缩略图
-                int32  Name   = 6; // 名称
+                uint64 ID        = 1; // 
+                int32  Name      = 2; // 名称
+                int32  Size      = 3; // 视频大小
+                bytes  Thumbnail = 4; // 缩略图
+                string Url       = 5; // 下载地址
             }
 
             message Image {
@@ -45,18 +27,19 @@ message IM {
                 int32  Width  = 2; // 图宽
                 int32  Height = 3; // 图高
                 int32  Size   = 4; // 图大小
-                bytes  Content= 5; // 缩略图
+                bytes  Thumbnail= 5; // 缩略图
                 int32  Name   = 6; // 名称
+                string Url       = 7; // 下载地址
             }
 
             message Voice {
-                bytes Content  = 1;
+                string Url  = 1; // 下载地址
             }
 
             message File {
                 uint64 ID     = 1; // 
                 int32  Size   = 2; // 图大小
-                string Types  = 3; // 
+                string Type   = 3; // 
                 int32  Name   = 4; // 图大小
             }
 
@@ -64,6 +47,81 @@ message IM {
                 bytes   Content  = 1;
                 string  Name     = 2; // 名称
             }
+        }
+
+        message Content {
+            uint64 Id = 1;
+            uint64 SeqID = 2;
+            string To    = 3;
+            string From  = 4;
+            oneof Payload {
+                ContentType.Text Text = 5;
+                ContentType.Video Video = 6;
+                ContentType.Image Image = 7;
+                ContentType.Voice Voice = 8;
+                ContentType.File File = 9;
+                ContentType.Emoticon Emoticon = 10;
+            }
+            Group Group = 11;
+            string Topic = 12;
+        }
+
+        message List {
+            repeated Content Values = 1;
+        }
+
+        message AckListReceived{
+            repeated AckReceived Successed = 1;
+            repeated AckFailed Failed = 2;
+        }
+
+        message AckListReaded{
+            repeated AckReaded Values = 1;
+        }
+
+        message AckListConfirmed{
+            repeated AckConfirmed Values = 1;
+        }
+
+        message AckReceived {
+            uint64 Id = 1;
+            uint64 SeqID = 2;
+            uint64 NewSeqID = 3;
+        }
+
+        message AckFailed {
+            uint64 SeqID = 1;
+            int32  ErrCode  = 2;
+            string ErrMessage = 3;
+        }
+
+
+        message AckReaded {
+            uint64 Id = 1;
+            uint64 SeqID = 2;
+        }
+
+        message AckConfirmed {
+            uint64 Id = 1;
+            uint64 SeqID = 2;
+        }
+    } 
+
+
+    message Send {
+         Msg.List Messages = 1;
+    }
+
+    message Pull {
+        Msg.List List = 1; 
+    }
+
+    message Notify {
+        oneof Payload {
+            Msg.AckListReceived Received = 1;
+            Msg.AckListReaded Readed = 2;
+            Msg.AckListConfirmed Confirmed = 3;
+            Msg.List List = 4; 
         }
     }
     

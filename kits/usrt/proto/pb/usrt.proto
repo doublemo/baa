@@ -5,8 +5,8 @@ option go_package = "github.com/doublemo/baa/kits/usrt/proto/pb";
 message USRT {
     message User {
         uint64 ID = 1;
-        string LoginType = 2; // 登录平台
-        string Addr      = 3; // 所在网关
+        string Type  = 2; // 平台
+        string Value = 3; // 内容
     }
 
     message Status {

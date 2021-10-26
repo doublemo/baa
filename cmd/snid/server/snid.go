@@ -47,6 +47,9 @@ type Config struct {
 
 	// Cache 缓存
 	Cache cache.CacherConfig `alias:"cache"`
+
+	// Nats
+	Nats conf.Nats `alias:"nats"`
 }
 
 type SnowflakeID struct {
@@ -117,6 +120,8 @@ func (s *SnowflakeID) Start() error {
 	snid.InitRouter(o.Router)
 
 	// 注册运行服务
+	o.Nats.Name = o.MachineID
+	s.actors.Add(s.mustProcessActor(snid.NewNatsProcessActor(o.Nats)), true)
 	s.actors.Add(s.mustProcessActor(snid.NewRPCServerActor(o.RPC)), true)
 	s.actors.Add(s.mustProcessActor(snid.NewServiceDiscoveryProcessActor()), true)
 	return s.actors.Run()

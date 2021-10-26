@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	r = router.New()
+	r        = router.New()
+	nrRouter = router.NewMux()
 )
 
 // RouterConfig 路由配置
@@ -21,4 +22,8 @@ func InitRouter(config RouterConfig) {
 	// 注册处理请求
 	r.Handle(proto.SnowflakeCommand, newSnHandler(config.Snowflake))
 	r.HandleFunc(proto.AutoincrementCommand, autoincrementID)
+	r.HandleFunc(proto.MoreAutoincrementCommand, moreAutoincrementID)
+
+	// 订阅请求
+	nrRouter.Register(ServiceName, router.New()).HandleFunc(proto.ClearAutoincrementCommand, clearAutoincrementID)
 }

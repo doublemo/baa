@@ -15,6 +15,9 @@ var (
 	// ErrInvalidTopicToken 无效用户ID
 	ErrInvalidTopicToken = types.NewErrCode(50003, "Invalid topic token in request")
 
+	// ErrInvalidUserStatus 无法获取用户实时状态
+	ErrInvalidUserStatus = types.NewErrCode(50004, "User status couldn't be created")
+
 	// ErrInternalServer 服务器内部错误
 	ErrInternalServer = types.NewErrCode(50500, "Internal Server Error")
 )

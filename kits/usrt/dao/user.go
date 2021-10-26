@@ -3,7 +3,6 @@ package dao
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -45,7 +44,7 @@ func UpdateStatusByUser(data ...*pb.USRT_User) ([]uint64, error) {
 			group[id] = make(map[string]interface{})
 		}
 
-		group[id][item.LoginType] = item.Addr
+		group[id][item.Type] = item.Value
 		cacher.Delete(namerStatusByUser(item.ID))
 	}
 
@@ -95,7 +94,7 @@ func RemoveStatusByUser(data ...*pb.USRT_User) error {
 			group[id] = make([]string, 0)
 		}
 
-		group[id] = append(group[id], item.LoginType)
+		group[id] = append(group[id], item.Type)
 		cacher.Delete(namerStatusByUser(item.ID))
 	}
 
@@ -144,7 +143,7 @@ func GetStatusByUser(data ...uint64) ([]*pb.USRT_User, error) {
 		}
 
 		for k, v := range ret.Val() {
-			values = append(values, &pb.USRT_User{ID: id, LoginType: k, Addr: v})
+			values = append(values, &pb.USRT_User{ID: id, Type: k, Value: v})
 		}
 	}
 
@@ -155,7 +154,6 @@ func GetStatueCacheByUser(data ...uint64) ([]*pb.USRT_User, error) {
 	values := make([]*pb.USRT_User, 0)
 	noCache := make([]uint64, 0)
 	for _, value := range data {
-		fmt.Println(namerStatusByUser(value), cacher)
 		cacheValues, ok := cacher.Get(namerStatusByUser(value))
 		if !ok {
 			noCache = append(noCache, value)
@@ -174,7 +172,7 @@ func GetStatueCacheByUser(data ...uint64) ([]*pb.USRT_User, error) {
 	if len(noCache) < 1 {
 		return values, nil
 	}
-	fmt.Println("nocache:", noCache, data)
+
 	retData, err := GetStatusByUser(noCache...)
 	if err != nil {
 		return nil, err

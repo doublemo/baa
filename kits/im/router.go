@@ -1,7 +1,6 @@
 package im
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -52,7 +51,8 @@ func InitRouter(config RouterConfig) {
 	snserv := newSnidRouter(config.ServiceSNID)
 	muxRouter.Register(snid.ServiceName, router.New()).
 		Handle(snproto.SnowflakeCommand, snserv).
-		Handle(snproto.AutoincrementCommand, snserv)
+		Handle(snproto.AutoincrementCommand, snserv).
+		Handle(snproto.MoreAutoincrementCommand, newSnuidRouter(config.ServiceSNID))
 
 	// cache
 	cache.SnowflakeCacherOnFill(func(i int) ([]uint64, error) { return getSNID(int32(i)) })
@@ -73,21 +73,24 @@ func testSend() {
 		Header:  make(map[string]string),
 	}
 
-	frame := &pb.IM_Msg_Body{
-		SeqID:       1,
-		To:          "2FRx9KAc-Jw",
-		Payload:     &pb.IM_Msg_Body_Text{Text: &pb.IM_Msg_Content_Text{Content: "你是不是个SB, 狗日的"}},
-		From:        "2FRx9KAc-Jw",
-		FName:       "test",
-		FHeadImgurl: "1233",
-		FSex:        "1",
-		ToType:      pb.IM_Msg_ToC,
+	frame := &pb.IM_Send{
+		Messages: &pb.IM_Msg_List{
+			Values: []*pb.IM_Msg_Content{
+				&pb.IM_Msg_Content{
+					SeqID:   1,
+					To:      "NS07bbD2yLM",
+					Payload: &pb.IM_Msg_Content_Text{Text: &pb.IM_Msg_ContentType_Text{Content: "你是不是个SB, 狗日的"}},
+					From:    "2FRx9KAc-Jw",
+					Group:   pb.IM_Msg_ToC,
+				},
+			},
+		},
 	}
 
 	req.Payload, _ = grpcproto.Marshal(frame)
-	//r.Handler(req)
+	//fmt.Println(r.Handler(req))
 
-	//fmt.Println(id.Encrypt(344722248029966338, []byte("7581BDD8E8DA3839")))
+	//fmt.Println(id.Encrypt(344709394144956418, []byte("7581BDD8E8DA3839")))
 	// snserv := newSnidRouter(conf.RPCClient{
 	// 	Name:               "snid",
 	// 	Weight:             10,
@@ -106,25 +109,25 @@ func testSend() {
 	// 	Handle(snproto.SnowflakeCommand, snserv).
 	// 	Handle(snproto.AutoincrementCommand, snserv)
 
-	for i := 0; i < 1000; i++ {
-		//r.Handler(req)
+	for i := 0; i < 1; i++ {
 		go func(idx int) {
-			for x := 0; x < 10; x++ {
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-				id, err := cache.GetSnowflakeID(ctx)
-				cancel()
-				if err != nil {
-					fmt.Println(err)
-				}
+			r.Handler(req)
+			// for x := 0; x < 10; x++ {
+			// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+			// 	id, err := cache.GetSnowflakeID(ctx)
+			// 	cancel()
+			// 	if err != nil {
+			// 		fmt.Println(err)
+			// 	}
 
-				if id < 1 {
-					panic("id zero")
-				}
+			// 	if id < 1 {
+			// 		panic("id zero")
+			// 	}
 
-				fmt.Println("id-->", id)
-			}
+			// 	fmt.Println("id-->", id)
+			// }
 		}(i)
 
-		//time.Sleep(time.Millisecond * 1)
+		time.Sleep(time.Millisecond * 1)
 	}
 }

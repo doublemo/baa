@@ -10,8 +10,8 @@ const (
 )
 
 var (
-	r  = router.New()
-	nr = router.New()
+	r        = router.New()
+	nrRouter = router.NewMux()
 )
 
 // RouterConfig 路由配置
@@ -29,5 +29,5 @@ func InitRouter() {
 	r.HandleFunc(proto.GetUserStatusCommand, getUserStatus)
 
 	// 订阅处理
-	nr.HandleFunc(proto.DeleteUserStatusCommand, deleteUserStatus)
+	nrRouter.Register(ServiceName, router.New()).HandleFunc(proto.DeleteUserStatusCommand, deleteUserStatus)
 }

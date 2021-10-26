@@ -76,9 +76,14 @@ func onFromNatsMessage(msg *natsgo.Msg) {
 	}
 
 	sName := ServiceName
+	requiredReply := false
 	if frame.Header != nil {
 		if m, ok := frame.Header["service"]; ok {
 			sName = m
+		}
+
+		if m, ok := frame.Header["required-reply"]; ok && m == "true" {
+			requiredReply = true
 		}
 	}
 
@@ -88,13 +93,13 @@ func onFromNatsMessage(msg *natsgo.Msg) {
 		return
 	}
 
-	if resp == nil {
+	if resp == nil || !requiredReply {
 		return
 	}
 
-	// 不需要回复消息,防止出现消息死循环
-	// reply, _ := grpcproto.Marshal(resp)
-	// if err := msg.Respond(reply); err != nil {
-	// 	log.Error(Logger()).Log("action", "msg.Respond", "error", err)
-	// }
+	// 防止出现消息死循环
+	reply, _ := grpcproto.Marshal(resp)
+	if err := msg.Respond(reply); err != nil {
+		log.Error(Logger()).Log("action", "msg.Respond", "error", err)
+	}
 }

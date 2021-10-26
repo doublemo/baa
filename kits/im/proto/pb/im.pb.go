@@ -25,49 +25,49 @@ const (
 // of the legacy proto package is being used.
 const _ = proto.ProtoPackageIsVersion4
 
-type IM_Msg_ToTypes int32
+type IM_Msg_Group int32
 
 const (
-	IM_Msg_ToC IM_Msg_ToTypes = 0
-	IM_Msg_ToG IM_Msg_ToTypes = 1
+	IM_Msg_ToC IM_Msg_Group = 0
+	IM_Msg_ToG IM_Msg_Group = 1
 )
 
-// Enum value maps for IM_Msg_ToTypes.
+// Enum value maps for IM_Msg_Group.
 var (
-	IM_Msg_ToTypes_name = map[int32]string{
+	IM_Msg_Group_name = map[int32]string{
 		0: "ToC",
 		1: "ToG",
 	}
-	IM_Msg_ToTypes_value = map[string]int32{
+	IM_Msg_Group_value = map[string]int32{
 		"ToC": 0,
 		"ToG": 1,
 	}
 )
 
-func (x IM_Msg_ToTypes) Enum() *IM_Msg_ToTypes {
-	p := new(IM_Msg_ToTypes)
+func (x IM_Msg_Group) Enum() *IM_Msg_Group {
+	p := new(IM_Msg_Group)
 	*p = x
 	return p
 }
 
-func (x IM_Msg_ToTypes) String() string {
+func (x IM_Msg_Group) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (IM_Msg_ToTypes) Descriptor() protoreflect.EnumDescriptor {
+func (IM_Msg_Group) Descriptor() protoreflect.EnumDescriptor {
 	return file_kits_im_proto_pb_im_proto_enumTypes[0].Descriptor()
 }
 
-func (IM_Msg_ToTypes) Type() protoreflect.EnumType {
+func (IM_Msg_Group) Type() protoreflect.EnumType {
 	return &file_kits_im_proto_pb_im_proto_enumTypes[0]
 }
 
-func (x IM_Msg_ToTypes) Number() protoreflect.EnumNumber {
+func (x IM_Msg_Group) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use IM_Msg_ToTypes.Descriptor instead.
-func (IM_Msg_ToTypes) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use IM_Msg_Group.Descriptor instead.
+func (IM_Msg_Group) EnumDescriptor() ([]byte, []int) {
 	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 0}
 }
 
@@ -147,31 +147,16 @@ func (*IM_Msg) Descriptor() ([]byte, []int) {
 	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0}
 }
 
-type IM_Msg_Body struct {
+type IM_Send struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	MsgId uint64 `protobuf:"varint,1,opt,name=MsgId,proto3" json:"MsgId,omitempty"`
-	SeqID uint64 `protobuf:"varint,2,opt,name=SeqID,proto3" json:"SeqID,omitempty"`
-	To    string `protobuf:"bytes,3,opt,name=To,proto3" json:"To,omitempty"`
-	// Types that are assignable to Payload:
-	//	*IM_Msg_Body_Text
-	//	*IM_Msg_Body_Video
-	//	*IM_Msg_Body_Image
-	//	*IM_Msg_Body_Voice
-	//	*IM_Msg_Body_File
-	//	*IM_Msg_Body_Emoticon
-	Payload     isIM_Msg_Body_Payload `protobuf_oneof:"Payload"`
-	From        string                `protobuf:"bytes,10,opt,name=From,proto3" json:"From,omitempty"`
-	FName       string                `protobuf:"bytes,11,opt,name=FName,proto3" json:"FName,omitempty"`
-	FHeadImgurl string                `protobuf:"bytes,12,opt,name=FHeadImgurl,proto3" json:"FHeadImgurl,omitempty"`
-	FSex        string                `protobuf:"bytes,13,opt,name=FSex,proto3" json:"FSex,omitempty"`
-	ToType      IM_Msg_ToTypes        `protobuf:"varint,14,opt,name=ToType,proto3,enum=pb.IM_Msg_ToTypes" json:"ToType,omitempty"`
+	Messages *IM_Msg_List `protobuf:"bytes,1,opt,name=Messages,proto3" json:"Messages,omitempty"`
 }
 
-func (x *IM_Msg_Body) Reset() {
-	*x = IM_Msg_Body{}
+func (x *IM_Send) Reset() {
+	*x = IM_Send{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_kits_im_proto_pb_im_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -179,13 +164,13 @@ func (x *IM_Msg_Body) Reset() {
 	}
 }
 
-func (x *IM_Msg_Body) String() string {
+func (x *IM_Send) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*IM_Msg_Body) ProtoMessage() {}
+func (*IM_Send) ProtoMessage() {}
 
-func (x *IM_Msg_Body) ProtoReflect() protoreflect.Message {
+func (x *IM_Send) ProtoReflect() protoreflect.Message {
 	mi := &file_kits_im_proto_pb_im_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -197,166 +182,236 @@ func (x *IM_Msg_Body) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use IM_Msg_Body.ProtoReflect.Descriptor instead.
-func (*IM_Msg_Body) Descriptor() ([]byte, []int) {
-	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 0}
+// Deprecated: Use IM_Send.ProtoReflect.Descriptor instead.
+func (*IM_Send) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 1}
 }
 
-func (x *IM_Msg_Body) GetMsgId() uint64 {
+func (x *IM_Send) GetMessages() *IM_Msg_List {
 	if x != nil {
-		return x.MsgId
+		return x.Messages
 	}
-	return 0
+	return nil
 }
 
-func (x *IM_Msg_Body) GetSeqID() uint64 {
+type IM_Pull struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	List *IM_Msg_List `protobuf:"bytes,1,opt,name=List,proto3" json:"List,omitempty"`
+}
+
+func (x *IM_Pull) Reset() {
+	*x = IM_Pull{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Pull) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Pull) ProtoMessage() {}
+
+func (x *IM_Pull) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Pull.ProtoReflect.Descriptor instead.
+func (*IM_Pull) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 2}
+}
+
+func (x *IM_Pull) GetList() *IM_Msg_List {
 	if x != nil {
-		return x.SeqID
+		return x.List
 	}
-	return 0
+	return nil
 }
 
-func (x *IM_Msg_Body) GetTo() string {
-	if x != nil {
-		return x.To
-	}
-	return ""
+type IM_Notify struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Payload:
+	//	*IM_Notify_Received
+	//	*IM_Notify_Readed
+	//	*IM_Notify_Confirmed
+	//	*IM_Notify_List
+	Payload isIM_Notify_Payload `protobuf_oneof:"Payload"`
 }
 
-func (m *IM_Msg_Body) GetPayload() isIM_Msg_Body_Payload {
+func (x *IM_Notify) Reset() {
+	*x = IM_Notify{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Notify) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Notify) ProtoMessage() {}
+
+func (x *IM_Notify) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Notify.ProtoReflect.Descriptor instead.
+func (*IM_Notify) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 3}
+}
+
+func (m *IM_Notify) GetPayload() isIM_Notify_Payload {
 	if m != nil {
 		return m.Payload
 	}
 	return nil
 }
 
-func (x *IM_Msg_Body) GetText() *IM_Msg_Content_Text {
-	if x, ok := x.GetPayload().(*IM_Msg_Body_Text); ok {
-		return x.Text
+func (x *IM_Notify) GetReceived() *IM_Msg_AckListReceived {
+	if x, ok := x.GetPayload().(*IM_Notify_Received); ok {
+		return x.Received
 	}
 	return nil
 }
 
-func (x *IM_Msg_Body) GetVideo() *IM_Msg_Content_Video {
-	if x, ok := x.GetPayload().(*IM_Msg_Body_Video); ok {
-		return x.Video
+func (x *IM_Notify) GetReaded() *IM_Msg_AckListReaded {
+	if x, ok := x.GetPayload().(*IM_Notify_Readed); ok {
+		return x.Readed
 	}
 	return nil
 }
 
-func (x *IM_Msg_Body) GetImage() *IM_Msg_Content_Image {
-	if x, ok := x.GetPayload().(*IM_Msg_Body_Image); ok {
-		return x.Image
+func (x *IM_Notify) GetConfirmed() *IM_Msg_AckListConfirmed {
+	if x, ok := x.GetPayload().(*IM_Notify_Confirmed); ok {
+		return x.Confirmed
 	}
 	return nil
 }
 
-func (x *IM_Msg_Body) GetVoice() *IM_Msg_Content_Voice {
-	if x, ok := x.GetPayload().(*IM_Msg_Body_Voice); ok {
-		return x.Voice
+func (x *IM_Notify) GetList() *IM_Msg_List {
+	if x, ok := x.GetPayload().(*IM_Notify_List); ok {
+		return x.List
 	}
 	return nil
 }
 
-func (x *IM_Msg_Body) GetFile() *IM_Msg_Content_File {
-	if x, ok := x.GetPayload().(*IM_Msg_Body_File); ok {
-		return x.File
-	}
-	return nil
+type isIM_Notify_Payload interface {
+	isIM_Notify_Payload()
 }
 
-func (x *IM_Msg_Body) GetEmoticon() *IM_Msg_Content_Emoticon {
-	if x, ok := x.GetPayload().(*IM_Msg_Body_Emoticon); ok {
-		return x.Emoticon
-	}
-	return nil
+type IM_Notify_Received struct {
+	Received *IM_Msg_AckListReceived `protobuf:"bytes,1,opt,name=Received,proto3,oneof"`
 }
 
-func (x *IM_Msg_Body) GetFrom() string {
-	if x != nil {
-		return x.From
-	}
-	return ""
+type IM_Notify_Readed struct {
+	Readed *IM_Msg_AckListReaded `protobuf:"bytes,2,opt,name=Readed,proto3,oneof"`
 }
 
-func (x *IM_Msg_Body) GetFName() string {
-	if x != nil {
-		return x.FName
-	}
-	return ""
+type IM_Notify_Confirmed struct {
+	Confirmed *IM_Msg_AckListConfirmed `protobuf:"bytes,3,opt,name=Confirmed,proto3,oneof"`
 }
 
-func (x *IM_Msg_Body) GetFHeadImgurl() string {
-	if x != nil {
-		return x.FHeadImgurl
-	}
-	return ""
+type IM_Notify_List struct {
+	List *IM_Msg_List `protobuf:"bytes,4,opt,name=List,proto3,oneof"`
 }
 
-func (x *IM_Msg_Body) GetFSex() string {
-	if x != nil {
-		return x.FSex
-	}
-	return ""
-}
+func (*IM_Notify_Received) isIM_Notify_Payload() {}
 
-func (x *IM_Msg_Body) GetToType() IM_Msg_ToTypes {
-	if x != nil {
-		return x.ToType
-	}
-	return IM_Msg_ToC
-}
+func (*IM_Notify_Readed) isIM_Notify_Payload() {}
 
-type isIM_Msg_Body_Payload interface {
-	isIM_Msg_Body_Payload()
-}
+func (*IM_Notify_Confirmed) isIM_Notify_Payload() {}
 
-type IM_Msg_Body_Text struct {
-	Text *IM_Msg_Content_Text `protobuf:"bytes,4,opt,name=Text,proto3,oneof"`
-}
+func (*IM_Notify_List) isIM_Notify_Payload() {}
 
-type IM_Msg_Body_Video struct {
-	Video *IM_Msg_Content_Video `protobuf:"bytes,5,opt,name=Video,proto3,oneof"`
-}
-
-type IM_Msg_Body_Image struct {
-	Image *IM_Msg_Content_Image `protobuf:"bytes,6,opt,name=Image,proto3,oneof"`
-}
-
-type IM_Msg_Body_Voice struct {
-	Voice *IM_Msg_Content_Voice `protobuf:"bytes,7,opt,name=Voice,proto3,oneof"`
-}
-
-type IM_Msg_Body_File struct {
-	File *IM_Msg_Content_File `protobuf:"bytes,8,opt,name=File,proto3,oneof"`
-}
-
-type IM_Msg_Body_Emoticon struct {
-	Emoticon *IM_Msg_Content_Emoticon `protobuf:"bytes,9,opt,name=Emoticon,proto3,oneof"`
-}
-
-func (*IM_Msg_Body_Text) isIM_Msg_Body_Payload() {}
-
-func (*IM_Msg_Body_Video) isIM_Msg_Body_Payload() {}
-
-func (*IM_Msg_Body_Image) isIM_Msg_Body_Payload() {}
-
-func (*IM_Msg_Body_Voice) isIM_Msg_Body_Payload() {}
-
-func (*IM_Msg_Body_File) isIM_Msg_Body_Payload() {}
-
-func (*IM_Msg_Body_Emoticon) isIM_Msg_Body_Payload() {}
-
-type IM_Msg_Content struct {
+type IM_Msg_ContentType struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
+func (x *IM_Msg_ContentType) Reset() {
+	*x = IM_Msg_ContentType{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Msg_ContentType) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Msg_ContentType) ProtoMessage() {}
+
+func (x *IM_Msg_ContentType) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Msg_ContentType.ProtoReflect.Descriptor instead.
+func (*IM_Msg_ContentType) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 0}
+}
+
+type IM_Msg_Content struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id    uint64 `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
+	SeqID uint64 `protobuf:"varint,2,opt,name=SeqID,proto3" json:"SeqID,omitempty"`
+	To    string `protobuf:"bytes,3,opt,name=To,proto3" json:"To,omitempty"`
+	From  string `protobuf:"bytes,4,opt,name=From,proto3" json:"From,omitempty"`
+	// Types that are assignable to Payload:
+	//	*IM_Msg_Content_Text
+	//	*IM_Msg_Content_Video
+	//	*IM_Msg_Content_Image
+	//	*IM_Msg_Content_Voice
+	//	*IM_Msg_Content_File
+	//	*IM_Msg_Content_Emoticon
+	Payload isIM_Msg_Content_Payload `protobuf_oneof:"Payload"`
+	Group   IM_Msg_Group             `protobuf:"varint,11,opt,name=Group,proto3,enum=pb.IM_Msg_Group" json:"Group,omitempty"`
+	Topic   string                   `protobuf:"bytes,12,opt,name=Topic,proto3" json:"Topic,omitempty"`
+}
+
 func (x *IM_Msg_Content) Reset() {
 	*x = IM_Msg_Content{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_im_proto_pb_im_proto_msgTypes[3]
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -369,7 +424,7 @@ func (x *IM_Msg_Content) String() string {
 func (*IM_Msg_Content) ProtoMessage() {}
 
 func (x *IM_Msg_Content) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_im_proto_pb_im_proto_msgTypes[3]
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -385,221 +440,147 @@ func (*IM_Msg_Content) Descriptor() ([]byte, []int) {
 	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 1}
 }
 
-type IM_Msg_Content_Text struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Content string `protobuf:"bytes,1,opt,name=Content,proto3" json:"Content,omitempty"`
-}
-
-func (x *IM_Msg_Content_Text) Reset() {
-	*x = IM_Msg_Content_Text{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_im_proto_pb_im_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *IM_Msg_Content_Text) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IM_Msg_Content_Text) ProtoMessage() {}
-
-func (x *IM_Msg_Content_Text) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_im_proto_pb_im_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use IM_Msg_Content_Text.ProtoReflect.Descriptor instead.
-func (*IM_Msg_Content_Text) Descriptor() ([]byte, []int) {
-	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 1, 0}
-}
-
-func (x *IM_Msg_Content_Text) GetContent() string {
+func (x *IM_Msg_Content) GetId() uint64 {
 	if x != nil {
-		return x.Content
+		return x.Id
+	}
+	return 0
+}
+
+func (x *IM_Msg_Content) GetSeqID() uint64 {
+	if x != nil {
+		return x.SeqID
+	}
+	return 0
+}
+
+func (x *IM_Msg_Content) GetTo() string {
+	if x != nil {
+		return x.To
 	}
 	return ""
 }
 
-type IM_Msg_Content_Video struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ID      uint64 `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`          //
-	Size    int32  `protobuf:"varint,4,opt,name=Size,proto3" json:"Size,omitempty"`      // 图大小
-	Content []byte `protobuf:"bytes,5,opt,name=Content,proto3" json:"Content,omitempty"` // 缩略图
-	Name    int32  `protobuf:"varint,6,opt,name=Name,proto3" json:"Name,omitempty"`      // 名称
-}
-
-func (x *IM_Msg_Content_Video) Reset() {
-	*x = IM_Msg_Content_Video{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_im_proto_pb_im_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *IM_Msg_Content_Video) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IM_Msg_Content_Video) ProtoMessage() {}
-
-func (x *IM_Msg_Content_Video) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_im_proto_pb_im_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use IM_Msg_Content_Video.ProtoReflect.Descriptor instead.
-func (*IM_Msg_Content_Video) Descriptor() ([]byte, []int) {
-	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 1, 1}
-}
-
-func (x *IM_Msg_Content_Video) GetID() uint64 {
+func (x *IM_Msg_Content) GetFrom() string {
 	if x != nil {
-		return x.ID
+		return x.From
 	}
-	return 0
+	return ""
 }
 
-func (x *IM_Msg_Content_Video) GetSize() int32 {
-	if x != nil {
-		return x.Size
-	}
-	return 0
-}
-
-func (x *IM_Msg_Content_Video) GetContent() []byte {
-	if x != nil {
-		return x.Content
+func (m *IM_Msg_Content) GetPayload() isIM_Msg_Content_Payload {
+	if m != nil {
+		return m.Payload
 	}
 	return nil
 }
 
-func (x *IM_Msg_Content_Video) GetName() int32 {
-	if x != nil {
-		return x.Name
+func (x *IM_Msg_Content) GetText() *IM_Msg_ContentType_Text {
+	if x, ok := x.GetPayload().(*IM_Msg_Content_Text); ok {
+		return x.Text
 	}
-	return 0
+	return nil
+}
+
+func (x *IM_Msg_Content) GetVideo() *IM_Msg_ContentType_Video {
+	if x, ok := x.GetPayload().(*IM_Msg_Content_Video); ok {
+		return x.Video
+	}
+	return nil
+}
+
+func (x *IM_Msg_Content) GetImage() *IM_Msg_ContentType_Image {
+	if x, ok := x.GetPayload().(*IM_Msg_Content_Image); ok {
+		return x.Image
+	}
+	return nil
+}
+
+func (x *IM_Msg_Content) GetVoice() *IM_Msg_ContentType_Voice {
+	if x, ok := x.GetPayload().(*IM_Msg_Content_Voice); ok {
+		return x.Voice
+	}
+	return nil
+}
+
+func (x *IM_Msg_Content) GetFile() *IM_Msg_ContentType_File {
+	if x, ok := x.GetPayload().(*IM_Msg_Content_File); ok {
+		return x.File
+	}
+	return nil
+}
+
+func (x *IM_Msg_Content) GetEmoticon() *IM_Msg_ContentType_Emoticon {
+	if x, ok := x.GetPayload().(*IM_Msg_Content_Emoticon); ok {
+		return x.Emoticon
+	}
+	return nil
+}
+
+func (x *IM_Msg_Content) GetGroup() IM_Msg_Group {
+	if x != nil {
+		return x.Group
+	}
+	return IM_Msg_ToC
+}
+
+func (x *IM_Msg_Content) GetTopic() string {
+	if x != nil {
+		return x.Topic
+	}
+	return ""
+}
+
+type isIM_Msg_Content_Payload interface {
+	isIM_Msg_Content_Payload()
+}
+
+type IM_Msg_Content_Text struct {
+	Text *IM_Msg_ContentType_Text `protobuf:"bytes,5,opt,name=Text,proto3,oneof"`
+}
+
+type IM_Msg_Content_Video struct {
+	Video *IM_Msg_ContentType_Video `protobuf:"bytes,6,opt,name=Video,proto3,oneof"`
 }
 
 type IM_Msg_Content_Image struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ID      uint64 `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`          //
-	Width   int32  `protobuf:"varint,2,opt,name=Width,proto3" json:"Width,omitempty"`    // 图宽
-	Height  int32  `protobuf:"varint,3,opt,name=Height,proto3" json:"Height,omitempty"`  // 图高
-	Size    int32  `protobuf:"varint,4,opt,name=Size,proto3" json:"Size,omitempty"`      // 图大小
-	Content []byte `protobuf:"bytes,5,opt,name=Content,proto3" json:"Content,omitempty"` // 缩略图
-	Name    int32  `protobuf:"varint,6,opt,name=Name,proto3" json:"Name,omitempty"`      // 名称
-}
-
-func (x *IM_Msg_Content_Image) Reset() {
-	*x = IM_Msg_Content_Image{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_im_proto_pb_im_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *IM_Msg_Content_Image) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IM_Msg_Content_Image) ProtoMessage() {}
-
-func (x *IM_Msg_Content_Image) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_im_proto_pb_im_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use IM_Msg_Content_Image.ProtoReflect.Descriptor instead.
-func (*IM_Msg_Content_Image) Descriptor() ([]byte, []int) {
-	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 1, 2}
-}
-
-func (x *IM_Msg_Content_Image) GetID() uint64 {
-	if x != nil {
-		return x.ID
-	}
-	return 0
-}
-
-func (x *IM_Msg_Content_Image) GetWidth() int32 {
-	if x != nil {
-		return x.Width
-	}
-	return 0
-}
-
-func (x *IM_Msg_Content_Image) GetHeight() int32 {
-	if x != nil {
-		return x.Height
-	}
-	return 0
-}
-
-func (x *IM_Msg_Content_Image) GetSize() int32 {
-	if x != nil {
-		return x.Size
-	}
-	return 0
-}
-
-func (x *IM_Msg_Content_Image) GetContent() []byte {
-	if x != nil {
-		return x.Content
-	}
-	return nil
-}
-
-func (x *IM_Msg_Content_Image) GetName() int32 {
-	if x != nil {
-		return x.Name
-	}
-	return 0
+	Image *IM_Msg_ContentType_Image `protobuf:"bytes,7,opt,name=Image,proto3,oneof"`
 }
 
 type IM_Msg_Content_Voice struct {
+	Voice *IM_Msg_ContentType_Voice `protobuf:"bytes,8,opt,name=Voice,proto3,oneof"`
+}
+
+type IM_Msg_Content_File struct {
+	File *IM_Msg_ContentType_File `protobuf:"bytes,9,opt,name=File,proto3,oneof"`
+}
+
+type IM_Msg_Content_Emoticon struct {
+	Emoticon *IM_Msg_ContentType_Emoticon `protobuf:"bytes,10,opt,name=Emoticon,proto3,oneof"`
+}
+
+func (*IM_Msg_Content_Text) isIM_Msg_Content_Payload() {}
+
+func (*IM_Msg_Content_Video) isIM_Msg_Content_Payload() {}
+
+func (*IM_Msg_Content_Image) isIM_Msg_Content_Payload() {}
+
+func (*IM_Msg_Content_Voice) isIM_Msg_Content_Payload() {}
+
+func (*IM_Msg_Content_File) isIM_Msg_Content_Payload() {}
+
+func (*IM_Msg_Content_Emoticon) isIM_Msg_Content_Payload() {}
+
+type IM_Msg_List struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Content []byte `protobuf:"bytes,1,opt,name=Content,proto3" json:"Content,omitempty"`
+	Values []*IM_Msg_Content `protobuf:"bytes,1,rep,name=Values,proto3" json:"Values,omitempty"`
 }
 
-func (x *IM_Msg_Content_Voice) Reset() {
-	*x = IM_Msg_Content_Voice{}
+func (x *IM_Msg_List) Reset() {
+	*x = IM_Msg_List{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_kits_im_proto_pb_im_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -607,13 +588,13 @@ func (x *IM_Msg_Content_Voice) Reset() {
 	}
 }
 
-func (x *IM_Msg_Content_Voice) String() string {
+func (x *IM_Msg_List) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*IM_Msg_Content_Voice) ProtoMessage() {}
+func (*IM_Msg_List) ProtoMessage() {}
 
-func (x *IM_Msg_Content_Voice) ProtoReflect() protoreflect.Message {
+func (x *IM_Msg_List) ProtoReflect() protoreflect.Message {
 	mi := &file_kits_im_proto_pb_im_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -625,31 +606,29 @@ func (x *IM_Msg_Content_Voice) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use IM_Msg_Content_Voice.ProtoReflect.Descriptor instead.
-func (*IM_Msg_Content_Voice) Descriptor() ([]byte, []int) {
-	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 1, 3}
+// Deprecated: Use IM_Msg_List.ProtoReflect.Descriptor instead.
+func (*IM_Msg_List) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 2}
 }
 
-func (x *IM_Msg_Content_Voice) GetContent() []byte {
+func (x *IM_Msg_List) GetValues() []*IM_Msg_Content {
 	if x != nil {
-		return x.Content
+		return x.Values
 	}
 	return nil
 }
 
-type IM_Msg_Content_File struct {
+type IM_Msg_AckListReceived struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ID    uint64 `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`      //
-	Size  int32  `protobuf:"varint,2,opt,name=Size,proto3" json:"Size,omitempty"`  // 图大小
-	Types string `protobuf:"bytes,3,opt,name=Types,proto3" json:"Types,omitempty"` //
-	Name  int32  `protobuf:"varint,4,opt,name=Name,proto3" json:"Name,omitempty"`  // 图大小
+	Successed []*IM_Msg_AckReceived `protobuf:"bytes,1,rep,name=Successed,proto3" json:"Successed,omitempty"`
+	Failed    []*IM_Msg_AckFailed   `protobuf:"bytes,2,rep,name=Failed,proto3" json:"Failed,omitempty"`
 }
 
-func (x *IM_Msg_Content_File) Reset() {
-	*x = IM_Msg_Content_File{}
+func (x *IM_Msg_AckListReceived) Reset() {
+	*x = IM_Msg_AckListReceived{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_kits_im_proto_pb_im_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -657,13 +636,13 @@ func (x *IM_Msg_Content_File) Reset() {
 	}
 }
 
-func (x *IM_Msg_Content_File) String() string {
+func (x *IM_Msg_AckListReceived) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*IM_Msg_Content_File) ProtoMessage() {}
+func (*IM_Msg_AckListReceived) ProtoMessage() {}
 
-func (x *IM_Msg_Content_File) ProtoReflect() protoreflect.Message {
+func (x *IM_Msg_AckListReceived) ProtoReflect() protoreflect.Message {
 	mi := &file_kits_im_proto_pb_im_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -675,50 +654,35 @@ func (x *IM_Msg_Content_File) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use IM_Msg_Content_File.ProtoReflect.Descriptor instead.
-func (*IM_Msg_Content_File) Descriptor() ([]byte, []int) {
-	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 1, 4}
+// Deprecated: Use IM_Msg_AckListReceived.ProtoReflect.Descriptor instead.
+func (*IM_Msg_AckListReceived) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 3}
 }
 
-func (x *IM_Msg_Content_File) GetID() uint64 {
+func (x *IM_Msg_AckListReceived) GetSuccessed() []*IM_Msg_AckReceived {
 	if x != nil {
-		return x.ID
+		return x.Successed
 	}
-	return 0
+	return nil
 }
 
-func (x *IM_Msg_Content_File) GetSize() int32 {
+func (x *IM_Msg_AckListReceived) GetFailed() []*IM_Msg_AckFailed {
 	if x != nil {
-		return x.Size
+		return x.Failed
 	}
-	return 0
+	return nil
 }
 
-func (x *IM_Msg_Content_File) GetTypes() string {
-	if x != nil {
-		return x.Types
-	}
-	return ""
-}
-
-func (x *IM_Msg_Content_File) GetName() int32 {
-	if x != nil {
-		return x.Name
-	}
-	return 0
-}
-
-type IM_Msg_Content_Emoticon struct {
+type IM_Msg_AckListReaded struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Content []byte `protobuf:"bytes,1,opt,name=Content,proto3" json:"Content,omitempty"`
-	Name    string `protobuf:"bytes,2,opt,name=Name,proto3" json:"Name,omitempty"` // 名称
+	Values []*IM_Msg_AckReaded `protobuf:"bytes,1,rep,name=Values,proto3" json:"Values,omitempty"`
 }
 
-func (x *IM_Msg_Content_Emoticon) Reset() {
-	*x = IM_Msg_Content_Emoticon{}
+func (x *IM_Msg_AckListReaded) Reset() {
+	*x = IM_Msg_AckListReaded{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_kits_im_proto_pb_im_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -726,13 +690,13 @@ func (x *IM_Msg_Content_Emoticon) Reset() {
 	}
 }
 
-func (x *IM_Msg_Content_Emoticon) String() string {
+func (x *IM_Msg_AckListReaded) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*IM_Msg_Content_Emoticon) ProtoMessage() {}
+func (*IM_Msg_AckListReaded) ProtoMessage() {}
 
-func (x *IM_Msg_Content_Emoticon) ProtoReflect() protoreflect.Message {
+func (x *IM_Msg_AckListReaded) ProtoReflect() protoreflect.Message {
 	mi := &file_kits_im_proto_pb_im_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -744,19 +708,689 @@ func (x *IM_Msg_Content_Emoticon) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use IM_Msg_Content_Emoticon.ProtoReflect.Descriptor instead.
-func (*IM_Msg_Content_Emoticon) Descriptor() ([]byte, []int) {
-	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 1, 5}
+// Deprecated: Use IM_Msg_AckListReaded.ProtoReflect.Descriptor instead.
+func (*IM_Msg_AckListReaded) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 4}
 }
 
-func (x *IM_Msg_Content_Emoticon) GetContent() []byte {
+func (x *IM_Msg_AckListReaded) GetValues() []*IM_Msg_AckReaded {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
+type IM_Msg_AckListConfirmed struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Values []*IM_Msg_AckConfirmed `protobuf:"bytes,1,rep,name=Values,proto3" json:"Values,omitempty"`
+}
+
+func (x *IM_Msg_AckListConfirmed) Reset() {
+	*x = IM_Msg_AckListConfirmed{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Msg_AckListConfirmed) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Msg_AckListConfirmed) ProtoMessage() {}
+
+func (x *IM_Msg_AckListConfirmed) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Msg_AckListConfirmed.ProtoReflect.Descriptor instead.
+func (*IM_Msg_AckListConfirmed) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 5}
+}
+
+func (x *IM_Msg_AckListConfirmed) GetValues() []*IM_Msg_AckConfirmed {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
+type IM_Msg_AckReceived struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id       uint64 `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
+	SeqID    uint64 `protobuf:"varint,2,opt,name=SeqID,proto3" json:"SeqID,omitempty"`
+	NewSeqID uint64 `protobuf:"varint,3,opt,name=NewSeqID,proto3" json:"NewSeqID,omitempty"`
+}
+
+func (x *IM_Msg_AckReceived) Reset() {
+	*x = IM_Msg_AckReceived{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Msg_AckReceived) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Msg_AckReceived) ProtoMessage() {}
+
+func (x *IM_Msg_AckReceived) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Msg_AckReceived.ProtoReflect.Descriptor instead.
+func (*IM_Msg_AckReceived) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 6}
+}
+
+func (x *IM_Msg_AckReceived) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *IM_Msg_AckReceived) GetSeqID() uint64 {
+	if x != nil {
+		return x.SeqID
+	}
+	return 0
+}
+
+func (x *IM_Msg_AckReceived) GetNewSeqID() uint64 {
+	if x != nil {
+		return x.NewSeqID
+	}
+	return 0
+}
+
+type IM_Msg_AckFailed struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SeqID      uint64 `protobuf:"varint,1,opt,name=SeqID,proto3" json:"SeqID,omitempty"`
+	ErrCode    int32  `protobuf:"varint,2,opt,name=ErrCode,proto3" json:"ErrCode,omitempty"`
+	ErrMessage string `protobuf:"bytes,3,opt,name=ErrMessage,proto3" json:"ErrMessage,omitempty"`
+}
+
+func (x *IM_Msg_AckFailed) Reset() {
+	*x = IM_Msg_AckFailed{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Msg_AckFailed) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Msg_AckFailed) ProtoMessage() {}
+
+func (x *IM_Msg_AckFailed) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Msg_AckFailed.ProtoReflect.Descriptor instead.
+func (*IM_Msg_AckFailed) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 7}
+}
+
+func (x *IM_Msg_AckFailed) GetSeqID() uint64 {
+	if x != nil {
+		return x.SeqID
+	}
+	return 0
+}
+
+func (x *IM_Msg_AckFailed) GetErrCode() int32 {
+	if x != nil {
+		return x.ErrCode
+	}
+	return 0
+}
+
+func (x *IM_Msg_AckFailed) GetErrMessage() string {
+	if x != nil {
+		return x.ErrMessage
+	}
+	return ""
+}
+
+type IM_Msg_AckReaded struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id    uint64 `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
+	SeqID uint64 `protobuf:"varint,2,opt,name=SeqID,proto3" json:"SeqID,omitempty"`
+}
+
+func (x *IM_Msg_AckReaded) Reset() {
+	*x = IM_Msg_AckReaded{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Msg_AckReaded) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Msg_AckReaded) ProtoMessage() {}
+
+func (x *IM_Msg_AckReaded) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Msg_AckReaded.ProtoReflect.Descriptor instead.
+func (*IM_Msg_AckReaded) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 8}
+}
+
+func (x *IM_Msg_AckReaded) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *IM_Msg_AckReaded) GetSeqID() uint64 {
+	if x != nil {
+		return x.SeqID
+	}
+	return 0
+}
+
+type IM_Msg_AckConfirmed struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id    uint64 `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
+	SeqID uint64 `protobuf:"varint,2,opt,name=SeqID,proto3" json:"SeqID,omitempty"`
+}
+
+func (x *IM_Msg_AckConfirmed) Reset() {
+	*x = IM_Msg_AckConfirmed{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Msg_AckConfirmed) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Msg_AckConfirmed) ProtoMessage() {}
+
+func (x *IM_Msg_AckConfirmed) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Msg_AckConfirmed.ProtoReflect.Descriptor instead.
+func (*IM_Msg_AckConfirmed) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 9}
+}
+
+func (x *IM_Msg_AckConfirmed) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *IM_Msg_AckConfirmed) GetSeqID() uint64 {
+	if x != nil {
+		return x.SeqID
+	}
+	return 0
+}
+
+type IM_Msg_ContentType_Text struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Content string `protobuf:"bytes,1,opt,name=Content,proto3" json:"Content,omitempty"`
+}
+
+func (x *IM_Msg_ContentType_Text) Reset() {
+	*x = IM_Msg_ContentType_Text{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Msg_ContentType_Text) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Msg_ContentType_Text) ProtoMessage() {}
+
+func (x *IM_Msg_ContentType_Text) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Msg_ContentType_Text.ProtoReflect.Descriptor instead.
+func (*IM_Msg_ContentType_Text) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 0, 0}
+}
+
+func (x *IM_Msg_ContentType_Text) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+type IM_Msg_ContentType_Video struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ID        uint64 `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`              //
+	Name      int32  `protobuf:"varint,2,opt,name=Name,proto3" json:"Name,omitempty"`          // 名称
+	Size      int32  `protobuf:"varint,3,opt,name=Size,proto3" json:"Size,omitempty"`          // 视频大小
+	Thumbnail []byte `protobuf:"bytes,4,opt,name=Thumbnail,proto3" json:"Thumbnail,omitempty"` // 缩略图
+	Url       string `protobuf:"bytes,5,opt,name=Url,proto3" json:"Url,omitempty"`             // 下载地址
+}
+
+func (x *IM_Msg_ContentType_Video) Reset() {
+	*x = IM_Msg_ContentType_Video{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[16]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Msg_ContentType_Video) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Msg_ContentType_Video) ProtoMessage() {}
+
+func (x *IM_Msg_ContentType_Video) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[16]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Msg_ContentType_Video.ProtoReflect.Descriptor instead.
+func (*IM_Msg_ContentType_Video) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 0, 1}
+}
+
+func (x *IM_Msg_ContentType_Video) GetID() uint64 {
+	if x != nil {
+		return x.ID
+	}
+	return 0
+}
+
+func (x *IM_Msg_ContentType_Video) GetName() int32 {
+	if x != nil {
+		return x.Name
+	}
+	return 0
+}
+
+func (x *IM_Msg_ContentType_Video) GetSize() int32 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+func (x *IM_Msg_ContentType_Video) GetThumbnail() []byte {
+	if x != nil {
+		return x.Thumbnail
+	}
+	return nil
+}
+
+func (x *IM_Msg_ContentType_Video) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+type IM_Msg_ContentType_Image struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ID        uint64 `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`              //
+	Width     int32  `protobuf:"varint,2,opt,name=Width,proto3" json:"Width,omitempty"`        // 图宽
+	Height    int32  `protobuf:"varint,3,opt,name=Height,proto3" json:"Height,omitempty"`      // 图高
+	Size      int32  `protobuf:"varint,4,opt,name=Size,proto3" json:"Size,omitempty"`          // 图大小
+	Thumbnail []byte `protobuf:"bytes,5,opt,name=Thumbnail,proto3" json:"Thumbnail,omitempty"` // 缩略图
+	Name      int32  `protobuf:"varint,6,opt,name=Name,proto3" json:"Name,omitempty"`          // 名称
+	Url       string `protobuf:"bytes,7,opt,name=Url,proto3" json:"Url,omitempty"`             // 下载地址
+}
+
+func (x *IM_Msg_ContentType_Image) Reset() {
+	*x = IM_Msg_ContentType_Image{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Msg_ContentType_Image) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Msg_ContentType_Image) ProtoMessage() {}
+
+func (x *IM_Msg_ContentType_Image) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Msg_ContentType_Image.ProtoReflect.Descriptor instead.
+func (*IM_Msg_ContentType_Image) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 0, 2}
+}
+
+func (x *IM_Msg_ContentType_Image) GetID() uint64 {
+	if x != nil {
+		return x.ID
+	}
+	return 0
+}
+
+func (x *IM_Msg_ContentType_Image) GetWidth() int32 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
+func (x *IM_Msg_ContentType_Image) GetHeight() int32 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
+func (x *IM_Msg_ContentType_Image) GetSize() int32 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+func (x *IM_Msg_ContentType_Image) GetThumbnail() []byte {
+	if x != nil {
+		return x.Thumbnail
+	}
+	return nil
+}
+
+func (x *IM_Msg_ContentType_Image) GetName() int32 {
+	if x != nil {
+		return x.Name
+	}
+	return 0
+}
+
+func (x *IM_Msg_ContentType_Image) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+type IM_Msg_ContentType_Voice struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Url string `protobuf:"bytes,1,opt,name=Url,proto3" json:"Url,omitempty"` // 下载地址
+}
+
+func (x *IM_Msg_ContentType_Voice) Reset() {
+	*x = IM_Msg_ContentType_Voice{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[18]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Msg_ContentType_Voice) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Msg_ContentType_Voice) ProtoMessage() {}
+
+func (x *IM_Msg_ContentType_Voice) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[18]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Msg_ContentType_Voice.ProtoReflect.Descriptor instead.
+func (*IM_Msg_ContentType_Voice) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 0, 3}
+}
+
+func (x *IM_Msg_ContentType_Voice) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+type IM_Msg_ContentType_File struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ID   uint64 `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`     //
+	Size int32  `protobuf:"varint,2,opt,name=Size,proto3" json:"Size,omitempty"` // 图大小
+	Type string `protobuf:"bytes,3,opt,name=Type,proto3" json:"Type,omitempty"`  //
+	Name int32  `protobuf:"varint,4,opt,name=Name,proto3" json:"Name,omitempty"` // 图大小
+}
+
+func (x *IM_Msg_ContentType_File) Reset() {
+	*x = IM_Msg_ContentType_File{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Msg_ContentType_File) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Msg_ContentType_File) ProtoMessage() {}
+
+func (x *IM_Msg_ContentType_File) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Msg_ContentType_File.ProtoReflect.Descriptor instead.
+func (*IM_Msg_ContentType_File) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 0, 4}
+}
+
+func (x *IM_Msg_ContentType_File) GetID() uint64 {
+	if x != nil {
+		return x.ID
+	}
+	return 0
+}
+
+func (x *IM_Msg_ContentType_File) GetSize() int32 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+func (x *IM_Msg_ContentType_File) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *IM_Msg_ContentType_File) GetName() int32 {
+	if x != nil {
+		return x.Name
+	}
+	return 0
+}
+
+type IM_Msg_ContentType_Emoticon struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Content []byte `protobuf:"bytes,1,opt,name=Content,proto3" json:"Content,omitempty"`
+	Name    string `protobuf:"bytes,2,opt,name=Name,proto3" json:"Name,omitempty"` // 名称
+}
+
+func (x *IM_Msg_ContentType_Emoticon) Reset() {
+	*x = IM_Msg_ContentType_Emoticon{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kits_im_proto_pb_im_proto_msgTypes[20]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IM_Msg_ContentType_Emoticon) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IM_Msg_ContentType_Emoticon) ProtoMessage() {}
+
+func (x *IM_Msg_ContentType_Emoticon) ProtoReflect() protoreflect.Message {
+	mi := &file_kits_im_proto_pb_im_proto_msgTypes[20]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IM_Msg_ContentType_Emoticon.ProtoReflect.Descriptor instead.
+func (*IM_Msg_ContentType_Emoticon) Descriptor() ([]byte, []int) {
+	return file_kits_im_proto_pb_im_proto_rawDescGZIP(), []int{0, 0, 0, 5}
+}
+
+func (x *IM_Msg_ContentType_Emoticon) GetContent() []byte {
 	if x != nil {
 		return x.Content
 	}
 	return nil
 }
 
-func (x *IM_Msg_Content_Emoticon) GetName() string {
+func (x *IM_Msg_ContentType_Emoticon) GetName() string {
 	if x != nil {
 		return x.Name
 	}
@@ -768,73 +1402,130 @@ var File_kits_im_proto_pb_im_proto protoreflect.FileDescriptor
 var file_kits_im_proto_pb_im_proto_rawDesc = []byte{
 	0x0a, 0x19, 0x6b, 0x69, 0x74, 0x73, 0x2f, 0x69, 0x6d, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f,
 	0x70, 0x62, 0x2f, 0x69, 0x6d, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x02, 0x70, 0x62, 0x22,
-	0xfa, 0x07, 0x0a, 0x02, 0x49, 0x4d, 0x1a, 0xf3, 0x07, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x1a, 0x88,
-	0x04, 0x0a, 0x04, 0x42, 0x6f, 0x64, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x4d, 0x73, 0x67, 0x49, 0x64,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x4d, 0x73, 0x67, 0x49, 0x64, 0x12, 0x14, 0x0a,
-	0x05, 0x53, 0x65, 0x71, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x53, 0x65,
-	0x71, 0x49, 0x44, 0x12, 0x0e, 0x0a, 0x02, 0x54, 0x6f, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x02, 0x54, 0x6f, 0x12, 0x2d, 0x0a, 0x04, 0x54, 0x65, 0x78, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x17, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x43, 0x6f,
-	0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2e, 0x54, 0x65, 0x78, 0x74, 0x48, 0x00, 0x52, 0x04, 0x54, 0x65,
-	0x78, 0x74, 0x12, 0x30, 0x0a, 0x05, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x18, 0x05, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x18, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x43, 0x6f,
-	0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2e, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x48, 0x00, 0x52, 0x05, 0x56,
-	0x69, 0x64, 0x65, 0x6f, 0x12, 0x30, 0x0a, 0x05, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x18, 0x06, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e,
-	0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2e, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x48, 0x00, 0x52,
-	0x05, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x12, 0x30, 0x0a, 0x05, 0x56, 0x6f, 0x69, 0x63, 0x65, 0x18,
-	0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73,
-	0x67, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2e, 0x56, 0x6f, 0x69, 0x63, 0x65, 0x48,
-	0x00, 0x52, 0x05, 0x56, 0x6f, 0x69, 0x63, 0x65, 0x12, 0x2d, 0x0a, 0x04, 0x46, 0x69, 0x6c, 0x65,
-	0x18, 0x08, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d,
-	0x73, 0x67, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x48,
-	0x00, 0x52, 0x04, 0x46, 0x69, 0x6c, 0x65, 0x12, 0x39, 0x0a, 0x08, 0x45, 0x6d, 0x6f, 0x74, 0x69,
-	0x63, 0x6f, 0x6e, 0x18, 0x09, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x70, 0x62, 0x2e, 0x49,
-	0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2e, 0x45, 0x6d,
-	0x6f, 0x74, 0x69, 0x63, 0x6f, 0x6e, 0x48, 0x00, 0x52, 0x08, 0x45, 0x6d, 0x6f, 0x74, 0x69, 0x63,
-	0x6f, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x46, 0x72, 0x6f, 0x6d, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x04, 0x46, 0x72, 0x6f, 0x6d, 0x12, 0x14, 0x0a, 0x05, 0x46, 0x4e, 0x61, 0x6d, 0x65, 0x18,
-	0x0b, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x46, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x20, 0x0a, 0x0b,
-	0x46, 0x48, 0x65, 0x61, 0x64, 0x49, 0x6d, 0x67, 0x75, 0x72, 0x6c, 0x18, 0x0c, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x0b, 0x46, 0x48, 0x65, 0x61, 0x64, 0x49, 0x6d, 0x67, 0x75, 0x72, 0x6c, 0x12, 0x12,
-	0x0a, 0x04, 0x46, 0x53, 0x65, 0x78, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x46, 0x53,
-	0x65, 0x78, 0x12, 0x2a, 0x0a, 0x06, 0x54, 0x6f, 0x54, 0x79, 0x70, 0x65, 0x18, 0x0e, 0x20, 0x01,
-	0x28, 0x0e, 0x32, 0x12, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x54,
-	0x6f, 0x54, 0x79, 0x70, 0x65, 0x73, 0x52, 0x06, 0x54, 0x6f, 0x54, 0x79, 0x70, 0x65, 0x42, 0x09,
-	0x0a, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x1a, 0xc3, 0x03, 0x0a, 0x07, 0x43, 0x6f,
-	0x6e, 0x74, 0x65, 0x6e, 0x74, 0x1a, 0x20, 0x0a, 0x04, 0x54, 0x65, 0x78, 0x74, 0x12, 0x18, 0x0a,
-	0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07,
-	0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x1a, 0x59, 0x0a, 0x05, 0x56, 0x69, 0x64, 0x65, 0x6f,
-	0x12, 0x0e, 0x0a, 0x02, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x49, 0x44,
-	0x12, 0x12, 0x0a, 0x04, 0x53, 0x69, 0x7a, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04,
-	0x53, 0x69, 0x7a, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18,
-	0x05, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x12, 0x12,
-	0x0a, 0x04, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x4e, 0x61,
-	0x6d, 0x65, 0x1a, 0x87, 0x01, 0x0a, 0x05, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x12, 0x0e, 0x0a, 0x02,
-	0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x49, 0x44, 0x12, 0x14, 0x0a, 0x05,
-	0x57, 0x69, 0x64, 0x74, 0x68, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x57, 0x69, 0x64,
-	0x74, 0x68, 0x12, 0x16, 0x0a, 0x06, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x03, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x06, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x53, 0x69,
-	0x7a, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x53, 0x69, 0x7a, 0x65, 0x12, 0x18,
-	0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0c, 0x52,
-	0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x4e, 0x61, 0x6d, 0x65,
-	0x18, 0x06, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x4e, 0x61, 0x6d, 0x65, 0x1a, 0x21, 0x0a, 0x05,
-	0x56, 0x6f, 0x69, 0x63, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x1a,
-	0x54, 0x0a, 0x04, 0x46, 0x69, 0x6c, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x44, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x04, 0x52, 0x02, 0x49, 0x44, 0x12, 0x12, 0x0a, 0x04, 0x53, 0x69, 0x7a, 0x65, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x53, 0x69, 0x7a, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x54,
-	0x79, 0x70, 0x65, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x54, 0x79, 0x70, 0x65,
-	0x73, 0x12, 0x12, 0x0a, 0x04, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52,
-	0x04, 0x4e, 0x61, 0x6d, 0x65, 0x1a, 0x38, 0x0a, 0x08, 0x45, 0x6d, 0x6f, 0x74, 0x69, 0x63, 0x6f,
-	0x6e, 0x12, 0x18, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x0c, 0x52, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x4e,
-	0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x4e, 0x61, 0x6d, 0x65, 0x22,
-	0x1b, 0x0a, 0x07, 0x54, 0x6f, 0x54, 0x79, 0x70, 0x65, 0x73, 0x12, 0x07, 0x0a, 0x03, 0x54, 0x6f,
-	0x43, 0x10, 0x00, 0x12, 0x07, 0x0a, 0x03, 0x54, 0x6f, 0x47, 0x10, 0x01, 0x42, 0x2a, 0x5a, 0x28,
-	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f, 0x75, 0x62, 0x6c,
-	0x65, 0x6d, 0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x6b, 0x69, 0x74, 0x73, 0x2f, 0x69, 0x6d, 0x2f,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x89, 0x0f, 0x0a, 0x02, 0x49, 0x4d, 0x1a, 0xb8, 0x0c, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x1a, 0xe9,
+	0x03, 0x0a, 0x0b, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x54, 0x79, 0x70, 0x65, 0x1a, 0x20,
+	0x0a, 0x04, 0x54, 0x65, 0x78, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e,
+	0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74,
+	0x1a, 0x6f, 0x0a, 0x05, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x44, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x49, 0x44, 0x12, 0x12, 0x0a, 0x04, 0x4e, 0x61, 0x6d,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x12, 0x0a,
+	0x04, 0x53, 0x69, 0x7a, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x53, 0x69, 0x7a,
+	0x65, 0x12, 0x1c, 0x0a, 0x09, 0x54, 0x68, 0x75, 0x6d, 0x62, 0x6e, 0x61, 0x69, 0x6c, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x0c, 0x52, 0x09, 0x54, 0x68, 0x75, 0x6d, 0x62, 0x6e, 0x61, 0x69, 0x6c, 0x12,
+	0x10, 0x0a, 0x03, 0x55, 0x72, 0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x55, 0x72,
+	0x6c, 0x1a, 0x9d, 0x01, 0x0a, 0x05, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x49,
+	0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x49, 0x44, 0x12, 0x14, 0x0a, 0x05, 0x57,
+	0x69, 0x64, 0x74, 0x68, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x57, 0x69, 0x64, 0x74,
+	0x68, 0x12, 0x16, 0x0a, 0x06, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x06, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x53, 0x69, 0x7a,
+	0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x53, 0x69, 0x7a, 0x65, 0x12, 0x1c, 0x0a,
+	0x09, 0x54, 0x68, 0x75, 0x6d, 0x62, 0x6e, 0x61, 0x69, 0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0c,
+	0x52, 0x09, 0x54, 0x68, 0x75, 0x6d, 0x62, 0x6e, 0x61, 0x69, 0x6c, 0x12, 0x12, 0x0a, 0x04, 0x4e,
+	0x61, 0x6d, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x4e, 0x61, 0x6d, 0x65, 0x12,
+	0x10, 0x0a, 0x03, 0x55, 0x72, 0x6c, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x55, 0x72,
+	0x6c, 0x1a, 0x19, 0x0a, 0x05, 0x56, 0x6f, 0x69, 0x63, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x55, 0x72,
+	0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x55, 0x72, 0x6c, 0x1a, 0x52, 0x0a, 0x04,
+	0x46, 0x69, 0x6c, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04,
+	0x52, 0x02, 0x49, 0x44, 0x12, 0x12, 0x0a, 0x04, 0x53, 0x69, 0x7a, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x05, 0x52, 0x04, 0x53, 0x69, 0x7a, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x54, 0x79, 0x70, 0x65,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x54, 0x79, 0x70, 0x65, 0x12, 0x12, 0x0a, 0x04,
+	0x4e, 0x61, 0x6d, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x4e, 0x61, 0x6d, 0x65,
+	0x1a, 0x38, 0x0a, 0x08, 0x45, 0x6d, 0x6f, 0x74, 0x69, 0x63, 0x6f, 0x6e, 0x12, 0x18, 0x0a, 0x07,
+	0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x43,
+	0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x4e, 0x61, 0x6d, 0x65, 0x1a, 0xe3, 0x03, 0x0a, 0x07, 0x43,
+	0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x04, 0x52, 0x02, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x53, 0x65, 0x71, 0x49, 0x44, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x53, 0x65, 0x71, 0x49, 0x44, 0x12, 0x0e, 0x0a, 0x02,
+	0x54, 0x6f, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x54, 0x6f, 0x12, 0x12, 0x0a, 0x04,
+	0x46, 0x72, 0x6f, 0x6d, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x46, 0x72, 0x6f, 0x6d,
+	0x12, 0x31, 0x0a, 0x04, 0x54, 0x65, 0x78, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1b,
+	0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65,
+	0x6e, 0x74, 0x54, 0x79, 0x70, 0x65, 0x2e, 0x54, 0x65, 0x78, 0x74, 0x48, 0x00, 0x52, 0x04, 0x54,
+	0x65, 0x78, 0x74, 0x12, 0x34, 0x0a, 0x05, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x18, 0x06, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x43,
+	0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x54, 0x79, 0x70, 0x65, 0x2e, 0x56, 0x69, 0x64, 0x65, 0x6f,
+	0x48, 0x00, 0x52, 0x05, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x12, 0x34, 0x0a, 0x05, 0x49, 0x6d, 0x61,
+	0x67, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d,
+	0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x54, 0x79, 0x70, 0x65,
+	0x2e, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x48, 0x00, 0x52, 0x05, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x12,
+	0x34, 0x0a, 0x05, 0x56, 0x6f, 0x69, 0x63, 0x65, 0x18, 0x08, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c,
+	0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65,
+	0x6e, 0x74, 0x54, 0x79, 0x70, 0x65, 0x2e, 0x56, 0x6f, 0x69, 0x63, 0x65, 0x48, 0x00, 0x52, 0x05,
+	0x56, 0x6f, 0x69, 0x63, 0x65, 0x12, 0x31, 0x0a, 0x04, 0x46, 0x69, 0x6c, 0x65, 0x18, 0x09, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e,
+	0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x54, 0x79, 0x70, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65,
+	0x48, 0x00, 0x52, 0x04, 0x46, 0x69, 0x6c, 0x65, 0x12, 0x3d, 0x0a, 0x08, 0x45, 0x6d, 0x6f, 0x74,
+	0x69, 0x63, 0x6f, 0x6e, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x70, 0x62, 0x2e,
+	0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x54, 0x79,
+	0x70, 0x65, 0x2e, 0x45, 0x6d, 0x6f, 0x74, 0x69, 0x63, 0x6f, 0x6e, 0x48, 0x00, 0x52, 0x08, 0x45,
+	0x6d, 0x6f, 0x74, 0x69, 0x63, 0x6f, 0x6e, 0x12, 0x26, 0x0a, 0x05, 0x47, 0x72, 0x6f, 0x75, 0x70,
+	0x18, 0x0b, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x10, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d,
+	0x73, 0x67, 0x2e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x05, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x12,
+	0x14, 0x0a, 0x05, 0x54, 0x6f, 0x70, 0x69, 0x63, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05,
+	0x54, 0x6f, 0x70, 0x69, 0x63, 0x42, 0x09, 0x0a, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64,
+	0x1a, 0x32, 0x0a, 0x04, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x2a, 0x0a, 0x06, 0x56, 0x61, 0x6c, 0x75,
+	0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d,
+	0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x52, 0x06, 0x56, 0x61,
+	0x6c, 0x75, 0x65, 0x73, 0x1a, 0x75, 0x0a, 0x0f, 0x41, 0x63, 0x6b, 0x4c, 0x69, 0x73, 0x74, 0x52,
+	0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x64, 0x12, 0x34, 0x0a, 0x09, 0x53, 0x75, 0x63, 0x63, 0x65,
+	0x73, 0x73, 0x65, 0x64, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x70, 0x62, 0x2e,
+	0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x41, 0x63, 0x6b, 0x52, 0x65, 0x63, 0x65, 0x69, 0x76,
+	0x65, 0x64, 0x52, 0x09, 0x53, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x65, 0x64, 0x12, 0x2c, 0x0a,
+	0x06, 0x46, 0x61, 0x69, 0x6c, 0x65, 0x64, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x14, 0x2e,
+	0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x41, 0x63, 0x6b, 0x46, 0x61, 0x69,
+	0x6c, 0x65, 0x64, 0x52, 0x06, 0x46, 0x61, 0x69, 0x6c, 0x65, 0x64, 0x1a, 0x3d, 0x0a, 0x0d, 0x41,
+	0x63, 0x6b, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x61, 0x64, 0x65, 0x64, 0x12, 0x2c, 0x0a, 0x06,
+	0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x70,
+	0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x41, 0x63, 0x6b, 0x52, 0x65, 0x61, 0x64,
+	0x65, 0x64, 0x52, 0x06, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x1a, 0x43, 0x0a, 0x10, 0x41, 0x63,
+	0x6b, 0x4c, 0x69, 0x73, 0x74, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x72, 0x6d, 0x65, 0x64, 0x12, 0x2f,
+	0x0a, 0x06, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x17,
+	0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x41, 0x63, 0x6b, 0x43, 0x6f,
+	0x6e, 0x66, 0x69, 0x72, 0x6d, 0x65, 0x64, 0x52, 0x06, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x1a,
+	0x4f, 0x0a, 0x0b, 0x41, 0x63, 0x6b, 0x52, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x64, 0x12, 0x0e,
+	0x0a, 0x02, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x49, 0x64, 0x12, 0x14,
+	0x0a, 0x05, 0x53, 0x65, 0x71, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x53,
+	0x65, 0x71, 0x49, 0x44, 0x12, 0x1a, 0x0a, 0x08, 0x4e, 0x65, 0x77, 0x53, 0x65, 0x71, 0x49, 0x44,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x08, 0x4e, 0x65, 0x77, 0x53, 0x65, 0x71, 0x49, 0x44,
+	0x1a, 0x5b, 0x0a, 0x09, 0x41, 0x63, 0x6b, 0x46, 0x61, 0x69, 0x6c, 0x65, 0x64, 0x12, 0x14, 0x0a,
+	0x05, 0x53, 0x65, 0x71, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x53, 0x65,
+	0x71, 0x49, 0x44, 0x12, 0x18, 0x0a, 0x07, 0x45, 0x72, 0x72, 0x43, 0x6f, 0x64, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x45, 0x72, 0x72, 0x43, 0x6f, 0x64, 0x65, 0x12, 0x1e, 0x0a,
+	0x0a, 0x45, 0x72, 0x72, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0a, 0x45, 0x72, 0x72, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x1a, 0x31, 0x0a,
+	0x09, 0x41, 0x63, 0x6b, 0x52, 0x65, 0x61, 0x64, 0x65, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x53, 0x65,
+	0x71, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x53, 0x65, 0x71, 0x49, 0x44,
+	0x1a, 0x34, 0x0a, 0x0c, 0x41, 0x63, 0x6b, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x72, 0x6d, 0x65, 0x64,
+	0x12, 0x0e, 0x0a, 0x02, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x49, 0x64,
+	0x12, 0x14, 0x0a, 0x05, 0x53, 0x65, 0x71, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52,
+	0x05, 0x53, 0x65, 0x71, 0x49, 0x44, 0x22, 0x19, 0x0a, 0x05, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x12,
+	0x07, 0x0a, 0x03, 0x54, 0x6f, 0x43, 0x10, 0x00, 0x12, 0x07, 0x0a, 0x03, 0x54, 0x6f, 0x47, 0x10,
+	0x01, 0x1a, 0x33, 0x0a, 0x04, 0x53, 0x65, 0x6e, 0x64, 0x12, 0x2b, 0x0a, 0x08, 0x4d, 0x65, 0x73,
+	0x73, 0x61, 0x67, 0x65, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x70, 0x62,
+	0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x08, 0x4d, 0x65,
+	0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x1a, 0x2b, 0x0a, 0x04, 0x50, 0x75, 0x6c, 0x6c, 0x12, 0x23,
+	0x0a, 0x04, 0x4c, 0x69, 0x73, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x70,
+	0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x04, 0x4c,
+	0x69, 0x73, 0x74, 0x1a, 0xe5, 0x01, 0x0a, 0x06, 0x4e, 0x6f, 0x74, 0x69, 0x66, 0x79, 0x12, 0x38,
+	0x0a, 0x08, 0x52, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x1a, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x41, 0x63, 0x6b,
+	0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x64, 0x48, 0x00, 0x52, 0x08,
+	0x52, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x64, 0x12, 0x32, 0x0a, 0x06, 0x52, 0x65, 0x61, 0x64,
+	0x65, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d,
+	0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x41, 0x63, 0x6b, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x61, 0x64,
+	0x65, 0x64, 0x48, 0x00, 0x52, 0x06, 0x52, 0x65, 0x61, 0x64, 0x65, 0x64, 0x12, 0x3b, 0x0a, 0x09,
+	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x72, 0x6d, 0x65, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x1b, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e, 0x4d, 0x73, 0x67, 0x2e, 0x41, 0x63, 0x6b, 0x4c,
+	0x69, 0x73, 0x74, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x72, 0x6d, 0x65, 0x64, 0x48, 0x00, 0x52, 0x09,
+	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x72, 0x6d, 0x65, 0x64, 0x12, 0x25, 0x0a, 0x04, 0x4c, 0x69, 0x73,
+	0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x70, 0x62, 0x2e, 0x49, 0x4d, 0x2e,
+	0x4d, 0x73, 0x67, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x48, 0x00, 0x52, 0x04, 0x4c, 0x69, 0x73, 0x74,
+	0x42, 0x09, 0x0a, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x42, 0x2a, 0x5a, 0x28, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f, 0x75, 0x62, 0x6c, 0x65,
+	0x6d, 0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x6b, 0x69, 0x74, 0x73, 0x2f, 0x69, 0x6d, 0x2f, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -850,33 +1541,55 @@ func file_kits_im_proto_pb_im_proto_rawDescGZIP() []byte {
 }
 
 var file_kits_im_proto_pb_im_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_kits_im_proto_pb_im_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_kits_im_proto_pb_im_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_kits_im_proto_pb_im_proto_goTypes = []interface{}{
-	(IM_Msg_ToTypes)(0),             // 0: pb.IM.Msg.ToTypes
-	(*IM)(nil),                      // 1: pb.IM
-	(*IM_Msg)(nil),                  // 2: pb.IM.Msg
-	(*IM_Msg_Body)(nil),             // 3: pb.IM.Msg.Body
-	(*IM_Msg_Content)(nil),          // 4: pb.IM.Msg.Content
-	(*IM_Msg_Content_Text)(nil),     // 5: pb.IM.Msg.Content.Text
-	(*IM_Msg_Content_Video)(nil),    // 6: pb.IM.Msg.Content.Video
-	(*IM_Msg_Content_Image)(nil),    // 7: pb.IM.Msg.Content.Image
-	(*IM_Msg_Content_Voice)(nil),    // 8: pb.IM.Msg.Content.Voice
-	(*IM_Msg_Content_File)(nil),     // 9: pb.IM.Msg.Content.File
-	(*IM_Msg_Content_Emoticon)(nil), // 10: pb.IM.Msg.Content.Emoticon
+	(IM_Msg_Group)(0),                   // 0: pb.IM.Msg.Group
+	(*IM)(nil),                          // 1: pb.IM
+	(*IM_Msg)(nil),                      // 2: pb.IM.Msg
+	(*IM_Send)(nil),                     // 3: pb.IM.Send
+	(*IM_Pull)(nil),                     // 4: pb.IM.Pull
+	(*IM_Notify)(nil),                   // 5: pb.IM.Notify
+	(*IM_Msg_ContentType)(nil),          // 6: pb.IM.Msg.ContentType
+	(*IM_Msg_Content)(nil),              // 7: pb.IM.Msg.Content
+	(*IM_Msg_List)(nil),                 // 8: pb.IM.Msg.List
+	(*IM_Msg_AckListReceived)(nil),      // 9: pb.IM.Msg.AckListReceived
+	(*IM_Msg_AckListReaded)(nil),        // 10: pb.IM.Msg.AckListReaded
+	(*IM_Msg_AckListConfirmed)(nil),     // 11: pb.IM.Msg.AckListConfirmed
+	(*IM_Msg_AckReceived)(nil),          // 12: pb.IM.Msg.AckReceived
+	(*IM_Msg_AckFailed)(nil),            // 13: pb.IM.Msg.AckFailed
+	(*IM_Msg_AckReaded)(nil),            // 14: pb.IM.Msg.AckReaded
+	(*IM_Msg_AckConfirmed)(nil),         // 15: pb.IM.Msg.AckConfirmed
+	(*IM_Msg_ContentType_Text)(nil),     // 16: pb.IM.Msg.ContentType.Text
+	(*IM_Msg_ContentType_Video)(nil),    // 17: pb.IM.Msg.ContentType.Video
+	(*IM_Msg_ContentType_Image)(nil),    // 18: pb.IM.Msg.ContentType.Image
+	(*IM_Msg_ContentType_Voice)(nil),    // 19: pb.IM.Msg.ContentType.Voice
+	(*IM_Msg_ContentType_File)(nil),     // 20: pb.IM.Msg.ContentType.File
+	(*IM_Msg_ContentType_Emoticon)(nil), // 21: pb.IM.Msg.ContentType.Emoticon
 }
 var file_kits_im_proto_pb_im_proto_depIdxs = []int32{
-	5,  // 0: pb.IM.Msg.Body.Text:type_name -> pb.IM.Msg.Content.Text
-	6,  // 1: pb.IM.Msg.Body.Video:type_name -> pb.IM.Msg.Content.Video
-	7,  // 2: pb.IM.Msg.Body.Image:type_name -> pb.IM.Msg.Content.Image
-	8,  // 3: pb.IM.Msg.Body.Voice:type_name -> pb.IM.Msg.Content.Voice
-	9,  // 4: pb.IM.Msg.Body.File:type_name -> pb.IM.Msg.Content.File
-	10, // 5: pb.IM.Msg.Body.Emoticon:type_name -> pb.IM.Msg.Content.Emoticon
-	0,  // 6: pb.IM.Msg.Body.ToType:type_name -> pb.IM.Msg.ToTypes
-	7,  // [7:7] is the sub-list for method output_type
-	7,  // [7:7] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	8,  // 0: pb.IM.Send.Messages:type_name -> pb.IM.Msg.List
+	8,  // 1: pb.IM.Pull.List:type_name -> pb.IM.Msg.List
+	9,  // 2: pb.IM.Notify.Received:type_name -> pb.IM.Msg.AckListReceived
+	10, // 3: pb.IM.Notify.Readed:type_name -> pb.IM.Msg.AckListReaded
+	11, // 4: pb.IM.Notify.Confirmed:type_name -> pb.IM.Msg.AckListConfirmed
+	8,  // 5: pb.IM.Notify.List:type_name -> pb.IM.Msg.List
+	16, // 6: pb.IM.Msg.Content.Text:type_name -> pb.IM.Msg.ContentType.Text
+	17, // 7: pb.IM.Msg.Content.Video:type_name -> pb.IM.Msg.ContentType.Video
+	18, // 8: pb.IM.Msg.Content.Image:type_name -> pb.IM.Msg.ContentType.Image
+	19, // 9: pb.IM.Msg.Content.Voice:type_name -> pb.IM.Msg.ContentType.Voice
+	20, // 10: pb.IM.Msg.Content.File:type_name -> pb.IM.Msg.ContentType.File
+	21, // 11: pb.IM.Msg.Content.Emoticon:type_name -> pb.IM.Msg.ContentType.Emoticon
+	0,  // 12: pb.IM.Msg.Content.Group:type_name -> pb.IM.Msg.Group
+	7,  // 13: pb.IM.Msg.List.Values:type_name -> pb.IM.Msg.Content
+	12, // 14: pb.IM.Msg.AckListReceived.Successed:type_name -> pb.IM.Msg.AckReceived
+	13, // 15: pb.IM.Msg.AckListReceived.Failed:type_name -> pb.IM.Msg.AckFailed
+	14, // 16: pb.IM.Msg.AckListReaded.Values:type_name -> pb.IM.Msg.AckReaded
+	15, // 17: pb.IM.Msg.AckListConfirmed.Values:type_name -> pb.IM.Msg.AckConfirmed
+	18, // [18:18] is the sub-list for method output_type
+	18, // [18:18] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_kits_im_proto_pb_im_proto_init() }
@@ -910,7 +1623,7 @@ func file_kits_im_proto_pb_im_proto_init() {
 			}
 		}
 		file_kits_im_proto_pb_im_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*IM_Msg_Body); i {
+			switch v := v.(*IM_Send); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -922,7 +1635,7 @@ func file_kits_im_proto_pb_im_proto_init() {
 			}
 		}
 		file_kits_im_proto_pb_im_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*IM_Msg_Content); i {
+			switch v := v.(*IM_Pull); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -934,7 +1647,7 @@ func file_kits_im_proto_pb_im_proto_init() {
 			}
 		}
 		file_kits_im_proto_pb_im_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*IM_Msg_Content_Text); i {
+			switch v := v.(*IM_Notify); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -946,7 +1659,7 @@ func file_kits_im_proto_pb_im_proto_init() {
 			}
 		}
 		file_kits_im_proto_pb_im_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*IM_Msg_Content_Video); i {
+			switch v := v.(*IM_Msg_ContentType); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -958,7 +1671,7 @@ func file_kits_im_proto_pb_im_proto_init() {
 			}
 		}
 		file_kits_im_proto_pb_im_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*IM_Msg_Content_Image); i {
+			switch v := v.(*IM_Msg_Content); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -970,7 +1683,7 @@ func file_kits_im_proto_pb_im_proto_init() {
 			}
 		}
 		file_kits_im_proto_pb_im_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*IM_Msg_Content_Voice); i {
+			switch v := v.(*IM_Msg_List); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -982,7 +1695,7 @@ func file_kits_im_proto_pb_im_proto_init() {
 			}
 		}
 		file_kits_im_proto_pb_im_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*IM_Msg_Content_File); i {
+			switch v := v.(*IM_Msg_AckListReceived); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -994,7 +1707,139 @@ func file_kits_im_proto_pb_im_proto_init() {
 			}
 		}
 		file_kits_im_proto_pb_im_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*IM_Msg_Content_Emoticon); i {
+			switch v := v.(*IM_Msg_AckListReaded); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_im_proto_pb_im_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IM_Msg_AckListConfirmed); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_im_proto_pb_im_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IM_Msg_AckReceived); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_im_proto_pb_im_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IM_Msg_AckFailed); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_im_proto_pb_im_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IM_Msg_AckReaded); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_im_proto_pb_im_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IM_Msg_AckConfirmed); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_im_proto_pb_im_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IM_Msg_ContentType_Text); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_im_proto_pb_im_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IM_Msg_ContentType_Video); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_im_proto_pb_im_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IM_Msg_ContentType_Image); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_im_proto_pb_im_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IM_Msg_ContentType_Voice); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_im_proto_pb_im_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IM_Msg_ContentType_File); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kits_im_proto_pb_im_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IM_Msg_ContentType_Emoticon); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1006,13 +1851,19 @@ func file_kits_im_proto_pb_im_proto_init() {
 			}
 		}
 	}
-	file_kits_im_proto_pb_im_proto_msgTypes[2].OneofWrappers = []interface{}{
-		(*IM_Msg_Body_Text)(nil),
-		(*IM_Msg_Body_Video)(nil),
-		(*IM_Msg_Body_Image)(nil),
-		(*IM_Msg_Body_Voice)(nil),
-		(*IM_Msg_Body_File)(nil),
-		(*IM_Msg_Body_Emoticon)(nil),
+	file_kits_im_proto_pb_im_proto_msgTypes[4].OneofWrappers = []interface{}{
+		(*IM_Notify_Received)(nil),
+		(*IM_Notify_Readed)(nil),
+		(*IM_Notify_Confirmed)(nil),
+		(*IM_Notify_List)(nil),
+	}
+	file_kits_im_proto_pb_im_proto_msgTypes[6].OneofWrappers = []interface{}{
+		(*IM_Msg_Content_Text)(nil),
+		(*IM_Msg_Content_Video)(nil),
+		(*IM_Msg_Content_Image)(nil),
+		(*IM_Msg_Content_Voice)(nil),
+		(*IM_Msg_Content_File)(nil),
+		(*IM_Msg_Content_Emoticon)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1020,7 +1871,7 @@ func file_kits_im_proto_pb_im_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_kits_im_proto_pb_im_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   10,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

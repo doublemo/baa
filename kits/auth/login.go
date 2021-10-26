@@ -152,7 +152,7 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	}
 
 	// 更新用户在线状态
-	noc, err := updateUserStatus(&usrtpb.USRT_User{ID: account.ID, LoginType: "password", Addr: sd.Endpoint().ID()})
+	noc, err := updateUserStatus(&usrtpb.USRT_User{ID: account.ID, Type: "password", Value: sd.Endpoint().ID()})
 	if err != nil || len(noc) > 0 {
 		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, "change status falied"), nil
 	}

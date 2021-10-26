@@ -11,4 +11,22 @@ message SNID {
    message Reply {
       repeated uint64 Values = 1;
    }
+
+   message Clear {
+      message Request {
+         repeated string K = 1;
+      }
+
+      message Reply {
+         bool OK = 1;
+      }
+   }
+
+   message MoreRequest {
+      repeated Request Request = 1;
+   }
+
+   message MoreReply {
+      map<string, Reply> Values  = 1;
+   }
 }

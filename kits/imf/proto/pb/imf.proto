@@ -4,66 +4,29 @@ option go_package = "github.com/doublemo/baa/kits/imf/proto/pb";
 
 message IMF {
     message Request {
-        oneof Payload {
-            Content.Text Text = 1;
-            Content.Video Video = 2;
-            Content.Image Image = 3;
-            Content.Voice Voice = 4;
-            Content.File File = 5;
-        }
+        repeated Content Values = 1;
+    }
 
-        uint64 MsgId = 6;
-        string Topic = 7;
-        int32  ToType = 8;
-        bool   RequiredReply = 9; // 是否必须回复。不管对错都要回复 否则，只有当消息不有问题时才回复
-        uint64 SeqId = 10;
+    message Response {
+        bool Ok = 1;
+        Content Content = 2;
     }
 
     message Reply {
-        bool  OK = 1;
-        oneof Payload {
-            Content.Text Text = 2;
-            Content.Video Video = 3;
-            Content.Image Image = 4;
-            Content.Voice Voice = 5;
-            Content.File File = 6;
-        }
-
-        uint64 MsgId = 7;
-        string Topic = 8;
-        int32  ToType = 9;
-        uint64 SeqId = 10;
+        repeated Response Values = 1;
     }
 
-    message Content {
-        message Text {
-            string Content = 1;
-        }
+    message Content{
+        uint64 MsgId = 1;
+        repeated uint64 SeqId = 2;
+        string Topic = 3;
+        int32  Group = 4;
+        string Content = 5;
+        uint64 To = 6;
+        uint64 From = 7;
+        string ContentType = 9;
+    }
 
-        message Video {
-            uint64 ID     = 1; // 
-            int32  Name   = 2; // 名称
-            string Url    = 3;
-        }
-
-        message Image {
-            uint64 ID     = 1; // 
-            bytes  Content= 2; // 缩略图
-            int32  Name   = 3; // 名称
-            string Url    = 4;
-        }
-
-        message Voice {
-            bytes Content  = 1;
-        }
-
-        message File {
-            uint64 ID     = 1; // 
-            string Url    = 2;
-            string Types  = 3; // 
-            int32  Name   = 4; // 图大小
-        }
-    } 
     message DirtyWords {
         message Request {
             oneof Payload {

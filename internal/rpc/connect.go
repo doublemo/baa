@@ -40,7 +40,14 @@ func makePolicy(c conf.RPCClient) string {
 			"serviceName" :""
 		},
 		"methodConfig": [{
-			"name": [{"service": "sfu"}],
+			"name": [
+				{"service": "sfu"},
+				{"service": "auth"},
+				{"service": "snid"},
+				{"service": "im"},
+				{"service": "usrt"},
+				{"service": "imf"}
+			],
 			"waitForReady": true,
 			"timeout":"1s",
 			"maxRequestMessageBytes":10240,

@@ -2,6 +2,7 @@ package sd
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/doublemo/baa/cores/sd"
@@ -11,31 +12,12 @@ import (
 )
 
 var (
-	endpoint   sd.Endpoint
-	endpointer sd.Endpointer
-	client     etcdv3.Client
-	prefix     string
+	endpoint         sd.Endpoint
+	endpointer       sd.Endpointer
+	client           etcdv3.Client
+	prefix           string
+	ErrEndpointerNil = errors.New("ErrEndpointerNil")
 )
-
-//Endpoint  获取节点信息
-func Endpoint() sd.Endpoint {
-	return endpoint
-}
-
-// Endpointer 获取节点发现
-func Endpointer() sd.Endpointer {
-	return endpointer
-}
-
-// Client 获取etcdv3 客户端
-func Client() etcdv3.Client {
-	return client
-}
-
-// Prefix 获取连接前缀
-func Prefix() string {
-	return prefix
-}
 
 // Init 初始化节点信息
 func Init(etcd conf.Etcd, e sd.Endpoint) error {
@@ -61,4 +43,33 @@ func Init(etcd conf.Etcd, e sd.Endpoint) error {
 	endpointer = sd.NewEndpointer(instancer)
 	endpoint = e
 	return nil
+}
+
+//Endpoint  获取节点信息
+func Endpoint() sd.Endpoint {
+	return endpoint
+}
+
+// Endpointer 获取节点发现
+func Endpointer() sd.Endpointer {
+	return endpointer
+}
+
+// Client 获取etcdv3 客户端
+func Client() etcdv3.Client {
+	return client
+}
+
+// Prefix 获取连接前缀
+func Prefix() string {
+	return prefix
+}
+
+// Endpoints 获取所有节点
+func Endpoints() ([]sd.Endpoint, error) {
+	if endpointer == nil {
+		return nil, ErrEndpointerNil
+	}
+
+	return endpointer.Endpoints()
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/kits/im/mime"
 	"github.com/doublemo/baa/kits/imf/errcode"
 	"github.com/doublemo/baa/kits/imf/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
@@ -35,16 +36,28 @@ func checkFromNats(req *corespb.Request, c FilterConfig) (*corespb.Response, err
 		Header:  req.Header,
 	}
 
-	resp, ok, err := check(req, &frame, c)
-	if err != nil {
-		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	ret := &pb.IMF_Reply{
+		Values: make([]*pb.IMF_Response, 0),
 	}
 
-	if frame.RequiredReply || ok {
-		return resp, nil
+	for _, value := range frame.Values {
+		resp, err := check(value, c)
+		if err != nil {
+			return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+		}
+
+		if resp.Ok {
+			ret.Values = append(ret.Values, resp)
+		}
 	}
 
-	return nil, nil
+	if len(ret.Values) < 1 {
+		return nil, nil
+	}
+
+	b, _ := grpcproto.Marshal(ret)
+	w.Payload = &corespb.Response_Content{Content: b}
+	return w, nil
 }
 
 func checkFromRPC(req *corespb.Request, c FilterConfig) (*corespb.Response, error) {
@@ -60,24 +73,35 @@ func checkFromRPC(req *corespb.Request, c FilterConfig) (*corespb.Response, erro
 		Header:  req.Header,
 	}
 
-	resp, _, err := check(req, &frame, c)
-	if err != nil {
-		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	ret := &pb.IMF_Reply{
+		Values: make([]*pb.IMF_Response, 0),
 	}
 
-	return resp, nil
+	for _, value := range frame.Values {
+		resp, err := check(value, c)
+		if err != nil {
+			return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+		}
+
+		if resp.Ok {
+			ret.Values = append(ret.Values, resp)
+		}
+	}
+
+	b, _ := grpcproto.Marshal(ret)
+	w.Payload = &corespb.Response_Content{Content: b}
+	return w, nil
 }
 
-func check(req *corespb.Request, frame *pb.IMF_Request, c FilterConfig) (*corespb.Response, bool, error) {
-	switch payload := frame.Payload.(type) {
-	case *pb.IMF_Request_Text:
-		return filterText(req, frame, payload, c)
-
-	case *pb.IMF_Request_Image:
-	case *pb.IMF_Request_Video:
-	case *pb.IMF_Request_Voice:
-	case *pb.IMF_Request_File:
+func check(frame *pb.IMF_Content, c FilterConfig) (*pb.IMF_Response, error) {
+	resp := pb.IMF_Response{}
+	switch frame.ContentType {
+	case mime.Text:
+		text, ok := filterText(frame.Content, c)
+		frame.Content = text
+		resp.Ok = ok
+	default:
+		return nil, errors.New("notsupported")
 	}
-
-	return nil, false, errors.New("notsupported")
+	return &resp, nil
 }

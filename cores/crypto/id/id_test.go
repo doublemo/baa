@@ -4,7 +4,7 @@ import "testing"
 
 func TestID(t *testing.T) {
 	var uid uint64
-	uid = 2
+	uid = 4
 	data, err := Encrypt(uid, []byte("7581BDD8E8DA3839"))
 	if err != nil {
 		t.Fatal(err)
