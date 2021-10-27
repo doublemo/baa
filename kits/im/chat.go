@@ -11,11 +11,16 @@ import (
 	"github.com/doublemo/baa/cores/crypto/id"
 	log "github.com/doublemo/baa/cores/log/level"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/nats"
+	"github.com/doublemo/baa/internal/sd"
+	agentproto "github.com/doublemo/baa/kits/agent/proto"
+	agentpb "github.com/doublemo/baa/kits/agent/proto/pb"
 	"github.com/doublemo/baa/kits/auth/platform"
 	"github.com/doublemo/baa/kits/im/cache"
 	"github.com/doublemo/baa/kits/im/dao"
 	"github.com/doublemo/baa/kits/im/errcode"
 	"github.com/doublemo/baa/kits/im/mime"
+	"github.com/doublemo/baa/kits/im/proto"
 	"github.com/doublemo/baa/kits/im/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 )
@@ -166,11 +171,16 @@ back:
 	msgInspectionReport(msg, ttid, ftid)
 
 	// 推送信息
-	pushMessage(*msg)
+	toMsg := *msg
+	toMsg.SeqId = ftid
+	if err := pushMessage([]byte(c.IDSecret), toMsg); err != nil {
+		log.Error(Logger()).Log("action", "pushMessage", "error", err)
+	}
+
 	return &pb.IM_Msg_AckReceived{
 		Id:       msg.ID,
 		SeqID:    msg.SeqId,
-		NewSeqID: ftid,
+		NewSeqID: ttid,
 	}, nil
 }
 
@@ -241,6 +251,7 @@ func gatherUsersAgent(users ...uint64) (map[uint64][]string, error) {
 	}
 
 	addrs := make(map[uint64][]string)
+	addrsmap := make(map[uint64]map[string]bool)
 	for _, id := range users {
 		infos, ok := userStatus[id]
 		if !ok {
@@ -249,29 +260,124 @@ func gatherUsersAgent(users ...uint64) (map[uint64][]string, error) {
 
 		if _, ok := addrs[id]; !ok {
 			addrs[id] = make([]string, 0)
+			addrsmap[id] = make(map[string]bool)
 		}
 
 		for k, v := range infos {
 			switch k {
-			case platform.PC, platform.Pad, platform.Phone:
-				addrs[id] = append(addrs[id], v)
+			case platform.PC, platform.Pad, platform.Phone, platform.Web:
+				if !addrsmap[id][v] {
+					addrs[id] = append(addrs[id], v)
+					addrsmap[id][v] = true
+				}
 			}
 		}
 	}
 	return addrs, nil
 }
 
-func pushMessage(msg ...dao.Messages) error {
+func pushMessage(idsecret []byte, msg ...dao.Messages) error {
 	users := make([]uint64, len(msg))
 	for i, m := range msg {
 		users[i] = m.To
 	}
 
-	// agents, err := gatherUsersAgent(users...)
-	// if err != nil {
-	// 	return err
-	// }
+	agents, err := gatherUsersAgent(users...)
+	if err != nil {
+		return err
+	}
 
-	// frame := pb.IM_
+	nc := nats.Conn()
+	for _, m := range msg {
+		addrs, ok := agents[m.To]
+		if !ok {
+			continue
+		}
+
+		frame, err := makeMessageToPB(m, idsecret)
+		if err != nil {
+			return err
+		}
+
+		w := &corespb.Response{
+			Command: proto.PushCommand.Int32(),
+			Header:  make(map[string]string),
+		}
+
+		bytes, _ := grpcproto.Marshal(&pb.IM_Notify{Payload: &pb.IM_Notify_List{List: &pb.IM_Msg_List{Values: []*pb.IM_Msg_Content{frame}}}})
+		w.Payload = &corespb.Response_Content{Content: bytes}
+		bytesW, _ := grpcproto.Marshal(w)
+		req := &corespb.Request{
+			Command: agentproto.BroadcastCommand.Int32(),
+			Header:  map[string]string{"service": ServiceName, "addr": sd.Endpoint().Addr(), "id": sd.Endpoint().ID()},
+		}
+
+		req.Payload, _ = grpcproto.Marshal(&agentpb.Agent_Broadcast{
+			Receiver: []string{frame.To},
+			Payload:  bytesW,
+			Command:  agentproto.IM.Int32(),
+		})
+
+		bytesMsg, _ := grpcproto.Marshal(req)
+		for _, addr := range addrs {
+			if err := nc.Publish(addr, bytesMsg); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
+}
+
+func makeMessageToPB(m dao.Messages, secret []byte) (*pb.IM_Msg_Content, error) {
+	frameMsg := pb.IM_Msg_Content{
+		Id:     m.ID,
+		SeqID:  m.SeqId,
+		Group:  pb.IM_Msg_Group(m.Group),
+		Topic:  m.Topic,
+		SendAt: m.CreatedAt.Unix(),
+	}
+	frameMsg.To, _ = id.Encrypt(m.To, secret)
+	frameMsg.From, _ = id.Encrypt(m.From, secret)
+
+	switch m.ContentType {
+	case mime.Text:
+		frameMsg.Payload = &pb.IM_Msg_Content_Text{Text: &pb.IM_Msg_ContentType_Text{Content: m.Content}}
+
+	case mime.Image:
+		content := pb.IM_Msg_Content_Image{}
+		if err := json.Unmarshal([]byte(m.Content), &content); err != nil {
+			return nil, err
+		}
+		frameMsg.Payload = &content
+
+	case mime.Video:
+		content := pb.IM_Msg_Content_Video{}
+		if err := json.Unmarshal([]byte(m.Content), &content); err != nil {
+			return nil, err
+		}
+		frameMsg.Payload = &content
+
+	case mime.Voice:
+		content := pb.IM_Msg_Content_Voice{}
+		if err := json.Unmarshal([]byte(m.Content), &content); err != nil {
+			return nil, err
+		}
+		frameMsg.Payload = &content
+
+	case mime.File:
+		content := pb.IM_Msg_Content_File{}
+		if err := json.Unmarshal([]byte(m.Content), &content); err != nil {
+			return nil, err
+		}
+		frameMsg.Payload = &content
+
+	case mime.Emoticon:
+		content := pb.IM_Msg_Content_Emoticon{}
+		if err := json.Unmarshal([]byte(m.Content), &content); err != nil {
+			return nil, err
+		}
+		frameMsg.Payload = &content
+	}
+
+	return &frameMsg, nil
 }

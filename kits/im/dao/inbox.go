@@ -65,3 +65,8 @@ func WriteInboxC(ctx context.Context, tid, fid uint64, msg *Messages) error {
 	}
 	return nil
 }
+
+// GetInboxMesssage 获取邮件
+func GetInboxMesssage(id uint64) (*Messages, error) {
+	return nil, nil
+}

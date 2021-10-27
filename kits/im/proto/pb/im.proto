@@ -64,6 +64,7 @@ message IM {
             }
             Group Group = 11;
             string Topic = 12;
+            int64 SendAt = 13;
         }
 
         message List {

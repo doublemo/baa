@@ -10,4 +10,7 @@ const (
 
 	// Pad 平板
 	Pad string = "pad"
+
+	// Web 网页
+	Web string = "web"
 )

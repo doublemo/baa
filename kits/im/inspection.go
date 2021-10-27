@@ -59,6 +59,22 @@ func handleMsgInspectionReport(req *corespb.Request) (*corespb.Response, error) 
 	}
 
 	// todo 处理非法的消息
+	for _, value := range frame.Values {
+		if !value.Ok {
+			continue
+		}
+
+		// m := dao.Messages{
+		// 	ID:          value.Content.MsgId,
+		// 	SeqId:       value.Content.SeqId[0],
+		// 	To:          value.Content.To,
+		// 	From:        value.Content.From,
+		// 	Content:     value.Content.Content,
+		// 	ContentType: value.Content.ContentType,
+		// 	Topic:       value.Content.Topic,
+		// }
+	}
+
 	fmt.Println("chek msg :=>", frame)
 	return nil, nil
 }

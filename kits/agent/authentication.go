@@ -19,6 +19,10 @@ func authenticationHookAfter(r *router.Call) {
 
 func authenticationHookDestroy(r *router.Call) {
 	r.OnDestroy(func(peer session.Peer) {
+		if userID, ok := peer.Params("UserID"); ok {
+			session.RemoveDict(userID.(string), peer)
+		}
+
 		accountID, ok := peer.Params("AccountID")
 		if !ok {
 			return
@@ -71,6 +75,7 @@ func onLogin(peer session.Peer, w *corespb.Response) {
 		peer.SetParams("AccountUnionID", payload.Account.UnionID)
 		peer.SetParams("UserID", payload.Account.UserID)
 		peer.SetParams("Token", payload.Account.Token)
+		session.AddDict(payload.Account.UserID, peer)
 
 	default:
 		return

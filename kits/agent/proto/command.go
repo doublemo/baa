@@ -24,4 +24,7 @@ const (
 
 	// KickedOutCommand 踢掉玩家
 	KickedOutCommand coresproto.Command = 4
+
+	// BroadcastCommand 广播消息
+	BroadcastCommand coresproto.Command = 5
 )

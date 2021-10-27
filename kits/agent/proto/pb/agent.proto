@@ -29,4 +29,10 @@ message Agent {
     message KickedOut {
         repeated string PeerID = 1;
     }
+
+    message Broadcast{
+        repeated string Receiver = 1;
+        bytes Payload  = 2;
+        int32 Command  = 3;
+    }
 }

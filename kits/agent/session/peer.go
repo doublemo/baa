@@ -111,17 +111,3 @@ func chain(mws []func(processor PeerMessageProcessor) PeerMessageProcessor, last
 	}
 	return h
 }
-
-// func xN(next PeerMessageProcessor) PeerMessageProcessor {
-// 	return PeerMessageProcessFunc(func(m PeerMessageProcessArgs) {
-// 		fmt.Println("okkkkk---1", m)
-// 		next.Process(m)
-// 	})
-// }
-
-// func xN2(next PeerMessageProcessor) PeerMessageProcessor {
-// 	return PeerMessageProcessFunc(func(m PeerMessageProcessArgs) {
-// 		fmt.Println("okkkkk---2", m)
-// 		next.Process(m)
-// 	})
-// }

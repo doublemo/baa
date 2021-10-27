@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/doublemo/baa/cores/crypto/dh"
+	log "github.com/doublemo/baa/cores/log/level"
 	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	coressd "github.com/doublemo/baa/cores/sd"
@@ -59,6 +60,7 @@ func InitRouter(config RouterConfig) {
 
 	// 注册处理nats订阅的请求
 	nRouter.HandleFunc(proto.KickedOutCommand, kickedOut)
+	nRouter.HandleFunc(proto.BroadcastCommand, broadcast)
 }
 
 func onMessage(peer session.Peer, msg session.PeerMessagePayload) error {
@@ -229,5 +231,42 @@ func kickedOut(req *corespb.Request) (*corespb.Response, error) {
 			m.Close()
 		}
 	}
+	return nil, nil
+}
+
+func broadcast(req *corespb.Request) (*corespb.Response, error) {
+	var frame pb.Agent_Broadcast
+	{
+		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+			return nil, err
+		}
+	}
+
+	var w corespb.Response
+	{
+		if err := grpcproto.Unmarshal(frame.Payload, &w); err != nil {
+			return nil, err
+		}
+	}
+
+	msg, _ := proto.NewResponseBytes(coresproto.Command(frame.Command), &w).Marshal()
+	for _, receiver := range frame.Receiver {
+		peers, ok := session.GetDict(receiver)
+		if !ok {
+			continue
+		}
+
+		for _, id := range peers {
+			peer, ok := session.GetPeer(id)
+			if !ok {
+				continue
+			}
+
+			if err := peer.Send(session.PeerMessagePayload{Channel: session.PeerMessageChannelWebrtc, Data: msg}); err != nil {
+				log.Error(Logger()).Log("action", "broadcast", "error", err)
+			}
+		}
+	}
+
 	return nil, nil
 }
