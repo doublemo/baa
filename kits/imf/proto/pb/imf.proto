@@ -18,13 +18,15 @@ message IMF {
 
     message Content{
         uint64 MsgId = 1;
-        repeated uint64 SeqId = 2;
+        uint64 SeqId = 2;
         string Topic = 3;
         int32  Group = 4;
         string Content = 5;
         uint64 To = 6;
         uint64 From = 7;
         string ContentType = 9;
+        uint64 TSeqId = 10;
+        uint64 FSeqId = 11;
     }
 
     message DirtyWords {

@@ -9,40 +9,41 @@ import (
 )
 
 const (
-	defaultInboxKey         = "inbox"
-	defaultInboxTimelineKey = "timelines"
+	defaultInboxKey        = "inbox"
+	defaultInboxMessageKey = "messages"
 )
 
 // WriteInboxC 写到个人信息箱
-func WriteInboxC(ctx context.Context, tid, fid uint64, msg *Messages) error {
-	tinboxNamer := RDBNamer(defaultInboxKey, strconv.FormatUint(msg.To, 10), strconv.FormatUint(tid, 10))
-	ttimelinesNamer := RDBNamer(defaultInboxTimelineKey, strconv.FormatUint(msg.To, 10))
-	finboxNamer := RDBNamer(defaultInboxKey, strconv.FormatUint(msg.From, 10), strconv.FormatUint(fid, 10))
-	ftimelinesNamer := RDBNamer(defaultInboxTimelineKey, strconv.FormatUint(msg.From, 10))
+func WriteInboxC(ctx context.Context, msg *Messages) error {
+	tinboxNamer := RDBNamer(defaultInboxKey, strconv.FormatUint(msg.To, 10))
+	finboxNamer := RDBNamer(defaultInboxKey, strconv.FormatUint(msg.From, 10))
+	messageNamer := RDBNamer(defaultInboxMessageKey, strconv.FormatUint(msg.ID, 10))
 
-	inboxMessage := make(map[string]interface{})
-	inboxMessage["ID"] = msg.ID
-	inboxMessage["SeqId"] = msg.SeqId
-	inboxMessage["To"] = msg.To
-	inboxMessage["From"] = msg.From
-	inboxMessage["Content"] = msg.Content
-	inboxMessage["Group"] = msg.Group
-	inboxMessage["ContentType"] = msg.ContentType
-	inboxMessage["CreatedAt"] = time.Now().Unix()
+	message := make(map[string]interface{})
+	message["ID"] = msg.ID
+	message["SeqId"] = msg.SeqId
+	message["To"] = msg.To
+	message["From"] = msg.From
+	message["Content"] = msg.Content
+	message["Group"] = msg.Group
+	message["ContentType"] = msg.ContentType
+	message["CreatedAt"] = time.Now().Unix()
+	message["TSeqId"] = msg.TSeqId
+	message["FSeqId"] = msg.FSeqId
 
 	var (
-		retInbox    []*redis.IntCmd
-		retTimeline []*redis.BoolCmd
+		retInbox   []*redis.IntCmd
+		retMessage *redis.BoolCmd
 	)
+
+	tvalue := strconv.FormatUint(msg.TSeqId, 10) + ":" + strconv.FormatUint(msg.ID, 10)
+	fvalue := strconv.FormatUint(msg.FSeqId, 10) + ":" + strconv.FormatUint(msg.ID, 10)
 	_, err := rdb.Pipelined(ctx, func(pipe redis.Pipeliner) error {
-		retInbox = append(retInbox, pipe.LPush(ctx, ttimelinesNamer, tid))
-		retInbox = append(retInbox, pipe.LPush(ctx, ftimelinesNamer, fid))
-		inboxMessage["SeqId"] = tid
-		retTimeline = append(retTimeline, pipe.HMSet(ctx, tinboxNamer, inboxMessage))
-		inboxMessage["SeqId"] = fid
-		retTimeline = append(retTimeline, pipe.HMSet(ctx, finboxNamer, inboxMessage))
-		pipe.LTrim(ctx, ttimelinesNamer, 0, 10000)
-		pipe.LTrim(ctx, ftimelinesNamer, 0, 10000)
+		retInbox = append(retInbox, pipe.LPush(ctx, tinboxNamer, tvalue))
+		retInbox = append(retInbox, pipe.LPush(ctx, finboxNamer, fvalue))
+		retMessage = pipe.HMSet(ctx, messageNamer, message)
+		pipe.LTrim(ctx, tinboxNamer, 0, 10000)
+		pipe.LTrim(ctx, finboxNamer, 0, 10000)
 		return nil
 	})
 
@@ -56,14 +57,7 @@ func WriteInboxC(ctx context.Context, tid, fid uint64, msg *Messages) error {
 			return err
 		}
 	}
-
-	for _, ret := range retTimeline {
-		err = ret.Err()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return retMessage.Err()
 }
 
 // GetInboxMesssage 获取邮件

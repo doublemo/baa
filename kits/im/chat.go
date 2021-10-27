@@ -156,10 +156,13 @@ back:
 		}
 	}
 
+	msg.TSeqId = ttid
+	msg.FSeqId = ftid
+
 	// 开始存储数据
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	if err := dao.WriteInboxC(ctx, ttid, ftid, msg); err != nil {
+	if err := dao.WriteInboxC(ctx, msg); err != nil {
 		return nil, &pb.IM_Msg_AckFailed{
 			SeqID:      frame.SeqID,
 			ErrCode:    errcode.ErrInternalServer.Code(),
@@ -168,12 +171,10 @@ back:
 	}
 
 	// 消息送检
-	msgInspectionReport(msg, ttid, ftid)
+	msgInspectionReport(msg)
 
 	// 推送信息
-	toMsg := *msg
-	toMsg.SeqId = ftid
-	if err := pushMessage([]byte(c.IDSecret), toMsg); err != nil {
+	if err := pushMessage([]byte(c.IDSecret), *msg); err != nil {
 		log.Error(Logger()).Log("action", "pushMessage", "error", err)
 	}
 
@@ -299,6 +300,7 @@ func pushMessage(idsecret []byte, msg ...dao.Messages) error {
 			return err
 		}
 
+		frame.SeqID = m.TSeqId
 		w := &corespb.Response{
 			Command: proto.PushCommand.Int32(),
 			Header:  make(map[string]string),

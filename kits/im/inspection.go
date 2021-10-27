@@ -31,13 +31,15 @@ func msgInspectionReport(msg *dao.Messages, seqs ...uint64) error {
 
 	data.Values = append(data.Values, &imfpb.IMF_Content{
 		MsgId:       msg.ID,
-		SeqId:       seqs,
+		SeqId:       msg.SeqId,
 		Topic:       msg.Topic,
 		Group:       msg.Group,
 		Content:     msg.Content,
 		To:          msg.To,
 		From:        msg.From,
 		ContentType: msg.ContentType,
+		TSeqId:      msg.TSeqId,
+		FSeqId:      msg.FSeqId,
 	})
 
 	req.Payload, _ = grpcproto.Marshal(&data)
@@ -64,17 +66,20 @@ func handleMsgInspectionReport(req *corespb.Request) (*corespb.Response, error) 
 			continue
 		}
 
-		// m := dao.Messages{
-		// 	ID:          value.Content.MsgId,
-		// 	SeqId:       value.Content.SeqId[0],
-		// 	To:          value.Content.To,
-		// 	From:        value.Content.From,
-		// 	Content:     value.Content.Content,
-		// 	ContentType: value.Content.ContentType,
-		// 	Topic:       value.Content.Topic,
-		// }
-	}
+		m := dao.Messages{
+			ID:          value.Content.MsgId,
+			SeqId:       value.Content.SeqId,
+			To:          value.Content.To,
+			From:        value.Content.From,
+			Content:     value.Content.Content,
+			ContentType: value.Content.ContentType,
+			Topic:       value.Content.Topic,
+			TSeqId:      value.Content.TSeqId,
+			FSeqId:      value.Content.FSeqId,
+			Group:       value.Content.Group,
+		}
 
-	fmt.Println("chek msg :=>", frame)
+		fmt.Println("chek msg :=>", m)
+	}
 	return nil, nil
 }

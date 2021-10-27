@@ -100,6 +100,7 @@ func check(frame *pb.IMF_Content, c FilterConfig) (*pb.IMF_Response, error) {
 		text, ok := filterText(frame.Content, c)
 		frame.Content = text
 		resp.Ok = ok
+		resp.Content = frame
 	default:
 		return nil, errors.New("notsupported")
 	}
