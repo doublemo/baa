@@ -7,6 +7,7 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/nats"
+	usrt "github.com/doublemo/baa/kits/usrt"
 	grpcproto "github.com/golang/protobuf/proto"
 	natsgo "github.com/nats-io/nats.go"
 )
@@ -23,7 +24,15 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 
 	nc := nats.Conn()
 	msgChan := make(chan *natsgo.Msg, config.ChanSubscribeBuffer)
-	nc.ChanSubscribe(config.Name, msgChan)
+	if _, err := nc.ChanSubscribe(config.Name, msgChan); err != nil {
+		return nil, err
+	}
+
+	// 监听用户状态改变
+	if _, err := nc.ChanSubscribe(usrt.NatsUserStatusWatchSubject, msgChan); err != nil {
+		return nil, err
+	}
+
 	exitChan := make(chan struct{})
 	return &os.ProcessActor{
 		Exec: func() error {

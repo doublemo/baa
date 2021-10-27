@@ -11,6 +11,11 @@ import (
 	natsgo "github.com/nats-io/nats.go"
 )
 
+const (
+	// NatsUserStatusWatchSubject 状态变更时通知通道
+	NatsUserStatusWatchSubject = "usrt.status.watch"
+)
+
 // NewNatsProcessActor nats
 func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 	if err := nats.Connect(config, Logger()); err != nil {

@@ -2,7 +2,10 @@ package usrt
 
 import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/nats"
+	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/usrt/dao"
+	"github.com/doublemo/baa/kits/usrt/proto"
 	"github.com/doublemo/baa/kits/usrt/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 )
@@ -13,6 +16,12 @@ func updateUserStatus(r *corespb.Request) (*corespb.Response, error) {
 		if err := grpcproto.Unmarshal(r.Payload, &frame); err != nil {
 			return nil, err
 		}
+	}
+
+	changeDataMap := make(map[uint64]bool)
+	changeData := make([]uint64, 0)
+	for _, v := range frame.Values {
+		changeDataMap[v.ID] = true
 	}
 
 	w := &corespb.Response{Command: r.Command, Header: r.Header}
@@ -29,6 +38,14 @@ func updateUserStatus(r *corespb.Request) (*corespb.Response, error) {
 	}
 
 	if len(noCompleted) < 1 {
+		for k := range changeDataMap {
+			changeData = append(changeData, k)
+		}
+
+		if err := pushUserStatusChangeMessage(proto.DeleteUserStatusCommand.Int32(), changeData...); err != nil {
+			return nil, err
+		}
+
 		reply := &pb.USRT_Status_Reply{Values: make([]*pb.USRT_User, 0)}
 		b, _ := grpcproto.Marshal(reply)
 		w.Payload = &corespb.Response_Content{Content: b}
@@ -38,6 +55,17 @@ func updateUserStatus(r *corespb.Request) (*corespb.Response, error) {
 	noCompletedMap := make(map[uint64]bool)
 	for _, id := range noCompleted {
 		noCompletedMap[id] = true
+	}
+
+	for k := range changeDataMap {
+		if noCompletedMap[k] {
+			continue
+		}
+		changeData = append(changeData, k)
+	}
+
+	if err := pushUserStatusChangeMessage(proto.DeleteUserStatusCommand.Int32(), changeData...); err != nil {
+		return nil, err
 	}
 
 	reply := &pb.USRT_Status_Reply{Values: make([]*pb.USRT_User, len(noCompletedMap))}
@@ -71,6 +99,20 @@ func deleteUserStatus(r *corespb.Request) (*corespb.Response, error) {
 	}
 
 	if err := dao.RemoveStatusByUser(frame.Values...); err != nil {
+		return nil, err
+	}
+
+	changeDataMap := make(map[uint64]bool)
+	changeData := make([]uint64, 0)
+	for _, v := range frame.Values {
+		changeDataMap[v.ID] = true
+	}
+
+	for k := range changeDataMap {
+		changeData = append(changeData, k)
+	}
+
+	if err := pushUserStatusChangeMessage(proto.DeleteUserStatusCommand.Int32(), changeData...); err != nil {
 		return nil, err
 	}
 
@@ -119,4 +161,21 @@ func getUserStatus(r *corespb.Request) (*corespb.Response, error) {
 	b, _ := grpcproto.Marshal(reply)
 	w.Payload = &corespb.Response_Content{Content: b}
 	return w, nil
+}
+
+func pushUserStatusChangeMessage(command int32, id ...uint64) error {
+	frame := pb.USRT_Status_Request{Values: id}
+	req := corespb.Request{
+		Command: command,
+		Header:  map[string]string{"service": ServiceName, "addr": sd.Endpoint().Addr(), "id": sd.Endpoint().ID()},
+	}
+
+	req.Payload, _ = grpcproto.Marshal(&frame)
+	bytes, _ := grpcproto.Marshal(&req)
+	nc := nats.Conn()
+	if err := nc.Publish(NatsUserStatusWatchSubject, bytes); err != nil {
+		return err
+	}
+
+	return nil
 }

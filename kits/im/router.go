@@ -46,6 +46,9 @@ func InitRouter(config RouterConfig) {
 
 	// 订阅处理
 	nrRouter.Register(imf.ServiceName, router.New()).HandleFunc(imfproto.CheckCommand, handleMsgInspectionReport)
+	nrRouter.Register(usrt.ServiceName, router.New()).
+		HandleFunc(usrtproto.DeleteUserStatusCommand, resetUserStatusCache).
+		HandleFunc(usrtproto.UpdateUserStatusCommand, resetUserStatusCache)
 
 	// 注册内部使用路由
 	snserv := newSnidRouter(config.ServiceSNID)

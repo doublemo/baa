@@ -240,3 +240,17 @@ func getCacheUserStatus(noCache bool, values ...uint64) (map[uint64]map[string]s
 func namerUserStatus(id uint64) string {
 	return "userstatus_" + strconv.FormatUint(id, 10)
 }
+
+func resetUserStatusCache(req *corespb.Request) (*corespb.Response, error) {
+	var frame usrtpb.USRT_Status_Request
+	{
+		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+			return nil, err
+		}
+	}
+
+	for _, id := range frame.Values {
+		cache.Remove(namerUserStatus(id))
+	}
+	return nil, nil
+}

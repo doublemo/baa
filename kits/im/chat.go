@@ -177,7 +177,6 @@ back:
 	if err := pushMessage([]byte(c.IDSecret), *msg); err != nil {
 		log.Error(Logger()).Log("action", "pushMessage", "error", err)
 	}
-
 	return &pb.IM_Msg_AckReceived{
 		Id:       msg.ID,
 		SeqID:    msg.SeqId,

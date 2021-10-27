@@ -7,8 +7,10 @@ import (
 	"github.com/doublemo/baa/internal/sd"
 )
 
-// ServiceName 服务名称 user's status real-time server
-const ServiceName string = "usrt"
+const (
+	// ServiceName 服务名称 user's status real-time server
+	ServiceName string = "usrt"
+)
 
 // NewServiceDiscoveryProcessActor 创建服务发现
 func NewServiceDiscoveryProcessActor() (*os.ProcessActor, error) {
