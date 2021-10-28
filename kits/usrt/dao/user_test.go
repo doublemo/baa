@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/doublemo/baa/internal/conf"
-	"github.com/doublemo/baa/kits/usrt/proto/pb"
+	"github.com/doublemo/baa/internal/proto/pb"
 )
 
 func TestUserStatusChange(t *testing.T) {

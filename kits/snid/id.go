@@ -6,10 +6,10 @@ import (
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/cores/uid"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/kits/snid/cache"
 	"github.com/doublemo/baa/kits/snid/errcode"
-	"github.com/doublemo/baa/kits/snid/proto/pb"
 	"github.com/golang/protobuf/jsonpb"
 	grpcproto "github.com/golang/protobuf/proto"
 )

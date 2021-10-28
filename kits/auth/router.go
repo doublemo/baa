@@ -4,13 +4,11 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/proto/command"
 	"github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/internal/sd"
-	"github.com/doublemo/baa/kits/auth/proto"
 	"github.com/doublemo/baa/kits/snid"
-	snproto "github.com/doublemo/baa/kits/snid/proto"
 	"github.com/doublemo/baa/kits/usrt"
-	usrtproto "github.com/doublemo/baa/kits/usrt/proto"
 	"google.golang.org/grpc/resolver"
 )
 
@@ -35,23 +33,23 @@ func InitRouter(config RouterConfig) {
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceUSRT.Name, config.ServiceUSRT.Group, sd.Endpointer()))
 
 	// 注册处理请求
-	r.HandleFunc(proto.RegisterCommand, func(r *corespb.Request) (*corespb.Response, error) {
+	r.HandleFunc(command.AuthRegister, func(r *corespb.Request) (*corespb.Response, error) {
 		return register(r, config.LR)
 	})
 
-	r.HandleFunc(proto.LoginCommand, func(r *corespb.Request) (*corespb.Response, error) {
+	r.HandleFunc(command.AuthLogin, func(r *corespb.Request) (*corespb.Response, error) {
 		return login(r, config.LR)
 	})
 
-	r.HandleFunc(proto.OfflineCommand, offline)
+	r.HandleFunc(command.AuthOffline, offline)
 
 	// 注册内部使用路由
 	muxRouter.Register(snid.ServiceName, router.New())
-	muxRouter.Handle(snid.ServiceName, snproto.SnowflakeCommand, newSnidRouter(config.ServiceSNID))
+	muxRouter.Handle(snid.ServiceName, command.SNIDSnowflake, newSnidRouter(config.ServiceSNID))
 
 	usrtr := newUSRTRouter(config.ServiceUSRT)
 	muxRouter.Register(usrt.ServiceName, router.New())
-	muxRouter.Handle(usrt.ServiceName, usrtproto.GetUserStatusCommand, usrtr)
-	muxRouter.Handle(usrt.ServiceName, usrtproto.DeleteUserStatusCommand, usrtr)
-	muxRouter.Handle(usrt.ServiceName, usrtproto.UpdateUserStatusCommand, usrtr)
+	muxRouter.Handle(usrt.ServiceName, command.USRTGetUserStatus, usrtr)
+	muxRouter.Handle(usrt.ServiceName, command.USRTDeleteUserStatus, usrtr)
+	muxRouter.Handle(usrt.ServiceName, command.USRTUpdateUserStatus, usrtr)
 }

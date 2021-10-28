@@ -1,6 +1,6 @@
 syntax = "proto3";
 package pb;
-option go_package = "github.com/doublemo/baa/kits/usrt/proto/pb";
+option go_package = "github.com/doublemo/baa/internal/proto/pb";
 
 message USRT {
     message User {

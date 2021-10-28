@@ -3,10 +3,10 @@ package usrt
 import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/nats"
+	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/usrt/dao"
-	"github.com/doublemo/baa/kits/usrt/proto"
-	"github.com/doublemo/baa/kits/usrt/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 )
 
@@ -42,7 +42,7 @@ func updateUserStatus(r *corespb.Request) (*corespb.Response, error) {
 			changeData = append(changeData, k)
 		}
 
-		if err := pushUserStatusChangeMessage(proto.DeleteUserStatusCommand.Int32(), changeData...); err != nil {
+		if err := pushUserStatusChangeMessage(command.USRTUpdateUserStatus.Int32(), changeData...); err != nil {
 			return nil, err
 		}
 
@@ -64,7 +64,7 @@ func updateUserStatus(r *corespb.Request) (*corespb.Response, error) {
 		changeData = append(changeData, k)
 	}
 
-	if err := pushUserStatusChangeMessage(proto.DeleteUserStatusCommand.Int32(), changeData...); err != nil {
+	if err := pushUserStatusChangeMessage(command.USRTUpdateUserStatus.Int32(), changeData...); err != nil {
 		return nil, err
 	}
 
@@ -112,7 +112,7 @@ func deleteUserStatus(r *corespb.Request) (*corespb.Response, error) {
 		changeData = append(changeData, k)
 	}
 
-	if err := pushUserStatusChangeMessage(proto.DeleteUserStatusCommand.Int32(), changeData...); err != nil {
+	if err := pushUserStatusChangeMessage(command.USRTDeleteUserStatus.Int32(), changeData...); err != nil {
 		return nil, err
 	}
 

@@ -5,11 +5,11 @@ import (
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/nats"
+	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/im/dao"
 	"github.com/doublemo/baa/kits/imf"
-	imfproto "github.com/doublemo/baa/kits/imf/proto"
-	imfpb "github.com/doublemo/baa/kits/imf/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 	natsgo "github.com/nats-io/nats.go"
 )
@@ -21,15 +21,15 @@ func msgInspectionReport(msg *dao.Messages, seqs ...uint64) error {
 	}
 
 	req := &corespb.Request{
-		Command: imfproto.CheckCommand.Int32(),
+		Command: command.IMFCheck.Int32(),
 		Header:  map[string]string{"service": ServiceName, "addr": sd.Endpoint().Addr(), "id": sd.Endpoint().ID()},
 	}
 
-	data := imfpb.IMF_Request{
-		Values: make([]*imfpb.IMF_Content, 0),
+	data := pb.IMF_Request{
+		Values: make([]*pb.IMF_Content, 0),
 	}
 
-	data.Values = append(data.Values, &imfpb.IMF_Content{
+	data.Values = append(data.Values, &pb.IMF_Content{
 		MsgId:       msg.ID,
 		SeqId:       msg.SeqId,
 		Topic:       msg.Topic,
@@ -53,7 +53,7 @@ func msgInspectionReport(msg *dao.Messages, seqs ...uint64) error {
 }
 
 func handleMsgInspectionReport(req *corespb.Request) (*corespb.Response, error) {
-	var frame imfpb.IMF_Reply
+	var frame pb.IMF_Reply
 	{
 		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
 			return nil, err

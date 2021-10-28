@@ -12,16 +12,15 @@ import (
 	log "github.com/doublemo/baa/cores/log/level"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/nats"
+	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
-	agentproto "github.com/doublemo/baa/kits/agent/proto"
-	agentpb "github.com/doublemo/baa/kits/agent/proto/pb"
 	"github.com/doublemo/baa/kits/auth/platform"
 	"github.com/doublemo/baa/kits/im/cache"
 	"github.com/doublemo/baa/kits/im/dao"
 	"github.com/doublemo/baa/kits/im/errcode"
 	"github.com/doublemo/baa/kits/im/mime"
-	"github.com/doublemo/baa/kits/im/proto"
-	"github.com/doublemo/baa/kits/im/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 )
 
@@ -301,7 +300,7 @@ func pushMessage(idsecret []byte, msg ...dao.Messages) error {
 
 		frame.SeqID = m.TSeqId
 		w := &corespb.Response{
-			Command: proto.PushCommand.Int32(),
+			Command: command.IMPush.Int32(),
 			Header:  make(map[string]string),
 		}
 
@@ -309,14 +308,14 @@ func pushMessage(idsecret []byte, msg ...dao.Messages) error {
 		w.Payload = &corespb.Response_Content{Content: bytes}
 		bytesW, _ := grpcproto.Marshal(w)
 		req := &corespb.Request{
-			Command: agentproto.BroadcastCommand.Int32(),
+			Command: command.AgentBroadcast.Int32(),
 			Header:  map[string]string{"service": ServiceName, "addr": sd.Endpoint().Addr(), "id": sd.Endpoint().ID()},
 		}
 
-		req.Payload, _ = grpcproto.Marshal(&agentpb.Agent_Broadcast{
+		req.Payload, _ = grpcproto.Marshal(&pb.Agent_Broadcast{
 			Receiver: []string{frame.To},
 			Payload:  bytesW,
-			Command:  agentproto.IM.Int32(),
+			Command:  kit.IM.Int32(),
 		})
 
 		bytesMsg, _ := grpcproto.Marshal(req)

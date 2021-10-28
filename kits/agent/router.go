@@ -11,11 +11,13 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/agent/errcode"
 	midPeer "github.com/doublemo/baa/kits/agent/middlewares/peer"
 	"github.com/doublemo/baa/kits/agent/proto"
-	"github.com/doublemo/baa/kits/agent/proto/pb"
 	"github.com/doublemo/baa/kits/agent/router"
 	"github.com/doublemo/baa/kits/agent/session"
 	grpcproto "github.com/golang/protobuf/proto"
@@ -52,15 +54,15 @@ func InitRouter(config RouterConfig) {
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceSnid.Name, config.ServiceSnid.Group, sd.Endpointer()))
 
 	// 注册处理socket/websocket来的请求
-	sRouter.HandleFunc(proto.Agent, agentRouter)
-	sRouter.Handle(proto.SFU, router.NewStream(config.ServiceSFU, Logger(), sfuHookOnReceive))
-	sRouter.Handle(proto.Auth, router.NewCall(config.ServiceAuth, Logger(), authenticationHookAfter, authenticationHookDestroy))
+	sRouter.HandleFunc(kit.Agent, agentRouter)
+	sRouter.Handle(kit.SFU, router.NewStream(config.ServiceSFU, Logger(), sfuHookOnReceive))
+	sRouter.Handle(kit.Auth, router.NewCall(config.ServiceAuth, Logger(), authenticationHookAfter, authenticationHookDestroy))
 
 	// 注册处理datachannel来的请求
 
 	// 注册处理nats订阅的请求
-	nRouter.HandleFunc(proto.KickedOutCommand, kickedOut)
-	nRouter.HandleFunc(proto.BroadcastCommand, broadcast)
+	nRouter.HandleFunc(command.AgentKickedOut, kickedOut)
+	nRouter.HandleFunc(command.AgentBroadcast, broadcast)
 }
 
 func onMessage(peer session.Peer, msg session.PeerMessagePayload) error {
@@ -146,13 +148,13 @@ func handleFromDataChannelBinaryMessage(peer session.Peer, frame []byte) (coresp
 
 func agentRouter(peer session.Peer, req coresproto.Request) (coresproto.Response, error) {
 	switch req.SubCommand() {
-	case proto.HandshakeCommand:
+	case command.AgentHandshake:
 		return handshake(peer, req)
 
-	case proto.DatachannelCommand:
+	case command.AgentDatachannel:
 		return datachannel(peer, req)
 
-	case proto.HeartbeaterCommand:
+	case command.AgentHeartbeater:
 	}
 	return nil, nil
 }
@@ -213,8 +215,8 @@ func kickedOut(req *corespb.Request) (*corespb.Response, error) {
 
 	w := &coresproto.ResponseBytes{
 		Ver:    1,
-		Cmd:    proto.Agent,
-		SubCmd: proto.KickedOutCommand,
+		Cmd:    kit.Agent,
+		SubCmd: command.AgentKickedOut,
 		SID:    1,
 	}
 

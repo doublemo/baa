@@ -2,8 +2,8 @@ package snid
 
 import (
 	"github.com/doublemo/baa/cores/uid"
+	"github.com/doublemo/baa/internal/proto/command"
 	"github.com/doublemo/baa/internal/router"
-	"github.com/doublemo/baa/kits/snid/proto"
 )
 
 var (
@@ -20,10 +20,10 @@ type RouterConfig struct {
 func InitRouter(config RouterConfig) {
 
 	// 注册处理请求
-	r.Handle(proto.SnowflakeCommand, newSnHandler(config.Snowflake))
-	r.HandleFunc(proto.AutoincrementCommand, autoincrementID)
-	r.HandleFunc(proto.MoreAutoincrementCommand, moreAutoincrementID)
+	r.Handle(command.SNIDSnowflake, newSnHandler(config.Snowflake))
+	r.HandleFunc(command.SNIDAutoincrement, autoincrementID)
+	r.HandleFunc(command.SNIDMoreAutoincrement, moreAutoincrementID)
 
 	// 订阅请求
-	nrRouter.Register(ServiceName, router.New()).HandleFunc(proto.ClearAutoincrementCommand, clearAutoincrementID)
+	nrRouter.Register(ServiceName, router.New()).HandleFunc(command.SNIDClearAutoincrement, clearAutoincrementID)
 }

@@ -12,12 +12,12 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/nats"
+	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/im/cache"
 	usrt "github.com/doublemo/baa/kits/usrt"
-	usrtproto "github.com/doublemo/baa/kits/usrt/proto"
-	usrtpb "github.com/doublemo/baa/kits/usrt/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 )
@@ -101,21 +101,21 @@ func newUSRTRouter(c conf.RPCClient) *usrtRouter {
 	return &usrtRouter{c: c}
 }
 
-func updateUserStatus(values ...*usrtpb.USRT_User) ([]*usrtpb.USRT_User, error) {
+func updateUserStatus(values ...*pb.USRT_User) ([]*pb.USRT_User, error) {
 	if len(values) > 100 {
 		return nil, errors.New("the value length cannot be greater then 100")
 	}
 
-	frame := usrtpb.USRT_Status_Update{Values: values}
+	frame := pb.USRT_Status_Update{Values: values}
 	b, _ := grpcproto.Marshal(&frame)
-	resp, err := muxRouter.Handler(usrt.ServiceName, &corespb.Request{Command: usrtproto.UpdateUserStatusCommand.Int32(), Payload: b, Header: make(map[string]string)})
+	resp, err := muxRouter.Handler(usrt.ServiceName, &corespb.Request{Command: command.USRTUpdateUserStatus.Int32(), Payload: b, Header: make(map[string]string)})
 	if err != nil {
 		return nil, err
 	}
 
 	switch payload := resp.Payload.(type) {
 	case *corespb.Response_Content:
-		resp := usrtpb.USRT_Status_Reply{}
+		resp := pb.USRT_Status_Reply{}
 		if err := grpcproto.Unmarshal(payload.Content, &resp); err != nil {
 			return nil, err
 		}
@@ -128,7 +128,7 @@ func updateUserStatus(values ...*usrtpb.USRT_User) ([]*usrtpb.USRT_User, error) 
 	return nil, errors.New("usrt failed")
 }
 
-func deleteUserStatus(values ...*usrtpb.USRT_User) {
+func deleteUserStatus(values ...*pb.USRT_User) {
 	endpointer := sd.Endpointer()
 	if endpointer == nil {
 		return
@@ -145,10 +145,10 @@ func deleteUserStatus(values ...*usrtpb.USRT_User) {
 		return
 	}
 
-	frame := usrtpb.USRT_Status_Update{Values: values}
+	frame := pb.USRT_Status_Update{Values: values}
 	frameBytes, _ := grpcproto.Marshal(&frame)
 	r := corespb.Request{
-		Command: usrtproto.DeleteUserStatusCommand.Int32(),
+		Command: command.USRTDeleteUserStatus.Int32(),
 		Payload: frameBytes,
 		Header:  make(map[string]string),
 	}
@@ -164,7 +164,7 @@ func deleteUserStatus(values ...*usrtpb.USRT_User) {
 	}
 }
 
-func getUserStatus(noCache bool, values ...uint64) ([]*usrtpb.USRT_User, error) {
+func getUserStatus(noCache bool, values ...uint64) ([]*pb.USRT_User, error) {
 	if len(values) > 100 {
 		return nil, errors.New("the value length cannot be greater then 100")
 	}
@@ -174,16 +174,16 @@ func getUserStatus(noCache bool, values ...uint64) ([]*usrtpb.USRT_User, error) 
 		header["no-cache"] = "true"
 	}
 
-	frame := usrtpb.USRT_Status_Request{Values: values}
+	frame := pb.USRT_Status_Request{Values: values}
 	b, _ := grpcproto.Marshal(&frame)
-	resp, err := muxRouter.Handler(usrt.ServiceName, &corespb.Request{Command: usrtproto.GetUserStatusCommand.Int32(), Payload: b, Header: header})
+	resp, err := muxRouter.Handler(usrt.ServiceName, &corespb.Request{Command: command.USRTGetUserStatus.Int32(), Payload: b, Header: header})
 	if err != nil {
 		return nil, err
 	}
 
 	switch payload := resp.Payload.(type) {
 	case *corespb.Response_Content:
-		resp := usrtpb.USRT_Status_Reply{}
+		resp := pb.USRT_Status_Reply{}
 		if err := grpcproto.Unmarshal(payload.Content, &resp); err != nil {
 			return nil, err
 		}
@@ -242,7 +242,7 @@ func namerUserStatus(id uint64) string {
 }
 
 func resetUserStatusCache(req *corespb.Request) (*corespb.Response, error) {
-	var frame usrtpb.USRT_Status_Request
+	var frame pb.USRT_Status_Request
 	{
 		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
 			return nil, err

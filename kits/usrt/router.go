@@ -1,8 +1,8 @@
 package usrt
 
 import (
+	"github.com/doublemo/baa/internal/proto/command"
 	"github.com/doublemo/baa/internal/router"
-	"github.com/doublemo/baa/kits/usrt/proto"
 )
 
 const (
@@ -21,13 +21,12 @@ type RouterConfig struct {
 // InitRouter init
 func InitRouter() {
 	// Register grpc load balance
-	//resolver.Register(coressd.NewResolverBuilder(config.ServiceSNID.Name, config.ServiceSNID.Group, sd.Endpointer()))
 
 	// 注册处理请求
-	r.HandleFunc(proto.UpdateUserStatusCommand, updateUserStatus)
-	r.HandleFunc(proto.DeleteUserStatusCommand, deleteUserStatus)
-	r.HandleFunc(proto.GetUserStatusCommand, getUserStatus)
+	r.HandleFunc(command.USRTUpdateUserStatus, updateUserStatus)
+	r.HandleFunc(command.USRTDeleteUserStatus, deleteUserStatus)
+	r.HandleFunc(command.USRTGetUserStatus, getUserStatus)
 
 	// 订阅处理
-	nrRouter.Register(ServiceName, router.New()).HandleFunc(proto.DeleteUserStatusCommand, deleteUserStatus)
+	nrRouter.Register(ServiceName, router.New()).HandleFunc(command.USRTDeleteUserStatus, deleteUserStatus)
 }

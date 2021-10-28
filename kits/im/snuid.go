@@ -10,10 +10,10 @@ import (
 	grpcpool "github.com/doublemo/baa/cores/pool/grpc"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/snid"
-	snproto "github.com/doublemo/baa/kits/snid/proto"
-	snpb "github.com/doublemo/baa/kits/snid/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
@@ -209,23 +209,23 @@ func getUID(status map[uint64]map[string]string, values ...uint64) (map[uint64]u
 
 	retValues := make(map[uint64]uint64)
 	for kk, vv := range newValues {
-		frame := snpb.SNID_MoreRequest{
-			Request: make([]*snpb.SNID_Request, 0),
+		frame := pb.SNID_MoreRequest{
+			Request: make([]*pb.SNID_Request, 0),
 		}
 
 		for _, id := range vv {
-			frame.Request = append(frame.Request, &snpb.SNID_Request{K: namerUserTimeline(id), N: 1})
+			frame.Request = append(frame.Request, &pb.SNID_Request{K: namerUserTimeline(id), N: 1})
 		}
 
 		b, _ := grpcproto.Marshal(&frame)
-		resp, err := muxRouter.Handler(snid.ServiceName, &corespb.Request{Command: snproto.MoreAutoincrementCommand.Int32(), Payload: b, Header: map[string]string{"service-addr": kk}})
+		resp, err := muxRouter.Handler(snid.ServiceName, &corespb.Request{Command: command.SNIDMoreAutoincrement.Int32(), Payload: b, Header: map[string]string{"service-addr": kk}})
 		if err != nil {
 			return nil, nil, err
 		}
 
 		switch payload := resp.Payload.(type) {
 		case *corespb.Response_Content:
-			resp := snpb.SNID_MoreReply{}
+			resp := pb.SNID_MoreReply{}
 			if err := grpcproto.Unmarshal(payload.Content, &resp); err != nil {
 				return nil, nil, err
 			}

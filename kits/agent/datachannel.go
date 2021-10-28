@@ -5,8 +5,9 @@ import (
 
 	log "github.com/doublemo/baa/cores/log/level"
 	coresproto "github.com/doublemo/baa/cores/proto"
-	"github.com/doublemo/baa/kits/agent/proto"
-	"github.com/doublemo/baa/kits/agent/proto/pb"
+	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/kits/agent/session"
 	awebrtc "github.com/doublemo/baa/kits/agent/webrtc"
 	grpcproto "github.com/golang/protobuf/proto"
@@ -95,8 +96,8 @@ func iceConnectionStateChange(peer session.Peer) func(connectionState webrtc.ICE
 	return func(connectionState webrtc.ICEConnectionState) {
 		resp := &coresproto.ResponseBytes{
 			Ver:    1,
-			Cmd:    proto.Agent,
-			SubCmd: proto.DatachannelCommand,
+			Cmd:    kit.Agent,
+			SubCmd: command.AgentDatachannel,
 			SID:    1,
 		}
 

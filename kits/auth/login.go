@@ -12,14 +12,12 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/helper"
 	"github.com/doublemo/baa/internal/nats"
+	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/agent"
-	agentproto "github.com/doublemo/baa/kits/agent/proto"
-	agentpb "github.com/doublemo/baa/kits/agent/proto/pb"
 	"github.com/doublemo/baa/kits/auth/dao"
 	"github.com/doublemo/baa/kits/auth/errcode"
-	"github.com/doublemo/baa/kits/auth/proto/pb"
-	usrtpb "github.com/doublemo/baa/kits/usrt/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -152,7 +150,7 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	}
 
 	// 更新用户在线状态
-	noc, err := updateUserStatus(&usrtpb.USRT_User{ID: account.ID, Type: "password", Value: sd.Endpoint().ID()})
+	noc, err := updateUserStatus(&pb.USRT_User{ID: account.ID, Type: "password", Value: sd.Endpoint().ID()})
 	if err != nil || len(noc) > 0 {
 		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, "change status falied"), nil
 	}
@@ -521,13 +519,13 @@ func kickedOut(peerID string) {
 		return
 	}
 
-	frame := agentpb.Agent_KickedOut{
+	frame := pb.Agent_KickedOut{
 		PeerID: []string{peerID},
 	}
 
 	frameBytes, _ := grpcproto.Marshal(&frame)
 	r := corespb.Request{
-		Command: agentproto.KickedOutCommand.Int32(),
+		Command: command.AgentKickedOut.Int32(),
 		Payload: frameBytes,
 		Header:  make(map[string]string),
 	}

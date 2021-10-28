@@ -2,10 +2,10 @@ package imf
 
 import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/kits/imf/errcode"
-	"github.com/doublemo/baa/kits/imf/proto"
-	"github.com/doublemo/baa/kits/imf/proto/pb"
 	"github.com/doublemo/baa/kits/imf/segmenter"
 	grpcproto "github.com/golang/protobuf/proto"
 )
@@ -24,12 +24,12 @@ func InitRouter(c FilterConfig) {
 	// Register grpc load balance
 
 	// 注册处理请求
-	r.HandleFunc(proto.CheckCommand, func(req *corespb.Request) (*corespb.Response, error) { return checkFromRPC(req, c) })
+	r.HandleFunc(command.IMFCheck, func(req *corespb.Request) (*corespb.Response, error) { return checkFromRPC(req, c) })
 
 	// 订阅处理
-	nr.HandleFunc(proto.ReloadCommand, reloadDictionary)
-	nr.HandleFunc(proto.DirtyWordsCommand, dirtyWords)
-	nr.HandleFunc(proto.CheckCommand, func(req *corespb.Request) (*corespb.Response, error) { return checkFromNats(req, c) })
+	nr.HandleFunc(command.IMFReload, reloadDictionary)
+	nr.HandleFunc(command.IMFDirtyWords, dirtyWords)
+	nr.HandleFunc(command.IMFCheck, func(req *corespb.Request) (*corespb.Response, error) { return checkFromNats(req, c) })
 
 }
 

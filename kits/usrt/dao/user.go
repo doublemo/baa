@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/doublemo/baa/cores/cache/memcacher"
-	"github.com/doublemo/baa/kits/usrt/proto/pb"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/go-redis/redis/v8"
 )
 

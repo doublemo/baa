@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.25.0
 // 	protoc        v3.11.1
-// source: kits/imf/proto/pb/imf.proto
+// source: internal/proto/pb/imf.proto
 
 package pb
 
@@ -34,7 +34,7 @@ type IMF struct {
 func (x *IMF) Reset() {
 	*x = IMF{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[0]
+		mi := &file_internal_proto_pb_imf_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -47,7 +47,7 @@ func (x *IMF) String() string {
 func (*IMF) ProtoMessage() {}
 
 func (x *IMF) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[0]
+	mi := &file_internal_proto_pb_imf_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +60,7 @@ func (x *IMF) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IMF.ProtoReflect.Descriptor instead.
 func (*IMF) Descriptor() ([]byte, []int) {
-	return file_kits_imf_proto_pb_imf_proto_rawDescGZIP(), []int{0}
+	return file_internal_proto_pb_imf_proto_rawDescGZIP(), []int{0}
 }
 
 type IMF_Request struct {
@@ -74,7 +74,7 @@ type IMF_Request struct {
 func (x *IMF_Request) Reset() {
 	*x = IMF_Request{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[1]
+		mi := &file_internal_proto_pb_imf_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -87,7 +87,7 @@ func (x *IMF_Request) String() string {
 func (*IMF_Request) ProtoMessage() {}
 
 func (x *IMF_Request) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[1]
+	mi := &file_internal_proto_pb_imf_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -100,7 +100,7 @@ func (x *IMF_Request) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IMF_Request.ProtoReflect.Descriptor instead.
 func (*IMF_Request) Descriptor() ([]byte, []int) {
-	return file_kits_imf_proto_pb_imf_proto_rawDescGZIP(), []int{0, 0}
+	return file_internal_proto_pb_imf_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *IMF_Request) GetValues() []*IMF_Content {
@@ -122,7 +122,7 @@ type IMF_Response struct {
 func (x *IMF_Response) Reset() {
 	*x = IMF_Response{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[2]
+		mi := &file_internal_proto_pb_imf_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -135,7 +135,7 @@ func (x *IMF_Response) String() string {
 func (*IMF_Response) ProtoMessage() {}
 
 func (x *IMF_Response) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[2]
+	mi := &file_internal_proto_pb_imf_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -148,7 +148,7 @@ func (x *IMF_Response) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IMF_Response.ProtoReflect.Descriptor instead.
 func (*IMF_Response) Descriptor() ([]byte, []int) {
-	return file_kits_imf_proto_pb_imf_proto_rawDescGZIP(), []int{0, 1}
+	return file_internal_proto_pb_imf_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *IMF_Response) GetOk() bool {
@@ -176,7 +176,7 @@ type IMF_Reply struct {
 func (x *IMF_Reply) Reset() {
 	*x = IMF_Reply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[3]
+		mi := &file_internal_proto_pb_imf_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -189,7 +189,7 @@ func (x *IMF_Reply) String() string {
 func (*IMF_Reply) ProtoMessage() {}
 
 func (x *IMF_Reply) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[3]
+	mi := &file_internal_proto_pb_imf_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -202,7 +202,7 @@ func (x *IMF_Reply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IMF_Reply.ProtoReflect.Descriptor instead.
 func (*IMF_Reply) Descriptor() ([]byte, []int) {
-	return file_kits_imf_proto_pb_imf_proto_rawDescGZIP(), []int{0, 2}
+	return file_internal_proto_pb_imf_proto_rawDescGZIP(), []int{0, 2}
 }
 
 func (x *IMF_Reply) GetValues() []*IMF_Response {
@@ -232,7 +232,7 @@ type IMF_Content struct {
 func (x *IMF_Content) Reset() {
 	*x = IMF_Content{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[4]
+		mi := &file_internal_proto_pb_imf_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -245,7 +245,7 @@ func (x *IMF_Content) String() string {
 func (*IMF_Content) ProtoMessage() {}
 
 func (x *IMF_Content) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[4]
+	mi := &file_internal_proto_pb_imf_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -258,7 +258,7 @@ func (x *IMF_Content) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IMF_Content.ProtoReflect.Descriptor instead.
 func (*IMF_Content) Descriptor() ([]byte, []int) {
-	return file_kits_imf_proto_pb_imf_proto_rawDescGZIP(), []int{0, 3}
+	return file_internal_proto_pb_imf_proto_rawDescGZIP(), []int{0, 3}
 }
 
 func (x *IMF_Content) GetMsgId() uint64 {
@@ -340,7 +340,7 @@ type IMF_DirtyWords struct {
 func (x *IMF_DirtyWords) Reset() {
 	*x = IMF_DirtyWords{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[5]
+		mi := &file_internal_proto_pb_imf_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -353,7 +353,7 @@ func (x *IMF_DirtyWords) String() string {
 func (*IMF_DirtyWords) ProtoMessage() {}
 
 func (x *IMF_DirtyWords) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[5]
+	mi := &file_internal_proto_pb_imf_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -366,7 +366,7 @@ func (x *IMF_DirtyWords) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IMF_DirtyWords.ProtoReflect.Descriptor instead.
 func (*IMF_DirtyWords) Descriptor() ([]byte, []int) {
-	return file_kits_imf_proto_pb_imf_proto_rawDescGZIP(), []int{0, 4}
+	return file_internal_proto_pb_imf_proto_rawDescGZIP(), []int{0, 4}
 }
 
 type IMF_DirtyWords_Request struct {
@@ -383,7 +383,7 @@ type IMF_DirtyWords_Request struct {
 func (x *IMF_DirtyWords_Request) Reset() {
 	*x = IMF_DirtyWords_Request{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[6]
+		mi := &file_internal_proto_pb_imf_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -396,7 +396,7 @@ func (x *IMF_DirtyWords_Request) String() string {
 func (*IMF_DirtyWords_Request) ProtoMessage() {}
 
 func (x *IMF_DirtyWords_Request) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[6]
+	mi := &file_internal_proto_pb_imf_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -409,7 +409,7 @@ func (x *IMF_DirtyWords_Request) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IMF_DirtyWords_Request.ProtoReflect.Descriptor instead.
 func (*IMF_DirtyWords_Request) Descriptor() ([]byte, []int) {
-	return file_kits_imf_proto_pb_imf_proto_rawDescGZIP(), []int{0, 4, 0}
+	return file_internal_proto_pb_imf_proto_rawDescGZIP(), []int{0, 4, 0}
 }
 
 func (m *IMF_DirtyWords_Request) GetPayload() isIMF_DirtyWords_Request_Payload {
@@ -460,7 +460,7 @@ type IMF_DirtyWords_Reply struct {
 func (x *IMF_DirtyWords_Reply) Reset() {
 	*x = IMF_DirtyWords_Reply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[7]
+		mi := &file_internal_proto_pb_imf_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -473,7 +473,7 @@ func (x *IMF_DirtyWords_Reply) String() string {
 func (*IMF_DirtyWords_Reply) ProtoMessage() {}
 
 func (x *IMF_DirtyWords_Reply) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_imf_proto_pb_imf_proto_msgTypes[7]
+	mi := &file_internal_proto_pb_imf_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -486,7 +486,7 @@ func (x *IMF_DirtyWords_Reply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IMF_DirtyWords_Reply.ProtoReflect.Descriptor instead.
 func (*IMF_DirtyWords_Reply) Descriptor() ([]byte, []int) {
-	return file_kits_imf_proto_pb_imf_proto_rawDescGZIP(), []int{0, 4, 1}
+	return file_internal_proto_pb_imf_proto_rawDescGZIP(), []int{0, 4, 1}
 }
 
 func (x *IMF_DirtyWords_Reply) GetOK() bool {
@@ -496,10 +496,10 @@ func (x *IMF_DirtyWords_Reply) GetOK() bool {
 	return false
 }
 
-var File_kits_imf_proto_pb_imf_proto protoreflect.FileDescriptor
+var File_internal_proto_pb_imf_proto protoreflect.FileDescriptor
 
-var file_kits_imf_proto_pb_imf_proto_rawDesc = []byte{
-	0x0a, 0x1b, 0x6b, 0x69, 0x74, 0x73, 0x2f, 0x69, 0x6d, 0x66, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+var file_internal_proto_pb_imf_proto_rawDesc = []byte{
+	0x0a, 0x1b, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x2f, 0x70, 0x62, 0x2f, 0x69, 0x6d, 0x66, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x02, 0x70,
 	0x62, 0x22, 0x92, 0x04, 0x0a, 0x03, 0x49, 0x4d, 0x46, 0x1a, 0x32, 0x0a, 0x07, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x12, 0x27, 0x0a, 0x06, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x18, 0x01,
@@ -536,24 +536,24 @@ var file_kits_imf_proto_pb_imf_proto_rawDesc = []byte{
 	0x05, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x12, 0x0e, 0x0a, 0x02, 0x4f, 0x4b, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x08, 0x52, 0x02, 0x4f, 0x4b, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
 	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f, 0x75, 0x62, 0x6c, 0x65, 0x6d, 0x6f, 0x2f, 0x62, 0x61,
-	0x61, 0x2f, 0x6b, 0x69, 0x74, 0x73, 0x2f, 0x69, 0x6d, 0x66, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x61, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
-	file_kits_imf_proto_pb_imf_proto_rawDescOnce sync.Once
-	file_kits_imf_proto_pb_imf_proto_rawDescData = file_kits_imf_proto_pb_imf_proto_rawDesc
+	file_internal_proto_pb_imf_proto_rawDescOnce sync.Once
+	file_internal_proto_pb_imf_proto_rawDescData = file_internal_proto_pb_imf_proto_rawDesc
 )
 
-func file_kits_imf_proto_pb_imf_proto_rawDescGZIP() []byte {
-	file_kits_imf_proto_pb_imf_proto_rawDescOnce.Do(func() {
-		file_kits_imf_proto_pb_imf_proto_rawDescData = protoimpl.X.CompressGZIP(file_kits_imf_proto_pb_imf_proto_rawDescData)
+func file_internal_proto_pb_imf_proto_rawDescGZIP() []byte {
+	file_internal_proto_pb_imf_proto_rawDescOnce.Do(func() {
+		file_internal_proto_pb_imf_proto_rawDescData = protoimpl.X.CompressGZIP(file_internal_proto_pb_imf_proto_rawDescData)
 	})
-	return file_kits_imf_proto_pb_imf_proto_rawDescData
+	return file_internal_proto_pb_imf_proto_rawDescData
 }
 
-var file_kits_imf_proto_pb_imf_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
-var file_kits_imf_proto_pb_imf_proto_goTypes = []interface{}{
+var file_internal_proto_pb_imf_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_internal_proto_pb_imf_proto_goTypes = []interface{}{
 	(*IMF)(nil),                    // 0: pb.IMF
 	(*IMF_Request)(nil),            // 1: pb.IMF.Request
 	(*IMF_Response)(nil),           // 2: pb.IMF.Response
@@ -563,7 +563,7 @@ var file_kits_imf_proto_pb_imf_proto_goTypes = []interface{}{
 	(*IMF_DirtyWords_Request)(nil), // 6: pb.IMF.DirtyWords.Request
 	(*IMF_DirtyWords_Reply)(nil),   // 7: pb.IMF.DirtyWords.Reply
 }
-var file_kits_imf_proto_pb_imf_proto_depIdxs = []int32{
+var file_internal_proto_pb_imf_proto_depIdxs = []int32{
 	4, // 0: pb.IMF.Request.Values:type_name -> pb.IMF.Content
 	4, // 1: pb.IMF.Response.Content:type_name -> pb.IMF.Content
 	2, // 2: pb.IMF.Reply.Values:type_name -> pb.IMF.Response
@@ -574,13 +574,13 @@ var file_kits_imf_proto_pb_imf_proto_depIdxs = []int32{
 	0, // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_kits_imf_proto_pb_imf_proto_init() }
-func file_kits_imf_proto_pb_imf_proto_init() {
-	if File_kits_imf_proto_pb_imf_proto != nil {
+func init() { file_internal_proto_pb_imf_proto_init() }
+func file_internal_proto_pb_imf_proto_init() {
+	if File_internal_proto_pb_imf_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_kits_imf_proto_pb_imf_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_imf_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*IMF); i {
 			case 0:
 				return &v.state
@@ -592,7 +592,7 @@ func file_kits_imf_proto_pb_imf_proto_init() {
 				return nil
 			}
 		}
-		file_kits_imf_proto_pb_imf_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_imf_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*IMF_Request); i {
 			case 0:
 				return &v.state
@@ -604,7 +604,7 @@ func file_kits_imf_proto_pb_imf_proto_init() {
 				return nil
 			}
 		}
-		file_kits_imf_proto_pb_imf_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_imf_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*IMF_Response); i {
 			case 0:
 				return &v.state
@@ -616,7 +616,7 @@ func file_kits_imf_proto_pb_imf_proto_init() {
 				return nil
 			}
 		}
-		file_kits_imf_proto_pb_imf_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_imf_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*IMF_Reply); i {
 			case 0:
 				return &v.state
@@ -628,7 +628,7 @@ func file_kits_imf_proto_pb_imf_proto_init() {
 				return nil
 			}
 		}
-		file_kits_imf_proto_pb_imf_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_imf_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*IMF_Content); i {
 			case 0:
 				return &v.state
@@ -640,7 +640,7 @@ func file_kits_imf_proto_pb_imf_proto_init() {
 				return nil
 			}
 		}
-		file_kits_imf_proto_pb_imf_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_imf_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*IMF_DirtyWords); i {
 			case 0:
 				return &v.state
@@ -652,7 +652,7 @@ func file_kits_imf_proto_pb_imf_proto_init() {
 				return nil
 			}
 		}
-		file_kits_imf_proto_pb_imf_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_imf_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*IMF_DirtyWords_Request); i {
 			case 0:
 				return &v.state
@@ -664,7 +664,7 @@ func file_kits_imf_proto_pb_imf_proto_init() {
 				return nil
 			}
 		}
-		file_kits_imf_proto_pb_imf_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_imf_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*IMF_DirtyWords_Reply); i {
 			case 0:
 				return &v.state
@@ -677,7 +677,7 @@ func file_kits_imf_proto_pb_imf_proto_init() {
 			}
 		}
 	}
-	file_kits_imf_proto_pb_imf_proto_msgTypes[6].OneofWrappers = []interface{}{
+	file_internal_proto_pb_imf_proto_msgTypes[6].OneofWrappers = []interface{}{
 		(*IMF_DirtyWords_Request_Add)(nil),
 		(*IMF_DirtyWords_Request_Delete)(nil),
 	}
@@ -685,18 +685,18 @@ func file_kits_imf_proto_pb_imf_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_kits_imf_proto_pb_imf_proto_rawDesc,
+			RawDescriptor: file_internal_proto_pb_imf_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_kits_imf_proto_pb_imf_proto_goTypes,
-		DependencyIndexes: file_kits_imf_proto_pb_imf_proto_depIdxs,
-		MessageInfos:      file_kits_imf_proto_pb_imf_proto_msgTypes,
+		GoTypes:           file_internal_proto_pb_imf_proto_goTypes,
+		DependencyIndexes: file_internal_proto_pb_imf_proto_depIdxs,
+		MessageInfos:      file_internal_proto_pb_imf_proto_msgTypes,
 	}.Build()
-	File_kits_imf_proto_pb_imf_proto = out.File
-	file_kits_imf_proto_pb_imf_proto_rawDesc = nil
-	file_kits_imf_proto_pb_imf_proto_goTypes = nil
-	file_kits_imf_proto_pb_imf_proto_depIdxs = nil
+	File_internal_proto_pb_imf_proto = out.File
+	file_internal_proto_pb_imf_proto_rawDesc = nil
+	file_internal_proto_pb_imf_proto_goTypes = nil
+	file_internal_proto_pb_imf_proto_depIdxs = nil
 }

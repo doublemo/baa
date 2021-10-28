@@ -3,10 +3,10 @@ package agent
 import (
 	log "github.com/doublemo/baa/cores/log/level"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/kits/agent/router"
 	"github.com/doublemo/baa/kits/agent/session"
-	authproto "github.com/doublemo/baa/kits/auth/proto"
-	authpb "github.com/doublemo/baa/kits/auth/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 )
 
@@ -29,14 +29,14 @@ func authenticationHookDestroy(r *router.Call) {
 		}
 
 		// 处理玩家离线
-		frame := authpb.Authentication_Form_Logout{
-			Payload: &authpb.Authentication_Form_Logout_PeerID{PeerID: peer.ID()},
+		frame := pb.Authentication_Form_Logout{
+			Payload: &pb.Authentication_Form_Logout_PeerID{PeerID: peer.ID()},
 		}
 
 		body, _ := grpcproto.Marshal(&frame)
 		_, err := r.Call(&corespb.Request{
 			Header:  map[string]string{"PeerId": peer.ID(), "AccountID": accountID.(string)},
-			Command: authproto.OfflineCommand.Int32(),
+			Command: command.AuthOffline.Int32(),
 			Payload: body,
 		})
 
@@ -47,7 +47,7 @@ func authenticationHookDestroy(r *router.Call) {
 }
 
 func onLogin(peer session.Peer, w *corespb.Response) {
-	if w.Command != authproto.LoginCommand.Int32() {
+	if w.Command != command.AuthLogin.Int32() {
 		return
 	}
 
@@ -61,7 +61,7 @@ func onLogin(peer session.Peer, w *corespb.Response) {
 		return
 	}
 
-	var frame authpb.Authentication_Form_LoginReply
+	var frame pb.Authentication_Form_LoginReply
 	{
 		if err := grpcproto.Unmarshal(content, &frame); err != nil {
 			log.Error(Logger()).Log("action", "onLogin", "error", err)
@@ -70,7 +70,7 @@ func onLogin(peer session.Peer, w *corespb.Response) {
 	}
 
 	switch payload := frame.Payload.(type) {
-	case *authpb.Authentication_Form_LoginReply_Account:
+	case *pb.Authentication_Form_LoginReply_Account:
 		peer.SetParams("AccountID", payload.Account.ID)
 		peer.SetParams("AccountUnionID", payload.Account.UnionID)
 		peer.SetParams("UserID", payload.Account.UserID)

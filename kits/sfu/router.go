@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/kits/sfu/adapter/router"
 	"github.com/doublemo/baa/kits/sfu/errcode"
 	ionsfu "github.com/doublemo/baa/kits/sfu/pkg/sfu"
-	"github.com/doublemo/baa/kits/sfu/proto"
-	"github.com/doublemo/baa/kits/sfu/proto/pb"
 	"github.com/doublemo/baa/kits/sfu/session"
 	grpcproto "github.com/golang/protobuf/proto"
 	"github.com/pion/webrtc/v3"
@@ -16,8 +16,8 @@ import (
 
 // InitRouter init
 func InitRouter() {
-	router.On(proto.JoinCommand, handleWebrtcJoin)
-	router.On(proto.NegotiateCommand, handleWebrtcNegotiate)
+	router.On(command.SFUJoin, handleWebrtcJoin)
+	router.On(command.SFUNegotiate, handleWebrtcNegotiate)
 }
 
 func handleWebrtcJoin(peer session.Peer, r *corespb.Request) (*corespb.Response, error) {
@@ -204,7 +204,7 @@ func makeOnOffer(peer session.Peer, r *pb.SFU_Subscribe_Request) func(*webrtc.Se
 
 		w.Payload = &pb.SFU_Signal_Reply_Description{Description: bytes}
 		b, _ := grpcproto.Marshal(&w)
-		resp := corespb.Response{Command: proto.NegotiateCommand.Int32()}
+		resp := corespb.Response{Command: command.SFUNegotiate.Int32()}
 		resp.Payload = &corespb.Response_Content{Content: b}
 		peer.Send(&resp)
 	}
@@ -224,7 +224,7 @@ func makeOnIceCandidate(peer session.Peer, r *pb.SFU_Subscribe_Request) func(*we
 		}}
 
 		b, _ := grpcproto.Marshal(&w)
-		resp := corespb.Response{Command: proto.NegotiateCommand.Int32()}
+		resp := corespb.Response{Command: command.SFUNegotiate.Int32()}
 		resp.Payload = &corespb.Response_Content{Content: b}
 		peer.Send(&resp)
 	}
@@ -239,7 +239,7 @@ func makeOnICEConnectionStateChange(peer session.Peer, r *pb.SFU_Subscribe_Reque
 
 		w.Payload = &pb.SFU_Signal_Reply_IceConnectionState{IceConnectionState: c.String()}
 		b, _ := grpcproto.Marshal(&w)
-		resp := corespb.Response{Command: proto.NegotiateCommand.Int32()}
+		resp := corespb.Response{Command: command.SFUNegotiate.Int32()}
 		resp.Payload = &corespb.Response_Content{Content: b}
 		peer.Send(&resp)
 	}

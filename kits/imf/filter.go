@@ -4,9 +4,9 @@ import (
 	"errors"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/kits/im/mime"
 	"github.com/doublemo/baa/kits/imf/errcode"
-	"github.com/doublemo/baa/kits/imf/proto/pb"
 	grpcproto "github.com/golang/protobuf/proto"
 )
 

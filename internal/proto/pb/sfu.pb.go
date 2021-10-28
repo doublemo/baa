@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.25.0
 // 	protoc        v3.11.1
-// source: kits/sfu/proto/pb/sfu.proto
+// source: internal/proto/pb/sfu.proto
 
 package pb
 
@@ -55,11 +55,11 @@ func (x SFU_Target) String() string {
 }
 
 func (SFU_Target) Descriptor() protoreflect.EnumDescriptor {
-	return file_kits_sfu_proto_pb_sfu_proto_enumTypes[0].Descriptor()
+	return file_internal_proto_pb_sfu_proto_enumTypes[0].Descriptor()
 }
 
 func (SFU_Target) Type() protoreflect.EnumType {
-	return &file_kits_sfu_proto_pb_sfu_proto_enumTypes[0]
+	return &file_internal_proto_pb_sfu_proto_enumTypes[0]
 }
 
 func (x SFU_Target) Number() protoreflect.EnumNumber {
@@ -68,7 +68,7 @@ func (x SFU_Target) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SFU_Target.Descriptor instead.
 func (SFU_Target) EnumDescriptor() ([]byte, []int) {
-	return file_kits_sfu_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 0}
+	return file_internal_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 0}
 }
 
 type SFU struct {
@@ -80,7 +80,7 @@ type SFU struct {
 func (x *SFU) Reset() {
 	*x = SFU{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[0]
+		mi := &file_internal_proto_pb_sfu_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -93,7 +93,7 @@ func (x *SFU) String() string {
 func (*SFU) ProtoMessage() {}
 
 func (x *SFU) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[0]
+	mi := &file_internal_proto_pb_sfu_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -106,7 +106,7 @@ func (x *SFU) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SFU.ProtoReflect.Descriptor instead.
 func (*SFU) Descriptor() ([]byte, []int) {
-	return file_kits_sfu_proto_pb_sfu_proto_rawDescGZIP(), []int{0}
+	return file_internal_proto_pb_sfu_proto_rawDescGZIP(), []int{0}
 }
 
 type SFU_Subscribe struct {
@@ -118,7 +118,7 @@ type SFU_Subscribe struct {
 func (x *SFU_Subscribe) Reset() {
 	*x = SFU_Subscribe{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[1]
+		mi := &file_internal_proto_pb_sfu_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -131,7 +131,7 @@ func (x *SFU_Subscribe) String() string {
 func (*SFU_Subscribe) ProtoMessage() {}
 
 func (x *SFU_Subscribe) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[1]
+	mi := &file_internal_proto_pb_sfu_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -144,7 +144,7 @@ func (x *SFU_Subscribe) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SFU_Subscribe.ProtoReflect.Descriptor instead.
 func (*SFU_Subscribe) Descriptor() ([]byte, []int) {
-	return file_kits_sfu_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 0}
+	return file_internal_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 0}
 }
 
 type SFU_Trickle struct {
@@ -159,7 +159,7 @@ type SFU_Trickle struct {
 func (x *SFU_Trickle) Reset() {
 	*x = SFU_Trickle{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[2]
+		mi := &file_internal_proto_pb_sfu_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -172,7 +172,7 @@ func (x *SFU_Trickle) String() string {
 func (*SFU_Trickle) ProtoMessage() {}
 
 func (x *SFU_Trickle) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[2]
+	mi := &file_internal_proto_pb_sfu_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -185,7 +185,7 @@ func (x *SFU_Trickle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SFU_Trickle.ProtoReflect.Descriptor instead.
 func (*SFU_Trickle) Descriptor() ([]byte, []int) {
-	return file_kits_sfu_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 1}
+	return file_internal_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *SFU_Trickle) GetTarget() SFU_Target {
@@ -211,7 +211,7 @@ type SFU_Signal struct {
 func (x *SFU_Signal) Reset() {
 	*x = SFU_Signal{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[3]
+		mi := &file_internal_proto_pb_sfu_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -224,7 +224,7 @@ func (x *SFU_Signal) String() string {
 func (*SFU_Signal) ProtoMessage() {}
 
 func (x *SFU_Signal) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[3]
+	mi := &file_internal_proto_pb_sfu_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -237,7 +237,7 @@ func (x *SFU_Signal) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SFU_Signal.ProtoReflect.Descriptor instead.
 func (*SFU_Signal) Descriptor() ([]byte, []int) {
-	return file_kits_sfu_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 2}
+	return file_internal_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 2}
 }
 
 type SFU_Subscribe_Request struct {
@@ -253,7 +253,7 @@ type SFU_Subscribe_Request struct {
 func (x *SFU_Subscribe_Request) Reset() {
 	*x = SFU_Subscribe_Request{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[4]
+		mi := &file_internal_proto_pb_sfu_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -266,7 +266,7 @@ func (x *SFU_Subscribe_Request) String() string {
 func (*SFU_Subscribe_Request) ProtoMessage() {}
 
 func (x *SFU_Subscribe_Request) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[4]
+	mi := &file_internal_proto_pb_sfu_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -279,7 +279,7 @@ func (x *SFU_Subscribe_Request) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SFU_Subscribe_Request.ProtoReflect.Descriptor instead.
 func (*SFU_Subscribe_Request) Descriptor() ([]byte, []int) {
-	return file_kits_sfu_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 0, 0}
+	return file_internal_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 0, 0}
 }
 
 func (x *SFU_Subscribe_Request) GetSessionId() string {
@@ -315,7 +315,7 @@ type SFU_Subscribe_Reply struct {
 func (x *SFU_Subscribe_Reply) Reset() {
 	*x = SFU_Subscribe_Reply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[5]
+		mi := &file_internal_proto_pb_sfu_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -328,7 +328,7 @@ func (x *SFU_Subscribe_Reply) String() string {
 func (*SFU_Subscribe_Reply) ProtoMessage() {}
 
 func (x *SFU_Subscribe_Reply) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[5]
+	mi := &file_internal_proto_pb_sfu_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -341,7 +341,7 @@ func (x *SFU_Subscribe_Reply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SFU_Subscribe_Reply.ProtoReflect.Descriptor instead.
 func (*SFU_Subscribe_Reply) Descriptor() ([]byte, []int) {
-	return file_kits_sfu_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 0, 1}
+	return file_internal_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 0, 1}
 }
 
 func (x *SFU_Subscribe_Reply) GetOk() bool {
@@ -373,7 +373,7 @@ type SFU_Signal_Request struct {
 func (x *SFU_Signal_Request) Reset() {
 	*x = SFU_Signal_Request{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[6]
+		mi := &file_internal_proto_pb_sfu_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -386,7 +386,7 @@ func (x *SFU_Signal_Request) String() string {
 func (*SFU_Signal_Request) ProtoMessage() {}
 
 func (x *SFU_Signal_Request) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[6]
+	mi := &file_internal_proto_pb_sfu_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -399,7 +399,7 @@ func (x *SFU_Signal_Request) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SFU_Signal_Request.ProtoReflect.Descriptor instead.
 func (*SFU_Signal_Request) Descriptor() ([]byte, []int) {
-	return file_kits_sfu_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 2, 0}
+	return file_internal_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 2, 0}
 }
 
 func (x *SFU_Signal_Request) GetSessionId() string {
@@ -463,7 +463,7 @@ type SFU_Signal_Reply struct {
 func (x *SFU_Signal_Reply) Reset() {
 	*x = SFU_Signal_Reply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[7]
+		mi := &file_internal_proto_pb_sfu_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -476,7 +476,7 @@ func (x *SFU_Signal_Reply) String() string {
 func (*SFU_Signal_Reply) ProtoMessage() {}
 
 func (x *SFU_Signal_Reply) ProtoReflect() protoreflect.Message {
-	mi := &file_kits_sfu_proto_pb_sfu_proto_msgTypes[7]
+	mi := &file_internal_proto_pb_sfu_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -489,7 +489,7 @@ func (x *SFU_Signal_Reply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SFU_Signal_Reply.ProtoReflect.Descriptor instead.
 func (*SFU_Signal_Reply) Descriptor() ([]byte, []int) {
-	return file_kits_sfu_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 2, 1}
+	return file_internal_proto_pb_sfu_proto_rawDescGZIP(), []int{0, 2, 1}
 }
 
 func (x *SFU_Signal_Reply) GetSessionId() string {
@@ -556,10 +556,10 @@ func (*SFU_Signal_Reply_Trickle) isSFU_Signal_Reply_Payload() {}
 
 func (*SFU_Signal_Reply_IceConnectionState) isSFU_Signal_Reply_Payload() {}
 
-var File_kits_sfu_proto_pb_sfu_proto protoreflect.FileDescriptor
+var File_internal_proto_pb_sfu_proto protoreflect.FileDescriptor
 
-var file_kits_sfu_proto_pb_sfu_proto_rawDesc = []byte{
-	0x0a, 0x1b, 0x6b, 0x69, 0x74, 0x73, 0x2f, 0x73, 0x66, 0x75, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+var file_internal_proto_pb_sfu_proto_rawDesc = []byte{
+	0x0a, 0x1b, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x2f, 0x70, 0x62, 0x2f, 0x73, 0x66, 0x75, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x02, 0x70,
 	0x62, 0x22, 0x8a, 0x05, 0x0a, 0x03, 0x53, 0x46, 0x55, 0x1a, 0xa9, 0x01, 0x0a, 0x09, 0x53, 0x75,
 	0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x1a, 0x61, 0x0a, 0x07, 0x52, 0x65, 0x71, 0x75, 0x65,
@@ -601,28 +601,28 @@ var file_kits_sfu_proto_pb_sfu_proto_rawDesc = []byte{
 	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x42, 0x09, 0x0a, 0x07, 0x50, 0x61,
 	0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0x27, 0x0a, 0x06, 0x54, 0x61, 0x72, 0x67, 0x65, 0x74, 0x12,
 	0x0d, 0x0a, 0x09, 0x50, 0x55, 0x42, 0x4c, 0x49, 0x53, 0x48, 0x45, 0x52, 0x10, 0x00, 0x12, 0x0e,
-	0x0a, 0x0a, 0x53, 0x55, 0x42, 0x53, 0x43, 0x52, 0x49, 0x42, 0x45, 0x52, 0x10, 0x01, 0x42, 0x2a,
-	0x5a, 0x28, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f, 0x75,
-	0x62, 0x6c, 0x65, 0x6d, 0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x6b, 0x69, 0x74, 0x2f, 0x73, 0x66,
-	0x75, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x0a, 0x0a, 0x53, 0x55, 0x42, 0x53, 0x43, 0x52, 0x49, 0x42, 0x45, 0x52, 0x10, 0x01, 0x42, 0x2b,
+	0x5a, 0x29, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f, 0x75,
+	0x62, 0x6c, 0x65, 0x6d, 0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e,
+	0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
-	file_kits_sfu_proto_pb_sfu_proto_rawDescOnce sync.Once
-	file_kits_sfu_proto_pb_sfu_proto_rawDescData = file_kits_sfu_proto_pb_sfu_proto_rawDesc
+	file_internal_proto_pb_sfu_proto_rawDescOnce sync.Once
+	file_internal_proto_pb_sfu_proto_rawDescData = file_internal_proto_pb_sfu_proto_rawDesc
 )
 
-func file_kits_sfu_proto_pb_sfu_proto_rawDescGZIP() []byte {
-	file_kits_sfu_proto_pb_sfu_proto_rawDescOnce.Do(func() {
-		file_kits_sfu_proto_pb_sfu_proto_rawDescData = protoimpl.X.CompressGZIP(file_kits_sfu_proto_pb_sfu_proto_rawDescData)
+func file_internal_proto_pb_sfu_proto_rawDescGZIP() []byte {
+	file_internal_proto_pb_sfu_proto_rawDescOnce.Do(func() {
+		file_internal_proto_pb_sfu_proto_rawDescData = protoimpl.X.CompressGZIP(file_internal_proto_pb_sfu_proto_rawDescData)
 	})
-	return file_kits_sfu_proto_pb_sfu_proto_rawDescData
+	return file_internal_proto_pb_sfu_proto_rawDescData
 }
 
-var file_kits_sfu_proto_pb_sfu_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_kits_sfu_proto_pb_sfu_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
-var file_kits_sfu_proto_pb_sfu_proto_goTypes = []interface{}{
+var file_internal_proto_pb_sfu_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_internal_proto_pb_sfu_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_internal_proto_pb_sfu_proto_goTypes = []interface{}{
 	(SFU_Target)(0),               // 0: pb.SFU.Target
 	(*SFU)(nil),                   // 1: pb.SFU
 	(*SFU_Subscribe)(nil),         // 2: pb.SFU.Subscribe
@@ -633,7 +633,7 @@ var file_kits_sfu_proto_pb_sfu_proto_goTypes = []interface{}{
 	(*SFU_Signal_Request)(nil),    // 7: pb.SFU.Signal.Request
 	(*SFU_Signal_Reply)(nil),      // 8: pb.SFU.Signal.Reply
 }
-var file_kits_sfu_proto_pb_sfu_proto_depIdxs = []int32{
+var file_internal_proto_pb_sfu_proto_depIdxs = []int32{
 	0, // 0: pb.SFU.Trickle.Target:type_name -> pb.SFU.Target
 	3, // 1: pb.SFU.Signal.Request.trickle:type_name -> pb.SFU.Trickle
 	3, // 2: pb.SFU.Signal.Reply.trickle:type_name -> pb.SFU.Trickle
@@ -644,13 +644,13 @@ var file_kits_sfu_proto_pb_sfu_proto_depIdxs = []int32{
 	0, // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_kits_sfu_proto_pb_sfu_proto_init() }
-func file_kits_sfu_proto_pb_sfu_proto_init() {
-	if File_kits_sfu_proto_pb_sfu_proto != nil {
+func init() { file_internal_proto_pb_sfu_proto_init() }
+func file_internal_proto_pb_sfu_proto_init() {
+	if File_internal_proto_pb_sfu_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_kits_sfu_proto_pb_sfu_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_sfu_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SFU); i {
 			case 0:
 				return &v.state
@@ -662,7 +662,7 @@ func file_kits_sfu_proto_pb_sfu_proto_init() {
 				return nil
 			}
 		}
-		file_kits_sfu_proto_pb_sfu_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_sfu_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SFU_Subscribe); i {
 			case 0:
 				return &v.state
@@ -674,7 +674,7 @@ func file_kits_sfu_proto_pb_sfu_proto_init() {
 				return nil
 			}
 		}
-		file_kits_sfu_proto_pb_sfu_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_sfu_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SFU_Trickle); i {
 			case 0:
 				return &v.state
@@ -686,7 +686,7 @@ func file_kits_sfu_proto_pb_sfu_proto_init() {
 				return nil
 			}
 		}
-		file_kits_sfu_proto_pb_sfu_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_sfu_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SFU_Signal); i {
 			case 0:
 				return &v.state
@@ -698,7 +698,7 @@ func file_kits_sfu_proto_pb_sfu_proto_init() {
 				return nil
 			}
 		}
-		file_kits_sfu_proto_pb_sfu_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_sfu_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SFU_Subscribe_Request); i {
 			case 0:
 				return &v.state
@@ -710,7 +710,7 @@ func file_kits_sfu_proto_pb_sfu_proto_init() {
 				return nil
 			}
 		}
-		file_kits_sfu_proto_pb_sfu_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_sfu_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SFU_Subscribe_Reply); i {
 			case 0:
 				return &v.state
@@ -722,7 +722,7 @@ func file_kits_sfu_proto_pb_sfu_proto_init() {
 				return nil
 			}
 		}
-		file_kits_sfu_proto_pb_sfu_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_sfu_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SFU_Signal_Request); i {
 			case 0:
 				return &v.state
@@ -734,7 +734,7 @@ func file_kits_sfu_proto_pb_sfu_proto_init() {
 				return nil
 			}
 		}
-		file_kits_sfu_proto_pb_sfu_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_sfu_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SFU_Signal_Reply); i {
 			case 0:
 				return &v.state
@@ -747,11 +747,11 @@ func file_kits_sfu_proto_pb_sfu_proto_init() {
 			}
 		}
 	}
-	file_kits_sfu_proto_pb_sfu_proto_msgTypes[6].OneofWrappers = []interface{}{
+	file_internal_proto_pb_sfu_proto_msgTypes[6].OneofWrappers = []interface{}{
 		(*SFU_Signal_Request_Description)(nil),
 		(*SFU_Signal_Request_Trickle)(nil),
 	}
-	file_kits_sfu_proto_pb_sfu_proto_msgTypes[7].OneofWrappers = []interface{}{
+	file_internal_proto_pb_sfu_proto_msgTypes[7].OneofWrappers = []interface{}{
 		(*SFU_Signal_Reply_Description)(nil),
 		(*SFU_Signal_Reply_Trickle)(nil),
 		(*SFU_Signal_Reply_IceConnectionState)(nil),
@@ -760,19 +760,19 @@ func file_kits_sfu_proto_pb_sfu_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_kits_sfu_proto_pb_sfu_proto_rawDesc,
+			RawDescriptor: file_internal_proto_pb_sfu_proto_rawDesc,
 			NumEnums:      1,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_kits_sfu_proto_pb_sfu_proto_goTypes,
-		DependencyIndexes: file_kits_sfu_proto_pb_sfu_proto_depIdxs,
-		EnumInfos:         file_kits_sfu_proto_pb_sfu_proto_enumTypes,
-		MessageInfos:      file_kits_sfu_proto_pb_sfu_proto_msgTypes,
+		GoTypes:           file_internal_proto_pb_sfu_proto_goTypes,
+		DependencyIndexes: file_internal_proto_pb_sfu_proto_depIdxs,
+		EnumInfos:         file_internal_proto_pb_sfu_proto_enumTypes,
+		MessageInfos:      file_internal_proto_pb_sfu_proto_msgTypes,
 	}.Build()
-	File_kits_sfu_proto_pb_sfu_proto = out.File
-	file_kits_sfu_proto_pb_sfu_proto_rawDesc = nil
-	file_kits_sfu_proto_pb_sfu_proto_goTypes = nil
-	file_kits_sfu_proto_pb_sfu_proto_depIdxs = nil
+	File_internal_proto_pb_sfu_proto = out.File
+	file_internal_proto_pb_sfu_proto_rawDesc = nil
+	file_internal_proto_pb_sfu_proto_goTypes = nil
+	file_internal_proto_pb_sfu_proto_depIdxs = nil
 }
