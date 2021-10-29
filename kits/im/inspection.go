@@ -3,9 +3,11 @@ package im
 import (
 	"fmt"
 
+	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/nats"
 	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/im/dao"
@@ -20,9 +22,11 @@ func msgInspectionReport(msg *dao.Messages, seqs ...uint64) error {
 		return nil
 	}
 
-	req := &corespb.Request{
-		Command: command.IMFCheck.Int32(),
-		Header:  map[string]string{"service": ServiceName, "addr": sd.Endpoint().Addr(), "id": sd.Endpoint().ID()},
+	req := &coresproto.RequestBytes{
+		Ver:    1, // 版本号不为0，则要求对方回复消息
+		Cmd:    kit.IMF,
+		SubCmd: command.IMFCheck,
+		SeqID:  1,
 	}
 
 	data := pb.IMF_Request{
@@ -42,9 +46,12 @@ func msgInspectionReport(msg *dao.Messages, seqs ...uint64) error {
 		FSeqId:      msg.FSeqId,
 	})
 
-	req.Payload, _ = grpcproto.Marshal(&data)
-	bytes, _ := grpcproto.Marshal(req)
-	err := nc.PublishMsg(&natsgo.Msg{
+	req.Content, _ = grpcproto.Marshal(&data)
+	bytes, err := req.Marshal()
+	if err != nil {
+		return err
+	}
+	err = nc.PublishMsg(&natsgo.Msg{
 		Subject: imf.NatsGroupSubject(),
 		Reply:   sd.Endpoint().ID(),
 		Data:    bytes,

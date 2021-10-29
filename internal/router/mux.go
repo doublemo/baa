@@ -15,22 +15,22 @@ var (
 
 // Mux 多路由管理
 type Mux struct {
-	routes map[string]*Router
+	routes map[int32]*Router
 	mutex  sync.RWMutex
 }
 
 // Register 注册路由
-func (m *Mux) Register(name string, r *Router) *Router {
+func (m *Mux) Register(id int32, r *Router) *Router {
 	m.mutex.Lock()
-	m.routes[name] = r
+	m.routes[id] = r
 	m.mutex.Unlock()
 	return r
 }
 
 // Handle 向指定路由中注册处理
-func (m *Mux) Handle(name string, pattern coresproto.Command, handler Handler) error {
+func (m *Mux) Handle(id int32, pattern coresproto.Command, handler Handler) error {
 	m.mutex.RLock()
-	r, ok := m.routes[name]
+	r, ok := m.routes[id]
 	m.mutex.RUnlock()
 
 	if !ok {
@@ -42,9 +42,9 @@ func (m *Mux) Handle(name string, pattern coresproto.Command, handler Handler) e
 }
 
 // HandleFunc 向指定路由中注册处理
-func (m *Mux) HandleFunc(name string, pattern coresproto.Command, handler func(*corespb.Request) (*corespb.Response, error)) error {
+func (m *Mux) HandleFunc(id int32, pattern coresproto.Command, handler func(*corespb.Request) (*corespb.Response, error)) error {
 	m.mutex.RLock()
-	r, ok := m.routes[name]
+	r, ok := m.routes[id]
 	m.mutex.RUnlock()
 
 	if !ok {
@@ -56,9 +56,9 @@ func (m *Mux) HandleFunc(name string, pattern coresproto.Command, handler func(*
 }
 
 // Handler 处理指定，路由中的信息
-func (m *Mux) Handler(name string, req *corespb.Request) (*corespb.Response, error) {
+func (m *Mux) Handler(id int32, req *corespb.Request) (*corespb.Response, error) {
 	m.mutex.RLock()
-	r, ok := m.routes[name]
+	r, ok := m.routes[id]
 	m.mutex.RUnlock()
 
 	if !ok {
@@ -70,5 +70,5 @@ func (m *Mux) Handler(name string, req *corespb.Request) (*corespb.Response, err
 
 // NewMux 创建多路由
 func NewMux() *Mux {
-	return &Mux{routes: make(map[string]*Router)}
+	return &Mux{routes: make(map[int32]*Router)}
 }

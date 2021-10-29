@@ -1,11 +1,12 @@
 package usrt
 
 import (
+	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/nats"
 	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
-	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/usrt/dao"
 	grpcproto "github.com/golang/protobuf/proto"
 )
@@ -164,18 +165,23 @@ func getUserStatus(r *corespb.Request) (*corespb.Response, error) {
 }
 
 func pushUserStatusChangeMessage(command int32, id ...uint64) error {
-	frame := pb.USRT_Status_Request{Values: id}
-	req := corespb.Request{
-		Command: command,
-		Header:  map[string]string{"service": ServiceName, "addr": sd.Endpoint().Addr(), "id": sd.Endpoint().ID()},
+	req := coresproto.RequestBytes{
+		Ver:    0, // 版本为0，不允许回复
+		Cmd:    coresproto.Command(kit.USRT.Int32()),
+		SubCmd: coresproto.Command(command),
+		SeqID:  1,
 	}
 
-	req.Payload, _ = grpcproto.Marshal(&frame)
-	bytes, _ := grpcproto.Marshal(&req)
+	frame := pb.USRT_Status_Request{Values: id}
+	req.Content, _ = grpcproto.Marshal(&frame)
+	bytes, err := req.Marshal()
+	if err != nil {
+		return err
+	}
+
 	nc := nats.Conn()
 	if err := nc.Publish(NatsUserStatusWatchSubject, bytes); err != nil {
 		return err
 	}
-
 	return nil
 }

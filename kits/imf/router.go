@@ -3,6 +3,7 @@ package imf
 import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/kits/imf/errcode"
@@ -11,8 +12,8 @@ import (
 )
 
 var (
-	r  = router.New()
-	nr = router.New()
+	r        = router.New()
+	nrRouter = router.NewMux()
 )
 
 // RouterConfig 路由配置
@@ -27,9 +28,10 @@ func InitRouter(c FilterConfig) {
 	r.HandleFunc(command.IMFCheck, func(req *corespb.Request) (*corespb.Response, error) { return checkFromRPC(req, c) })
 
 	// 订阅处理
-	nr.HandleFunc(command.IMFReload, reloadDictionary)
-	nr.HandleFunc(command.IMFDirtyWords, dirtyWords)
-	nr.HandleFunc(command.IMFCheck, func(req *corespb.Request) (*corespb.Response, error) { return checkFromNats(req, c) })
+	nrRouter.Register(kit.IMF.Int32(), router.New()).
+		HandleFunc(command.IMFReload, reloadDictionary).
+		HandleFunc(command.IMFDirtyWords, dirtyWords).
+		HandleFunc(command.IMFCheck, func(req *corespb.Request) (*corespb.Response, error) { return checkFromNats(req, c) })
 
 }
 

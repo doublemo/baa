@@ -3,6 +3,7 @@ package snid
 import (
 	"github.com/doublemo/baa/cores/uid"
 	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/router"
 )
 
@@ -25,5 +26,5 @@ func InitRouter(config RouterConfig) {
 	r.HandleFunc(command.SNIDMoreAutoincrement, moreAutoincrementID)
 
 	// 订阅请求
-	nrRouter.Register(ServiceName, router.New()).HandleFunc(command.SNIDClearAutoincrement, clearAutoincrementID)
+	nrRouter.Register(kit.SNID.Int32(), router.New()).HandleFunc(command.SNIDClearAutoincrement, clearAutoincrementID)
 }

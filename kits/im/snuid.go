@@ -11,6 +11,7 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/snid"
@@ -218,7 +219,7 @@ func getUID(status map[uint64]map[string]string, values ...uint64) (map[uint64]u
 		}
 
 		b, _ := grpcproto.Marshal(&frame)
-		resp, err := muxRouter.Handler(snid.ServiceName, &corespb.Request{Command: command.SNIDMoreAutoincrement.Int32(), Payload: b, Header: map[string]string{"service-addr": kk}})
+		resp, err := muxRouter.Handler(kit.SNID.Int32(), &corespb.Request{Command: command.SNIDMoreAutoincrement.Int32(), Payload: b, Header: map[string]string{"service-addr": kk}})
 		if err != nil {
 			return nil, nil, err
 		}

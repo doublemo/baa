@@ -14,6 +14,7 @@ import (
 	"github.com/doublemo/baa/internal/proto/command"
 	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
+	irouter "github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/agent/errcode"
 	midPeer "github.com/doublemo/baa/kits/agent/middlewares/peer"
@@ -33,7 +34,7 @@ var (
 	dRouter = router.New()
 
 	// nRouter nats Subscribe
-	nRouter = router.NewCoresPB()
+	nrRouter = irouter.NewMux()
 )
 
 type (
@@ -61,8 +62,9 @@ func InitRouter(config RouterConfig) {
 	// 注册处理datachannel来的请求
 
 	// 注册处理nats订阅的请求
-	nRouter.HandleFunc(command.AgentKickedOut, kickedOut)
-	nRouter.HandleFunc(command.AgentBroadcast, broadcast)
+	nrRouter.Register(kit.Agent.Int32(), irouter.New()).
+		HandleFunc(command.AgentKickedOut, kickedOut).
+		HandleFunc(command.AgentBroadcast, broadcast)
 }
 
 func onMessage(peer session.Peer, msg session.PeerMessagePayload) error {

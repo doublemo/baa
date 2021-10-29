@@ -5,10 +5,9 @@ import (
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/internal/sd"
-	"github.com/doublemo/baa/kits/snid"
-	"github.com/doublemo/baa/kits/usrt"
 	"google.golang.org/grpc/resolver"
 )
 
@@ -44,12 +43,12 @@ func InitRouter(config RouterConfig) {
 	r.HandleFunc(command.AuthOffline, offline)
 
 	// 注册内部使用路由
-	muxRouter.Register(snid.ServiceName, router.New())
-	muxRouter.Handle(snid.ServiceName, command.SNIDSnowflake, newSnidRouter(config.ServiceSNID))
+	muxRouter.Register(kit.SNID.Int32(), router.New())
+	muxRouter.Handle(kit.SNID.Int32(), command.SNIDSnowflake, newSnidRouter(config.ServiceSNID))
 
 	usrtr := newUSRTRouter(config.ServiceUSRT)
-	muxRouter.Register(usrt.ServiceName, router.New())
-	muxRouter.Handle(usrt.ServiceName, command.USRTGetUserStatus, usrtr)
-	muxRouter.Handle(usrt.ServiceName, command.USRTDeleteUserStatus, usrtr)
-	muxRouter.Handle(usrt.ServiceName, command.USRTUpdateUserStatus, usrtr)
+	muxRouter.Register(kit.USRT.Int32(), router.New())
+	muxRouter.Handle(kit.USRT.Int32(), command.USRTGetUserStatus, usrtr)
+	muxRouter.Handle(kit.USRT.Int32(), command.USRTDeleteUserStatus, usrtr)
+	muxRouter.Handle(kit.USRT.Int32(), command.USRTUpdateUserStatus, usrtr)
 }

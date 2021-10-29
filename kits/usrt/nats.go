@@ -4,10 +4,10 @@ import (
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/os"
 	"github.com/doublemo/baa/cores/pool/worker"
+	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/nats"
-	grpcproto "github.com/golang/protobuf/proto"
 	natsgo "github.com/nats-io/nats.go"
 )
 
@@ -68,38 +68,32 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 
 // onFromNatsMessage 处理来至nats订阅的消息
 func onFromNatsMessage(msg *natsgo.Msg) {
-	var frame corespb.Request
-	{
-		if err := grpcproto.Unmarshal(msg.Data, &frame); err != nil {
-			log.Error(Logger()).Log("action", "onFromNatsMessage", "error", err, "frame", msg.Data)
-			return
-		}
-	}
-
-	sName := ServiceName
-	requiredReply := false
-	if frame.Header != nil {
-		if m, ok := frame.Header["service"]; ok {
-			sName = m
-		}
-
-		if m, ok := frame.Header["required-reply"]; ok && m == "true" {
-			requiredReply = true
-		}
-	}
-
-	resp, err := nrRouter.Handler(sName, &frame)
-	if err != nil {
-		log.Error(Logger()).Log("action", "Handler", "error", err, "frame", frame.Command)
+	req := coresproto.RequestBytes{}
+	if err := req.Unmarshal(msg.Data); err != nil {
+		log.Error(Logger()).Log("action", "onFromNatsMessage", "error", err, "frame", msg.Data)
 		return
 	}
 
-	if resp == nil || !requiredReply {
+	resp, err := nrRouter.Handler(req.Cmd.Int32(), &corespb.Request{Header: make(map[string]string), Command: req.SubCmd.Int32(), Payload: req.Content})
+	if err != nil {
+		log.Error(Logger()).Log("action", "Handler", "error", err)
+		return
+	}
+
+	if resp == nil || req.Ver == 0 {
+		return
+	}
+
+	switch payload := resp.Payload.(type) {
+	case *corespb.Response_Content:
+		req.Content = payload.Content
+	case *corespb.Response_Error:
+		log.Error(Logger()).Log("action", "Handler", "error", string(payload.Error.Message), "code", payload.Error.Code)
 		return
 	}
 
 	// 防止出现消息死循环
-	reply, _ := grpcproto.Marshal(resp)
+	reply, _ := req.Marshal()
 	if err := msg.Respond(reply); err != nil {
 		log.Error(Logger()).Log("action", "msg.Respond", "error", err)
 	}

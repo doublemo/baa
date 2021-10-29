@@ -8,13 +8,11 @@ import (
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/im/cache"
-	"github.com/doublemo/baa/kits/imf"
-	"github.com/doublemo/baa/kits/snid"
-	"github.com/doublemo/baa/kits/usrt"
 	grpcproto "github.com/golang/protobuf/proto"
 	"google.golang.org/grpc/resolver"
 )
@@ -42,14 +40,14 @@ func InitRouter(config RouterConfig) {
 	r.HandleFunc(command.IMSend, func(req *corespb.Request) (*corespb.Response, error) { return send(req, config.Chat) })
 
 	// 订阅处理
-	nrRouter.Register(imf.ServiceName, router.New()).HandleFunc(command.IMFCheck, handleMsgInspectionReport)
-	nrRouter.Register(usrt.ServiceName, router.New()).
+	nrRouter.Register(kit.IMF.Int32(), router.New()).HandleFunc(command.IMFCheck, handleMsgInspectionReport)
+	nrRouter.Register(kit.USRT.Int32(), router.New()).
 		HandleFunc(command.USRTDeleteUserStatus, resetUserStatusCache).
 		HandleFunc(command.USRTUpdateUserStatus, resetUserStatusCache)
 
 	// 注册内部使用路由
 	snserv := newSnidRouter(config.ServiceSNID)
-	muxRouter.Register(snid.ServiceName, router.New()).
+	muxRouter.Register(kit.SNID.Int32(), router.New()).
 		Handle(command.SNIDSnowflake, snserv).
 		Handle(command.SNIDAutoincrement, snserv).
 		Handle(command.SNIDMoreAutoincrement, newSnuidRouter(config.ServiceSNID))
@@ -58,7 +56,7 @@ func InitRouter(config RouterConfig) {
 	cache.SnowflakeCacherOnFill(func(i int) ([]uint64, error) { return getSNID(int32(i)) })
 
 	usrtserv := newUSRTRouter(config.ServiceUSRT)
-	muxRouter.Register(usrt.ServiceName, router.New()).
+	muxRouter.Register(kit.USRT.Int32(), router.New()).
 		Handle(command.USRTGetUserStatus, usrtserv).
 		Handle(command.USRTDeleteUserStatus, usrtserv).
 		Handle(command.USRTUpdateUserStatus, usrtserv)

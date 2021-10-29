@@ -12,6 +12,7 @@ import (
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/nats"
 	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/internal/sd"
@@ -106,7 +107,7 @@ func updateUserStatus(values ...*pb.USRT_User) ([]*pb.USRT_User, error) {
 
 	frame := pb.USRT_Status_Update{Values: values}
 	b, _ := grpcproto.Marshal(&frame)
-	resp, err := muxRouter.Handler(usrt.ServiceName, &corespb.Request{Command: command.USRTUpdateUserStatus.Int32(), Payload: b, Header: make(map[string]string)})
+	resp, err := muxRouter.Handler(kit.USRT.Int32(), &corespb.Request{Command: command.USRTUpdateUserStatus.Int32(), Payload: b, Header: make(map[string]string)})
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +175,7 @@ func getUserStatus(noCache bool, values ...uint64) ([]*pb.USRT_User, error) {
 
 	frame := pb.USRT_Status_Request{Values: values}
 	b, _ := grpcproto.Marshal(&frame)
-	resp, err := muxRouter.Handler(usrt.ServiceName, &corespb.Request{Command: command.USRTGetUserStatus.Int32(), Payload: b, Header: header})
+	resp, err := muxRouter.Handler(kit.USRT.Int32(), &corespb.Request{Command: command.USRTGetUserStatus.Int32(), Payload: b, Header: header})
 	if err != nil {
 		return nil, err
 	}

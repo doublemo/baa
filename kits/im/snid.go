@@ -10,9 +10,9 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/rpc"
-	"github.com/doublemo/baa/kits/snid"
 	grpcproto "github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 )
@@ -103,7 +103,7 @@ func getSNID(num int32) ([]uint64, error) {
 
 	frame := pb.SNID_Request{N: num}
 	b, _ := grpcproto.Marshal(&frame)
-	resp, err := muxRouter.Handler(snid.ServiceName, &corespb.Request{Command: command.SNIDSnowflake.Int32(), Payload: b})
+	resp, err := muxRouter.Handler(kit.SNID.Int32(), &corespb.Request{Command: command.SNIDSnowflake.Int32(), Payload: b})
 	if err != nil {
 		return nil, err
 	}

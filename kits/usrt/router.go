@@ -2,11 +2,8 @@ package usrt
 
 import (
 	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/router"
-)
-
-const (
-	internalSnidRouter = 10001
 )
 
 var (
@@ -28,5 +25,5 @@ func InitRouter() {
 	r.HandleFunc(command.USRTGetUserStatus, getUserStatus)
 
 	// 订阅处理
-	nrRouter.Register(ServiceName, router.New()).HandleFunc(command.USRTDeleteUserStatus, deleteUserStatus)
+	nrRouter.Register(kit.USRT.Int32(), router.New()).HandleFunc(command.USRTDeleteUserStatus, deleteUserStatus)
 }
