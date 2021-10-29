@@ -12,6 +12,8 @@ const (
 	IM
 	IMF
 	USRT
+	User
+	Robot
 )
 
 // MakeErrCode 为不同组件创建对应的错误代码

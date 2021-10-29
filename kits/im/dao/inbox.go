@@ -30,6 +30,7 @@ func WriteInboxC(ctx context.Context, msg *Messages) error {
 	message["CreatedAt"] = time.Now().Unix()
 	message["TSeqId"] = msg.TSeqId
 	message["FSeqId"] = msg.FSeqId
+	message["Status"] = msg.Status
 
 	var (
 		retInbox   []*redis.IntCmd
@@ -63,4 +64,11 @@ func WriteInboxC(ctx context.Context, msg *Messages) error {
 // GetInboxMesssage 获取邮件
 func GetInboxMesssage(id uint64) (*Messages, error) {
 	return nil, nil
+}
+
+// ChangeInboxMessageStatus 修改信息状态
+func ChangeInboxMessageStatus(ctx context.Context, id uint64, status int32) (bool, error) {
+	messageNamer := RDBNamer(defaultInboxMessageKey, strconv.FormatUint(id, 10))
+	retMessage := rdb.HMSet(ctx, messageNamer, map[string]interface{}{"Status": status})
+	return retMessage.Val(), retMessage.Err()
 }

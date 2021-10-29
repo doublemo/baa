@@ -1,7 +1,9 @@
 package im
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
@@ -86,6 +88,9 @@ func handleMsgInspectionReport(req *corespb.Request) (*corespb.Response, error) 
 			Group:       value.Content.Group,
 		}
 
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		dao.ChangeInboxMessageStatus(ctx, m.ID, 1)
+		cancel()
 		fmt.Println("chek msg :=>", m)
 	}
 	return nil, nil
