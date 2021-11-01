@@ -1,9 +1,12 @@
 package dao
 
 import (
+	"hash/crc32"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/doublemo/baa/cores/cache/memcacher"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/go-redis/redis/v8"
 	"gorm.io/driver/mysql"
@@ -13,9 +16,11 @@ import (
 )
 
 var (
-	db        *gorm.DB
-	rdb       redis.UniversalClient
-	rdbPrefix string
+	database    *gorm.DB
+	rdb         redis.UniversalClient
+	dbPrefix    string
+	rdbPrefix   string
+	tableCacher = memcacher.New(0, 0)
 )
 
 // Open 打开数据库
@@ -50,7 +55,7 @@ func Open(c conf.DBMySQLConfig, rc conf.Redis) error {
 	mdb.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
 	mdb.SetMaxIdleConns(c.MaxIdleConns)
 	mdb.SetMaxOpenConns(c.MaxOpenConns)
-	db = db0
+	database = db0
 
 	if len(c.Resolver) > 0 {
 		var res *dbresolver.DBResolver
@@ -90,12 +95,12 @@ func Open(c conf.DBMySQLConfig, rc conf.Redis) error {
 			res.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
 			res.SetMaxIdleConns(c.MaxIdleConns)
 			res.SetMaxOpenConns(c.MaxOpenConns)
-			db.Use(res)
+			database.Use(res)
 		}
 	}
 
 	// 迁移
-	db.AutoMigrate(&Accounts{})
+	// db.AutoMigrate(&Accounts{})
 
 	// 连接redis
 	rdbPrefix = rc.Prefix
@@ -105,7 +110,7 @@ func Open(c conf.DBMySQLConfig, rc conf.Redis) error {
 
 // DB 获取数据库
 func DB() *gorm.DB {
-	return db
+	return database
 }
 
 // RDB 获取redis数据库
@@ -121,4 +126,25 @@ func RDBNamer(name ...string) string {
 	}
 
 	return prefix + strings.Join(name, ":")
+}
+
+// DBNamer db key
+func DBNamer(name ...string) string {
+	prefix := dbPrefix
+	if prefix != "" {
+		prefix += "_"
+	}
+
+	return prefix + strings.Join(name, "_")
+}
+
+// 计算表名
+func makeTablenameFromUint64(id uint64, maxRecord, maxTable uint32) uint32 {
+	c32 := crc32.ChecksumIEEE([]byte(strconv.FormatUint(id, 10)))
+	return (c32 - (c32 / maxRecord * maxRecord)) % maxTable
+}
+
+func makeTablenameFromString(s string, maxRecord, maxTable uint32) uint32 {
+	c32 := crc32.ChecksumIEEE([]byte(s))
+	return (c32 - (c32 / maxRecord * maxRecord)) % maxTable
 }

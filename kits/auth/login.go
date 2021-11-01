@@ -115,7 +115,7 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 		return errcode.Bad(w, errcode.ErrVerificationCodeIncorrect), nil
 	}
 
-	account, err := dao.GetAccoutsBySchemeAName(reqFrame.Scheme, form.Account.Username)
+	account, err := dao.GetAccoutsBySchemaAndName(reqFrame.Scheme, form.Account.Username)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
 	}
@@ -355,7 +355,7 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 	}
 
 	dao.RemoveSMSCode(r.Account.Phone, "register")
-	_, err = dao.GetAccoutsBySchemeAName(reqFrame.Scheme, r.Account.Username)
+	_, err = dao.GetAccoutsBySchemaAndName(reqFrame.Scheme, r.Account.Username)
 	if err != gorm.ErrRecordNotFound {
 		return errcode.Bad(w, errcode.ErrAccountIsExists), nil
 	}
@@ -374,7 +374,7 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 		ID:      idvalues[0],
 		UnionID: idvalues[1],
 		UserID:  idvalues[2],
-		Scheme:  "password",
+		Schema:  "password",
 		Name:    r.Account.Username,
 		Secret:  string(password),
 	}
@@ -433,7 +433,7 @@ func registerCheckUsername(req *corespb.Request, reqFrame *pb.Authentication_For
 		return w, nil
 	}
 
-	_, err := dao.GetAccoutsBySchemeAName(reqFrame.Scheme, r.CheckUsername.Username)
+	_, err := dao.GetAccoutsBySchemaAndName(reqFrame.Scheme, r.CheckUsername.Username)
 	if err == gorm.ErrRecordNotFound {
 		reply.CheckUsername.OK = true
 	}

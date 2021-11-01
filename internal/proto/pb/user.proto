@@ -1,0 +1,64 @@
+syntax = "proto3";
+package pb;
+option go_package = "github.com/doublemo/baa/internal/proto/pb";
+
+message User{
+    message Info {
+        string UserId = 1;
+        string Nickname = 2;
+        string Headimg = 3;
+        int32 Age = 4;
+        int32 Sex = 5;
+        string Idcard = 6;
+        string phone = 7;
+    }
+
+    message Register {
+        message Request{
+            string AccountId = 1;
+            Info Info = 2;
+        }
+
+        message Reply{
+            uint64 UserId = 1;
+        }
+    }
+
+    message Contacts {
+        message Info {
+            string FriendID = 1; 
+            string FNickname = 2;
+            string FHeadimg = 3;
+            int32 FSex = 4;
+            string Remark = 5;
+            int32 Mute = 6;
+            int32 StickyOnTop = 7;
+            int32 Type = 8;
+            uint64 Topic= 9;
+        }
+
+        message Add{
+            string FriendID = 1; 
+            string Remark = 2;
+        }
+
+        message Accept {
+            string FriendID = 1; 
+        }
+
+        message Refuse {
+            string FriendID = 1; 
+            string Message = 2;
+        }
+
+        message Request {
+            oneof Payload {
+                Add Add = 1;
+            }
+        }
+
+        message Reply {
+
+        }
+    }
+}

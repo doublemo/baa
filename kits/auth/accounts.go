@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"errors"
+	"strconv"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/proto/pb"
@@ -12,13 +12,24 @@ import (
 
 // 处理账户下线
 func offline(r *corespb.Request) (*corespb.Response, error) {
-	var peerID string
-	{
-		if r.Header != nil {
-			if m, ok := r.Header["PeerId"]; ok {
-				peerID = m
-			}
+	var (
+		accountID string
+		peerID    string
+	)
+
+	if r.Header != nil {
+		if m, ok := r.Header["PeerId"]; ok {
+			peerID = m
 		}
+
+		if m, ok := r.Header["AccountID"]; ok {
+			accountID = m
+		}
+	}
+
+	uid, err0 := strconv.ParseUint(accountID, 10, 64)
+	if err0 != nil {
+		return nil, err0
 	}
 
 	var frame pb.Authentication_Form_Logout
@@ -36,11 +47,8 @@ func offline(r *corespb.Request) (*corespb.Response, error) {
 	switch payload := frame.Payload.(type) {
 	case *pb.Authentication_Form_Logout_ID:
 	case *pb.Authentication_Form_Logout_PeerID:
-		if peerID != payload.PeerID {
-			return nil, errors.New("InvalidPeerID")
-		}
-
-		accounts, err = dao.GetAccoutsByPeerID(payload.PeerID)
+		peerID = payload.PeerID
+		accounts, err = dao.GetAccoutsByID(uid)
 		if err != nil {
 			return nil, err
 		}
@@ -53,11 +61,11 @@ func offline(r *corespb.Request) (*corespb.Response, error) {
 		Payload: &corespb.Response_Content{Content: r.Payload},
 	}
 
-	if accounts == nil {
+	if accounts == nil || accounts.PeerID != peerID {
 		return w, nil
 	}
 
-	deleteUserStatus(&pb.USRT_User{ID: accounts.ID, Type: accounts.Scheme, Value: sd.Endpoint().ID()})
+	deleteUserStatus(&pb.USRT_User{ID: accounts.ID, Type: accounts.Schema, Value: sd.Endpoint().ID()})
 	dao.UpdatesAccountByID(accounts.ID, "peer_id", "")
 	return w, nil
 }

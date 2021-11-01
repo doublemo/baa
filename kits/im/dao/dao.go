@@ -96,6 +96,7 @@ func Open(c conf.DBMySQLConfig, rc conf.Redis) error {
 
 	// 迁移
 	// db.AutoMigrate(&Accounts{})
+	// db.Scopes(dao.UseContactsTable(344707147885449216)).Create(&dao.Contacts{ID: 1})
 
 	// 连接redis
 	rdbPrefix = rc.Prefix

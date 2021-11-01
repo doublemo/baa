@@ -2,35 +2,68 @@ package dao
 
 import (
 	"errors"
+	"strconv"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-// Accounts 账户
-type Accounts struct {
-	ID        uint64 `gorm:"<-:create;primaryKey"`
-	UnionID   uint64 `gorm:"<-:create;index"`
-	UserID    uint64 `gorm:"<-:create;index"`
-	Scheme    string `gorm:"<-:create;size:50;index:scheme_name"`
-	Name      string `gorm:"<-:create;index:scheme_name"`
-	Secret    string
-	Status    int
-	ExpiresAt int64
-	PeerID    string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+const (
+	defaultAccountsMaxRecord              = 10000000
+	defaultAccountsMaxTable               = 100
+	defaultAccountsSchemaNameIdxMaxRecord = 20000000
+	defaultAccountsSchemaNameIdxMaxTable  = 25
+)
+
+type (
+	// Accounts 账户
+	Accounts struct {
+		ID        uint64 `gorm:"<-:create;primaryKey"`
+		UnionID   uint64 `gorm:"<-:create;index"`
+		UserID    uint64 `gorm:"<-:create;index"`
+		Schema    string `gorm:"<-:create;size:50;index:schema_name"`
+		Name      string `gorm:"<-:create;index:schema_name"`
+		Secret    string
+		Status    int
+		ExpiresAt int64
+		PeerID    string
+		CreatedAt time.Time
+		UpdatedAt time.Time
+		DeletedAt gorm.DeletedAt `gorm:"index"`
+	}
+
+	// AccountsSchemaNameIdx 账户索引表
+	AccountsSchemaNameIdx struct {
+		ID    uint64 `gorm:"<-:create;primaryKey"`
+		Table uint32
+	}
+)
+
+// TableName 数据库表名称
+func (accounts Accounts) TableName() string {
+	return DBNamer("accounts")
 }
 
-// GetAccoutsBySchemeAName 根据条件 scheme, name 获取信息
-func GetAccoutsBySchemeAName(scheme, name string) (*Accounts, error) {
-	if db == nil {
+// TableName 数据库表名称
+func (idx AccountsSchemaNameIdx) TableName() string {
+	return DBNamer("accounts", "scheme", "name", "idx")
+}
+
+// GetAccoutsBySchemaAndName 根据条件 scheme, name 获取信息
+func GetAccoutsBySchemaAndName(schema, name string) (*Accounts, error) {
+	if database == nil {
 		return nil, gorm.ErrInvalidDB
 	}
 
+	idx, err := GetAccountsSchemeNameIdx(schema, name)
+	if err != nil {
+		return nil, err
+	}
+
 	accounts := &Accounts{}
-	tx := db.Where("scheme = ? AND name = ?", scheme, name).First(accounts)
+	table := DBNamer(accounts.TableName(), strconv.FormatUint(uint64(idx.Table), 10))
+	tx := database.Table(table).Where("scheme = ? AND name = ?", schema, name).First(accounts)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
@@ -38,42 +71,106 @@ func GetAccoutsBySchemeAName(scheme, name string) (*Accounts, error) {
 	return accounts, nil
 }
 
-func GetAccoutsByPeerID(id string) (*Accounts, error) {
-	if db == nil {
+func GetAccoutsByID(id uint64) (*Accounts, error) {
+	if database == nil {
 		return nil, gorm.ErrInvalidDB
 	}
-
 	accounts := &Accounts{}
-	tx := db.Where("peer_id = ?", id).First(accounts)
-	if tx.Error != nil {
-		return nil, tx.Error
+	r := database.Scopes(UseAccountsTableFromUint64(id)).Where("id = ?", id).First(accounts)
+	if r.Error != nil {
+		return nil, r.Error
 	}
-
 	return accounts, nil
 }
 
 func CreateAccount(accounts *Accounts) error {
-	if db == nil {
+	if database == nil {
 		return gorm.ErrInvalidDB
 	}
 
-	r := db.Create(accounts)
-	if r.Error != nil {
-		return r.Error
-	}
+	return database.Transaction(func(tx *gorm.DB) error {
+		r := tx.Scopes(UseAccountsTableFromUint64(accounts.ID)).Create(accounts)
+		if r.Error != nil {
+			return r.Error
+		}
 
-	if r.RowsAffected != 1 {
-		return errors.New("CreateFailed")
-	}
+		if r.RowsAffected != 1 {
+			return errors.New("CreateFailed")
+		}
 
-	return nil
+		idx := makeTablenameFromString(strings.ToLower(accounts.Schema+accounts.Name), defaultAccountsSchemaNameIdxMaxRecord, defaultAccountsSchemaNameIdxMaxTable)
+		r = tx.Scopes(UseAccountsSchemeNameIdxTableFromString(accounts.Schema, accounts.Name)).Create(&AccountsSchemaNameIdx{ID: accounts.ID, Table: idx})
+		if r.Error != nil || r.RowsAffected != 1 {
+			return errors.New("CreateFailed")
+		}
+
+		return nil
+	})
 }
 
 func UpdatesAccountByID(id uint64, col string, value interface{}) (int64, error) {
-	if db == nil {
+	if database == nil {
 		return 0, gorm.ErrInvalidDB
 	}
 
-	r := db.Model(&Accounts{}).Where("id = ?", id).Update(col, value)
+	r := database.Scopes(UseAccountsTableFromUint64(id)).Where("id = ?", id).Update(col, value)
 	return r.RowsAffected, r.Error
+}
+
+func GetAccountsSchemeNameIdx(schema, name string) (*AccountsSchemaNameIdx, error) {
+	if database == nil {
+		return nil, gorm.ErrInvalidDB
+	}
+
+	idx := &AccountsSchemaNameIdx{}
+	tx := database.Scopes(UseAccountsSchemeNameIdxTableFromString(schema, name)).Where("scheme = ? AND name = ?", schema, name).First(idx)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return idx, nil
+}
+
+// UseAccountsTableFromUint64 动态表名
+func UseAccountsTableFromUint64(id uint64) func(tx *gorm.DB) *gorm.DB {
+	c32 := makeTablenameFromUint64(id, defaultAccountsMaxRecord, defaultAccountsMaxTable)
+	return func(tx *gorm.DB) *gorm.DB {
+		accounts := &Accounts{}
+		tablename := DBNamer(accounts.TableName(), strconv.FormatUint(uint64(c32), 10))
+		_, ok := tableCacher.Get(tablename)
+		if !ok {
+			if !tx.Migrator().HasTable(tablename) {
+				if err := tx.Table(tablename).AutoMigrate(accounts); err != nil {
+					tx.AddError(err)
+				} else {
+					tableCacher.Set(tablename, true, 0)
+				}
+			} else {
+				tableCacher.Set(tablename, true, 0)
+			}
+		}
+		return tx.Table(tablename)
+	}
+}
+
+// UseAccountsSchemeNameIdxTableFromString 动态表名
+func UseAccountsSchemeNameIdxTableFromString(schema, name string) func(tx *gorm.DB) *gorm.DB {
+	c32 := makeTablenameFromString(strings.ToLower(schema+name), defaultAccountsSchemaNameIdxMaxRecord, defaultAccountsSchemaNameIdxMaxTable)
+	return func(tx *gorm.DB) *gorm.DB {
+		accounts := &AccountsSchemaNameIdx{}
+		tablename := DBNamer(accounts.TableName(), strconv.FormatUint(uint64(c32), 10))
+		_, ok := tableCacher.Get(tablename)
+		if !ok {
+			if !tx.Migrator().HasTable(tablename) {
+				if err := tx.Table(tablename).AutoMigrate(accounts); err != nil {
+					tx.AddError(err)
+				} else {
+					tableCacher.Set(tablename, true, 0)
+				}
+			} else {
+				tableCacher.Set(tablename, true, 0)
+			}
+		}
+		return tx.Table(tablename)
+	}
 }
