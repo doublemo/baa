@@ -41,6 +41,7 @@ func InitRouter(config RouterConfig) {
 	})
 
 	r.HandleFunc(command.AuthOffline, offline)
+	r.HandleFunc(command.AuthAccountInfo, func(r *corespb.Request) (*corespb.Response, error) { return accountInfo(r, config.LR) })
 
 	// 注册内部使用路由
 	muxRouter.Register(kit.SNID.Int32(), router.New())

@@ -57,7 +57,6 @@ func send(req *corespb.Request, c ChatConfig) (*corespb.Response, error) {
 
 	for _, message := range frame.Messages.Values {
 		received, failed := sendto(message, c)
-		fmt.Println(received, failed)
 		if received != nil {
 			ret.Successed = append(ret.Successed, received)
 		}

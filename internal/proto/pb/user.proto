@@ -20,13 +20,13 @@ message User{
         }
 
         message Reply{
-            uint64 UserId = 1;
+            string UserId = 1;
         }
     }
 
     message Contacts {
         message Info {
-            string FriendID = 1; 
+            string FriendId = 1; 
             string FNickname = 2;
             string FHeadimg = 3;
             int32 FSex = 4;
@@ -37,28 +37,170 @@ message User{
             uint64 Topic= 9;
         }
 
+        message FriendRequestInfo {
+            string UserId = 1;
+            string FriendId = 2;
+            string FromID = 3;
+            string FNickname = 4;
+            string FHeadimg = 5;
+            string FSex = 6;
+            string Remark = 7;
+            string Messages = 8;
+            string Status = 9;
+            int64 Version = 10;
+            int64 CreatedAt = 11;
+        }
+
         message Add{
-            string FriendID = 1; 
+            string FriendId = 1; 
             string Remark = 2;
+            string Message = 3;
+            string UserId  = 4;
         }
 
         message Accept {
-            string FriendID = 1; 
+            string FriendId = 1; 
+            string Remark = 2;
+            string UserId  = 3;
         }
 
         message Refuse {
-            string FriendID = 1; 
+            string FriendId = 1; 
             string Message = 2;
+            string UserId  = 3;
+        }
+
+        message Cancel {
+            string FriendId = 1; 
+            string UserId  = 2;
+        }
+
+        message FriendRequest {
+            string FriendId = 1;
+            string FNickname = 2;
+            string FHeadimg  = 3;
+            string FSex = 4;
+            string Message = 5;
+        }
+
+        message ListRequest {
+            int32  Page = 1;
+            int32  Size = 2;
+            uint64 UserId = 3;
+        }
+
+        message FriendRequestList {
+            uint64 UserId = 1;
+            int32 Page = 2;
+            int32 Size = 3;
+        }
+
+        message ListReply {
+            repeated Info Values = 1;
+            int32  Page = 2;
+            int32  Size = 3;
+            int32 RecordCount = 4;
+        }
+
+        message FriendRequestListReply {
+            repeated FriendRequestInfo Values = 1;
+            int32  Page = 2;
+            int32  Size = 3;
+            int32 RecordCount = 4;
         }
 
         message Request {
             oneof Payload {
                 Add Add = 1;
+                Accept Accept = 2;
+                Refuse Refuse = 3;
+                Cancel Cancel = 4;
+                string SearchFriend   = 5;
             }
         }
 
         message Reply {
+            bool OK = 1;
+        }
 
+        message Notify {
+            oneof Payload {
+                FriendRequest Request = 1;
+                Refuse Refuse = 2;
+            }
+        }
+    }
+
+
+    message Group {
+        message Info {
+            string ID = 1;
+            string Name = 2;
+            string Notice = 3;
+            string Headimg = 4;
+        }
+
+        message Member{
+            string UserId = 1;
+            string Nickname = 2;
+            string Headimg = 3;
+            string Sex = 4;
+            uint64 Topic = 5;
+            string Alias = 6;
+        }
+
+
+        message Members {
+            repeated Member Values = 1;
+        }
+
+        message Add{
+            string GroupId = 1; 
+            string Remark = 2;
+            string Message = 3;
+        } 
+
+        message Accept {
+            string GroupId = 1; 
+            string Remark = 2;
+        }
+
+        message Refuse {
+            string GroupId = 1; 
+            string Message = 2;
+        }
+
+        message Cancel {
+            string GroupId = 1; 
+        }
+
+        message MemberRequest {
+            string UserID = 1;
+            string Nickname = 2;
+            string Headimg  = 3;
+            string Sex = 4;
+            string Message = 5;
+        }
+
+        message Request {
+            oneof Payload {
+                Add Add = 1;
+                Accept Accept = 2;
+                Refuse Refuse = 3;
+                Cancel Cancel = 4;
+            }
+        }
+
+        message Reply {
+            bool OK = 1;
+        }
+
+        message Notify {
+            oneof Payload {
+                MemberRequest MemberRequest = 1;
+                Info  GroupRequest = 2;
+                Refuse Refuse = 3;
+            }
         }
     }
 }

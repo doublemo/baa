@@ -17,4 +17,7 @@ const (
 
 	// AuthOffline 玩家离线
 	AuthOffline
+
+	// AuthAccountInfo 账户信息
+	AuthAccountInfo
 )

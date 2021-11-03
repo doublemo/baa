@@ -3,6 +3,30 @@ package pb;
 option go_package = "github.com/doublemo/baa/internal/proto/pb";
 
 message Authentication {
+   
+
+   message Account {
+      message Info {
+         string ID  = 1;
+         string UnionID = 2;
+         string UserID = 3;
+         string Token = 4;
+         string Schema = 5;
+         string Name = 6;
+         int32 Status = 7;
+         int64 ExpiresAt = 8;
+         int64 CreatedAt = 9;
+      }
+
+      message Request {
+         string AccountId = 1;
+      }
+
+      message Reply {
+         Info Info = 1;
+      }
+   }
+
    message Form {
       message AccountInfo {
          string ID  = 1;

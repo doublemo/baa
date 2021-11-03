@@ -3,12 +3,54 @@ package auth
 import (
 	"strconv"
 
+	"github.com/doublemo/baa/cores/crypto/id"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/auth/dao"
+	"github.com/doublemo/baa/kits/auth/errcode"
 	grpcproto "github.com/golang/protobuf/proto"
 )
+
+func accountInfo(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
+	var frame pb.Authentication_Account_Request
+	{
+		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+			return nil, err
+		}
+	}
+
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  req.Header,
+	}
+
+	accountId, err := id.Decrypt(frame.AccountId, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrAccountIDInvalid), nil
+	}
+
+	info, err := dao.GetAccoutsByID(accountId)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrAccountIDInvalid, err.Error()), nil
+	}
+
+	resp := &pb.Authentication_Account_Info{
+		Token:     "",
+		Schema:    info.Schema,
+		Name:      info.Name,
+		Status:    int32(info.Status),
+		ExpiresAt: info.ExpiresAt,
+		CreatedAt: info.CreatedAt.Unix(),
+	}
+
+	resp.ID, _ = id.Encrypt(info.ID, []byte(c.IDSecret))
+	resp.UnionID, _ = id.Encrypt(info.UnionID, []byte(c.IDSecret))
+	resp.UserID, _ = id.Encrypt(info.UserID, []byte(c.IDSecret))
+	respBytes, _ := grpcproto.Marshal(resp)
+	w.Payload = &corespb.Response_Content{Content: respBytes}
+	return w, nil
+}
 
 // 处理账户下线
 func offline(r *corespb.Request) (*corespb.Response, error) {
