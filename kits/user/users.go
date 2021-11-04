@@ -20,6 +20,9 @@ type UserConfig struct {
 	// IDSecret 用户ID 加密key 16位
 	IDSecret string `alias:"idSecret" default:"7581BDD8E8DA3839"`
 
+	// IdxSecret 用户生成用户默认索引号
+	IdxSecret string `alias:"idxSecret" default:"A5C11DD8E8DA3830"`
+
 	// NicknameMaxLength 昵称最大长度
 	NicknameMaxLength int `alias:"nicknameMaxLength" default:"34"`
 
@@ -78,9 +81,10 @@ func register(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 	}
 
 	userId, _ = id.Encrypt(userUint64Id, []byte(c.IDSecret))
+	indexNo, _ := id.Encrypt(userUint64Id, []byte(c.IdxSecret))
 	user := dao.Users{
 		ID:       userUint64Id,
-		IndexNo:  "id_" + userId,
+		IndexNo:  "ID_" + indexNo,
 		Nickname: frame.Info.Nickname,
 		Headimg:  frame.Info.Headimg,
 		Age:      int8(frame.Info.Age),

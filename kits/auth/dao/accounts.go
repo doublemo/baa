@@ -51,7 +51,7 @@ func (idx AccountsSchemaNameIdx) TableName() string {
 }
 
 // GetAccoutsBySchemaAndName 根据条件 scheme, name 获取信息
-func GetAccoutsBySchemaAndName(schema, name string) (*Accounts, error) {
+func GetAccoutsBySchemaAndName(schema, name string, cols ...string) (*Accounts, error) {
 	if database == nil {
 		return nil, gorm.ErrInvalidDB
 	}
@@ -63,7 +63,11 @@ func GetAccoutsBySchemaAndName(schema, name string) (*Accounts, error) {
 
 	accounts := &Accounts{}
 	table := DBNamer(accounts.TableName(), strconv.FormatUint(uint64(idx.Table), 10))
-	tx := database.Table(table).Where("scheme = ? AND name = ?", schema, name).First(accounts)
+	tx := database.Table(table)
+	if len(cols) > 0 {
+		tx.Select(cols)
+	}
+	tx.Where("scheme = ? AND name = ?", schema, name).First(accounts)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
@@ -71,12 +75,16 @@ func GetAccoutsBySchemaAndName(schema, name string) (*Accounts, error) {
 	return accounts, nil
 }
 
-func GetAccoutsByID(id uint64) (*Accounts, error) {
+func GetAccoutsByID(id uint64, cols ...string) (*Accounts, error) {
 	if database == nil {
 		return nil, gorm.ErrInvalidDB
 	}
 	accounts := &Accounts{}
-	r := database.Scopes(UseAccountsTableFromUint64(id)).Where("id = ?", id).First(accounts)
+	r := database.Scopes(UseAccountsTableFromUint64(id))
+	if len(cols) > 0 {
+		r.Select(cols)
+	}
+	r.Where("id = ?", id).First(accounts)
 	if r.Error != nil {
 		return nil, r.Error
 	}
@@ -123,7 +131,7 @@ func GetAccountsSchemeNameIdx(schema, name string) (*AccountsSchemaNameIdx, erro
 	}
 
 	idx := &AccountsSchemaNameIdx{}
-	tx := database.Scopes(UseAccountsSchemeNameIdxTableFromString(schema, name)).Where("scheme = ? AND name = ?", schema, name).First(idx)
+	tx := database.Scopes(UseAccountsSchemeNameIdxTableFromString(schema, name)).Select("id", "table").Where("scheme = ? AND name = ?", schema, name).First(idx)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

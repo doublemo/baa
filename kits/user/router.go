@@ -44,7 +44,7 @@ func InitRouter(config RouterConfig) {
 	// 订阅处理
 	// nrRouter.Register(kit.USRT.Int32(), router.New()).HandleFunc(command.USRTDeleteUserStatus, deleteUserStatus)
 
-	time.AfterFunc(time.Second*10, testSend)
+	//time.AfterFunc(time.Second*10, testSend)
 }
 
 func testSend() {

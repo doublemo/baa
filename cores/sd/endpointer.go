@@ -49,29 +49,24 @@ func (e *EndpointerLocal) Deregister(name string) {
 
 func (e *EndpointerLocal) receive() {
 	for event := range e.ch {
-
 		// todo update cache
 		e.cache.Update(event)
-
 		if event.Err != nil {
 			continue
 		}
 
 		// 如果没有错误那么广播
-		for _, instance := range event.Instances {
-			endpoint := &EndpointLocal{}
-			if err := endpoint.Unmarshal(instance); err == nil {
-				e.mutx.RLock()
-				m, ok := e.registry[endpoint.Name()]
-				e.mutx.RUnlock()
-				if ok {
-					select {
-					case m <- struct{}{}:
-					default:
-					}
-				}
+		time.Sleep(time.Millisecond)
+		e.mutx.RLock()
+		for _, ch := range e.registry {
+			e.mutx.RUnlock()
+			select {
+			case ch <- struct{}{}:
+			default:
 			}
+			e.mutx.RLock()
 		}
+		e.mutx.RUnlock()
 	}
 }
 

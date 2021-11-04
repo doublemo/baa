@@ -14,6 +14,7 @@ import (
 var (
 	endpoint         sd.Endpoint
 	endpointer       sd.Endpointer
+	instancer        sd.Instancer
 	client           etcdv3.Client
 	prefix           string
 	ErrEndpointerNil = errors.New("ErrEndpointerNil")
@@ -33,15 +34,16 @@ func Init(etcd conf.Etcd, e sd.Endpoint) error {
 		return err
 	}
 
-	instancer, err := etcdv3.NewInstancer(c, etcd.BasePath)
+	instance, err := etcdv3.NewInstancer(c, etcd.BasePath)
 	if err != nil {
 		return err
 	}
 
 	client = c
 	prefix = etcd.BasePath
-	endpointer = sd.NewEndpointer(instancer)
+	endpointer = sd.NewEndpointer(instance)
 	endpoint = e
+	instancer = instance
 	return nil
 }
 
@@ -53,6 +55,10 @@ func Endpoint() sd.Endpoint {
 // Endpointer 获取节点发现
 func Endpointer() sd.Endpointer {
 	return endpointer
+}
+
+func Instancer() sd.Instancer {
+	return instancer
 }
 
 // Client 获取etcdv3 客户端
