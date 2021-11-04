@@ -16,14 +16,16 @@ import (
 )
 
 func contact(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
-	if router.IsHTTP(req) {
-		return contactToHTTP(req, c)
-	}
-
 	var frame pb.User_Contacts_Request
 	{
-		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
-			return nil, err
+		if router.IsHTTP(req) {
+			if err := jsonpb.UnmarshalString(string(req.Payload), &frame); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -43,48 +45,8 @@ func contact(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 	case *pb.User_Contacts_Request_SearchFriend:
 		return searchFriend(req, payload, c)
 	}
+
 	return nil, errors.New("notsupported")
-}
-
-func contactToHTTP(req *corespb.Request, c UserConfig) (resp *corespb.Response, err error) {
-	var frame pb.User_Contacts_Request
-	{
-		if err := jsonpb.UnmarshalString(string(req.Payload), &frame); err != nil {
-			return nil, err
-		}
-	}
-
-	switch payload := frame.Payload.(type) {
-	case *pb.User_Contacts_Request_Add:
-		resp, err = addContact(req, payload, c)
-
-	case *pb.User_Contacts_Request_Accept:
-		resp, err = acceptContact(req, payload, c)
-
-	case *pb.User_Contacts_Request_Refuse:
-		resp, err = refuseContact(req, payload, c)
-
-	case *pb.User_Contacts_Request_Cancel:
-		resp, err = cancelContact(req, payload, c)
-
-	case *pb.User_Contacts_Request_SearchFriend:
-		resp, err = searchFriend(req, payload, c)
-
-	default:
-		return nil, errors.New("notsupported")
-	}
-
-	switch w := resp.Payload.(type) {
-	case *corespb.Response_Content:
-		var frame pb.User_Contacts_Reply
-		grpcproto.Unmarshal(w.Content, &frame)
-		jsonpbM := &jsonpb.Marshaler{}
-		b, _ := jsonpbM.MarshalToString(&frame)
-		resp.Payload = &corespb.Response_Content{Content: []byte(b)}
-	case *corespb.Response_Error:
-		return
-	}
-	return
 }
 
 func addContact(req *corespb.Request, frame *pb.User_Contacts_Request_Add, c UserConfig) (*corespb.Response, error) {
@@ -120,12 +82,21 @@ func addContact(req *corespb.Request, frame *pb.User_Contacts_Request_Add, c Use
 		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
 	}
 
-	if _, err = dao.FindContactsByUserIDAndFriendID(uid, friendId); err == nil {
+	if _, err = dao.FindContactsByUserIDAndFriendID(uid, friendId, "id"); err == nil {
 		return errcode.Bad(w, errcode.ErrUserAlreadyContact), nil
 	}
 
 	resp := &pb.User_Contacts_Reply{OK: true}
-	respBytes, _ := grpcproto.Marshal(resp)
+	var respBytes []byte
+	{
+		if router.IsHTTP(req) {
+			jsonpbM := &jsonpb.Marshaler{}
+			json, _ := jsonpbM.MarshalToString(resp)
+			respBytes = []byte(json)
+		} else {
+			respBytes, _ = grpcproto.Marshal(resp)
+		}
+	}
 	w.Payload = &corespb.Response_Content{Content: respBytes}
 
 	// 检查对方信箱里面有我的请求
@@ -141,12 +112,12 @@ func addContact(req *corespb.Request, frame *pb.User_Contacts_Request_Add, c Use
 		}
 	}
 
-	user, err := dao.FindUsersByID(uid)
+	user, err := dao.FindUsersByID(uid, "id", "nickname", "heading", "sex")
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
 	}
 
-	friend, err := dao.FindUsersByID(friendId)
+	friend, err := dao.FindUsersByID(friendId, "id", "nickname", "heading", "sex")
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
 	}
@@ -167,6 +138,7 @@ func addContact(req *corespb.Request, frame *pb.User_Contacts_Request_Add, c Use
 	if err := dao.CreateContactsRequest(&request); err != nil {
 		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
 	}
+
 	return w, nil
 }
 
@@ -225,7 +197,16 @@ func acceptContact(req *corespb.Request, frame *pb.User_Contacts_Request_Accept,
 	}
 
 	resp := &pb.User_Contacts_Reply{OK: true}
-	respBytes, _ := grpcproto.Marshal(resp)
+	var respBytes []byte
+	{
+		if router.IsHTTP(req) {
+			jsonpbM := &jsonpb.Marshaler{}
+			json, _ := jsonpbM.MarshalToString(resp)
+			respBytes = []byte(json)
+		} else {
+			respBytes, _ = grpcproto.Marshal(resp)
+		}
+	}
 	w.Payload = &corespb.Response_Content{Content: respBytes}
 	if err := dao.AddContactsFromRequest(user, friend, contactsRequest, frame.Accept.Remark); err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
@@ -282,7 +263,16 @@ func refuseContact(req *corespb.Request, frame *pb.User_Contacts_Request_Refuse,
 	}
 
 	resp := &pb.User_Contacts_Reply{OK: true}
-	respBytes, _ := grpcproto.Marshal(resp)
+	var respBytes []byte
+	{
+		if router.IsHTTP(req) {
+			jsonpbM := &jsonpb.Marshaler{}
+			json, _ := jsonpbM.MarshalToString(resp)
+			respBytes = []byte(json)
+		} else {
+			respBytes, _ = grpcproto.Marshal(resp)
+		}
+	}
 	w.Payload = &corespb.Response_Content{Content: respBytes}
 	if frame.Refuse.Message == "" {
 		dao.UpdateContactsRequestStatusByID(uid, friendId, 1)
@@ -331,7 +321,16 @@ func cancelContact(req *corespb.Request, frame *pb.User_Contacts_Request_Cancel,
 	}
 
 	resp := &pb.User_Contacts_Reply{OK: true}
-	respBytes, _ := grpcproto.Marshal(resp)
+	var respBytes []byte
+	{
+		if router.IsHTTP(req) {
+			jsonpbM := &jsonpb.Marshaler{}
+			json, _ := jsonpbM.MarshalToString(resp)
+			respBytes = []byte(json)
+		} else {
+			respBytes, _ = grpcproto.Marshal(resp)
+		}
+	}
 	w.Payload = &corespb.Response_Content{Content: respBytes}
 	dao.DeleteContactsRequestByUserIDAndFriendID(uid, friendId)
 	//dao.DeleteContactsRequestByUserIDAndFriendID(friendId, uid)
@@ -357,7 +356,176 @@ func searchFriend(req *corespb.Request, frame *pb.User_Contacts_Request_SearchFr
 	}
 
 	resp.UserId, _ = id.Encrypt(users.ID, []byte(c.IDSecret))
-	respBytes, _ := grpcproto.Marshal(resp)
+	var respBytes []byte
+	{
+		if router.IsHTTP(req) {
+			jsonpbM := &jsonpb.Marshaler{}
+			json, _ := jsonpbM.MarshalToString(resp)
+			respBytes = []byte(json)
+		} else {
+			respBytes, _ = grpcproto.Marshal(resp)
+		}
+	}
+	w.Payload = &corespb.Response_Content{Content: respBytes}
+	return w, nil
+}
+
+func friendRequestList(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
+	var frame pb.User_Contacts_FriendRequestList
+	{
+		if router.IsHTTP(req) {
+			if err := jsonpb.UnmarshalString(string(req.Payload), &frame); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if req.Header == nil {
+		req.Header = make(map[string]string)
+	}
+
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  req.Header,
+	}
+
+	var userId string
+	if m, ok := req.Header["UserId"]; ok {
+		userId = m
+	}
+
+	if userId != frame.UserId {
+		return errcode.Bad(w, errcode.ErrUserNotfound, frame.UserId), nil
+	}
+
+	uid, err := id.Decrypt(frame.UserId, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+	}
+
+	list, count, err := dao.FindContactsRequestByUserID(uid, frame.Page, frame.Size, frame.Version)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	resp := &pb.User_Contacts_FriendRequestListReply{
+		Values:      make([]*pb.User_Contacts_FriendRequestInfo, len(list)),
+		Page:        frame.Page,
+		Size:        frame.Size,
+		RecordCount: int32(count),
+	}
+
+	for k, v := range list {
+		enuid, _ := id.Encrypt(v.UserID, []byte(c.IDSecret))
+		enfid, _ := id.Encrypt(v.FriendID, []byte(c.IDSecret))
+		resp.Values[k] = &pb.User_Contacts_FriendRequestInfo{
+			UserId:    enuid,
+			FriendId:  enfid,
+			FNickname: v.FNickname,
+			FHeadimg:  v.FHeadimg,
+			FSex:      int32(v.FSex),
+			Remark:    v.Remark,
+			Messages:  v.Messages,
+			Status:    int32(v.Status),
+			Version:   v.Version,
+			CreatedAt: v.CreatedAt,
+		}
+	}
+
+	var respBytes []byte
+	{
+		if router.IsHTTP(req) {
+			jsonpbM := &jsonpb.Marshaler{}
+			json, _ := jsonpbM.MarshalToString(resp)
+			respBytes = []byte(json)
+		} else {
+			respBytes, _ = grpcproto.Marshal(resp)
+		}
+	}
+	w.Payload = &corespb.Response_Content{Content: respBytes}
+	return w, nil
+}
+
+func contacts(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
+	var frame pb.User_Contacts_ListRequest
+	{
+		if router.IsHTTP(req) {
+			if err := jsonpb.UnmarshalString(string(req.Payload), &frame); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if req.Header == nil {
+		req.Header = make(map[string]string)
+	}
+
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  req.Header,
+	}
+
+	var userId string
+	if m, ok := req.Header["UserId"]; ok {
+		userId = m
+	}
+
+	if userId != frame.UserId {
+		return errcode.Bad(w, errcode.ErrUserNotfound, frame.UserId), nil
+	}
+
+	uid, err := id.Decrypt(frame.UserId, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+	}
+
+	list, count, err := dao.FindContactsByUserID(uid, frame.Page, frame.Size, frame.Version)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	resp := &pb.User_Contacts_ListReply{
+		Values:      make([]*pb.User_Contacts_Info, len(list)),
+		Page:        frame.Page,
+		Size:        frame.Size,
+		RecordCount: int32(count),
+	}
+
+	for k, v := range list {
+		enfid, _ := id.Encrypt(v.FriendID, []byte(c.IDSecret))
+		resp.Values[k] = &pb.User_Contacts_Info{
+			FriendId:    enfid,
+			FNickname:   v.FNickname,
+			FHeadimg:    v.FHeadimg,
+			FSex:        int32(v.FSex),
+			Remark:      v.Remark,
+			Mute:        int32(v.Mute),
+			StickyOnTop: int32(v.StickyOnTop),
+			Type:        int32(v.Type),
+			Topic:       v.Topic,
+			Version:     v.Version,
+			CreatedAt:   v.CreateAt,
+		}
+	}
+
+	var respBytes []byte
+	{
+		if router.IsHTTP(req) {
+			jsonpbM := &jsonpb.Marshaler{}
+			json, _ := jsonpbM.MarshalToString(resp)
+			respBytes = []byte(json)
+		} else {
+			respBytes, _ = grpcproto.Marshal(resp)
+		}
+	}
 	w.Payload = &corespb.Response_Content{Content: respBytes}
 	return w, nil
 }

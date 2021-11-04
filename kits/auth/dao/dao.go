@@ -1,8 +1,6 @@
 package dao
 
 import (
-	"hash/crc32"
-	"strconv"
 	"strings"
 	"time"
 
@@ -27,6 +25,7 @@ var (
 func Open(c conf.DBMySQLConfig, rc conf.Redis) error {
 	gormConfig := &gorm.Config{}
 	if c.TablePrefix != "" {
+		dbPrefix = c.TablePrefix
 		gormConfig.NamingStrategy = schema.NamingStrategy{
 			TablePrefix: c.TablePrefix,
 		}
@@ -130,21 +129,5 @@ func RDBNamer(name ...string) string {
 
 // DBNamer db key
 func DBNamer(name ...string) string {
-	prefix := dbPrefix
-	if prefix != "" {
-		prefix += "_"
-	}
-
-	return prefix + strings.Join(name, "_")
-}
-
-// 计算表名
-func makeTablenameFromUint64(id uint64, maxRecord, maxTable uint32) uint32 {
-	c32 := crc32.ChecksumIEEE([]byte(strconv.FormatUint(id, 10)))
-	return (c32 - (c32 / maxRecord * maxRecord)) % maxTable
-}
-
-func makeTablenameFromString(s string, maxRecord, maxTable uint32) uint32 {
-	c32 := crc32.ChecksumIEEE([]byte(s))
-	return (c32 - (c32 / maxRecord * maxRecord)) % maxTable
+	return dbPrefix + strings.Join(name, "_")
 }

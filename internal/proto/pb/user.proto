@@ -35,6 +35,8 @@ message User{
             int32 StickyOnTop = 7;
             int32 Type = 8;
             uint64 Topic= 9;
+            int64 Version = 10;
+            int64 CreatedAt = 11;
         }
 
         message FriendRequestInfo {
@@ -43,10 +45,10 @@ message User{
             string FromID = 3;
             string FNickname = 4;
             string FHeadimg = 5;
-            string FSex = 6;
+            int32 FSex = 6;
             string Remark = 7;
             string Messages = 8;
-            string Status = 9;
+            int32 Status = 9;
             int64 Version = 10;
             int64 CreatedAt = 11;
         }
@@ -86,13 +88,15 @@ message User{
         message ListRequest {
             int32  Page = 1;
             int32  Size = 2;
-            uint64 UserId = 3;
+            string UserId = 3;
+            int64  Version = 4;
         }
 
         message FriendRequestList {
-            uint64 UserId = 1;
+            string UserId = 1;
             int32 Page = 2;
             int32 Size = 3;
+            int64 Version = 4;
         }
 
         message ListReply {

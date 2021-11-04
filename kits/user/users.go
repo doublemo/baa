@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 
 	"github.com/doublemo/baa/cores/crypto/id"
@@ -39,15 +40,15 @@ func register(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 		userId    string
 	)
 
-	if req.Header != nil {
+	if req.Header == nil {
 		req.Header = make(map[string]string)
 	}
 
-	if m, ok := req.Header["AccountID"]; !ok {
+	if m, ok := req.Header["AccountID"]; ok {
 		accountId = m
 	}
 
-	if m, ok := req.Header["UserID"]; !ok {
+	if m, ok := req.Header["UserID"]; ok {
 		userId = m
 	}
 
@@ -55,6 +56,8 @@ func register(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 		Command: req.Command,
 		Header:  req.Header,
 	}
+
+	fmt.Println(accountId, frame.AccountId)
 
 	if accountId != frame.AccountId {
 		return errcode.Bad(w, errcode.ErrInvalidAccountID), nil
@@ -94,7 +97,7 @@ func register(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 	resp.UserId, _ = id.Encrypt(user.ID, []byte(c.IDSecret))
 	respBytes, _ := grpcproto.Marshal(resp)
 	w.Payload = &corespb.Response_Content{Content: respBytes}
-	return nil, nil
+	return w, nil
 }
 
 func getAccountInfo(accountId, userId string, secret []byte) (uint64, uint64, error) {
@@ -103,9 +106,12 @@ func getAccountInfo(accountId, userId string, secret []byte) (uint64, uint64, er
 		return 0, 0, err
 	}
 
-	uuid, err := id.Decrypt(userId, secret)
-	if err != nil {
-		return 0, 0, err
+	var uuid uint64
+	if userId != "" {
+		uuid, err = id.Decrypt(userId, secret)
+		if err != nil {
+			return 0, 0, err
+		}
 	}
 
 	if auid < 1 {

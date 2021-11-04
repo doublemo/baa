@@ -91,19 +91,23 @@ func CreateUsers(users *Users) error {
 }
 
 // FindUsersByIndexNo 根据索引查询用户
-func FindUsersByIndexNo(indexno string) (*Users, error) {
+func FindUsersByIndexNo(indexno string, cols ...string) (*Users, error) {
 	if database == nil {
 		return nil, gorm.ErrInvalidDB
 	}
 
 	usersIndexNo := &UsersIndexNo{}
-	tx := database.Scopes(UseUsersIndexNoTable(indexno)).Where("index_no = ?", indexno).First(usersIndexNo)
+	tx := database.Scopes(UseUsersIndexNoTable(indexno)).Select("id", "index_no").Where("index_no = ?", indexno).First(usersIndexNo)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
 
 	users := &Users{}
-	tx = database.Scopes(UseUsersTable(usersIndexNo.ID)).Where("id = ?", usersIndexNo.ID).First(users)
+	tx = database.Scopes(UseUsersTable(usersIndexNo.ID))
+	if len(cols) > 0 {
+		tx.Select(cols)
+	}
+	tx.Where("id = ?", usersIndexNo.ID).First(users)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
@@ -112,13 +116,17 @@ func FindUsersByIndexNo(indexno string) (*Users, error) {
 }
 
 // FindUsersByID 查询用户
-func FindUsersByID(id uint64) (*Users, error) {
+func FindUsersByID(id uint64, cols ...string) (*Users, error) {
 	if database == nil {
 		return nil, gorm.ErrInvalidDB
 	}
 
 	users := &Users{}
-	tx := database.Scopes(UseUsersTable(id)).Where("id = ?", id).First(users)
+	tx := database.Scopes(UseUsersTable(id))
+	if len(cols) > 0 {
+		tx.Select(cols)
+	}
+	tx.Where("id = ?", id).First(users)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

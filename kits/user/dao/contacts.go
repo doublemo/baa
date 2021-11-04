@@ -55,6 +55,7 @@ type (
 		Messages  string `gorm:"size:10000"` // size消息
 		Status    int8   // 状态  -1 已经过期 0 正常 1 拒绝
 		Version   int64  // 好友信息更新版本号
+		From      string // 来源
 		CreatedAt int64  `gorm:"autoCreateTime"`
 	}
 )
@@ -66,7 +67,7 @@ func (contacts Contacts) TableName() string {
 
 // TableName 数据库表名称
 func (r ContactsRequest) TableName() string {
-	return DBNamer("users", "contacts", "request ")
+	return DBNamer("users", "contacts", "request")
 }
 
 // UseContactsTable 动态表名
@@ -80,13 +81,18 @@ func UseContactsRequestTable(userID uint64) func(tx *gorm.DB) *gorm.DB {
 }
 
 // FindContactsByUserIDAndFriendID 查询是否已经为好友
-func FindContactsByUserIDAndFriendID(userid, friendid uint64) (*Contacts, error) {
+func FindContactsByUserIDAndFriendID(userid, friendid uint64, cols ...string) (*Contacts, error) {
 	if database == nil {
 		return nil, gorm.ErrInvalidDB
 	}
 
 	contacts := &Contacts{}
-	tx := database.Scopes(UseContactsTable(userid)).Where("user_id = ? And friend_id = ?", userid, friendid).Take(contacts)
+	tx := database.Scopes(UseContactsTable(userid))
+	if len(cols) > 0 {
+		tx.Select(cols)
+	}
+
+	tx.Where("user_id = ? And friend_id = ?", userid, friendid).Take(contacts)
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			return nil, ErrRecordNotFound
@@ -99,13 +105,17 @@ func FindContactsByUserIDAndFriendID(userid, friendid uint64) (*Contacts, error)
 }
 
 // FindContactsRequestByUserIDAndFriendID 查询是否已经发了好友请求
-func FindContactsRequestByUserIDAndFriendID(userid, friendid uint64) (*ContactsRequest, error) {
+func FindContactsRequestByUserIDAndFriendID(userid, friendid uint64, cols ...string) (*ContactsRequest, error) {
 	if database == nil {
 		return nil, gorm.ErrInvalidDB
 	}
 
 	contactsRequest := &ContactsRequest{}
-	tx := database.Scopes(UseContactsTable(userid)).Where("user_id = ? And friend_id = ?", userid, friendid).Last(contactsRequest)
+	tx := database.Scopes(UseContactsRequestTable(userid))
+	if len(cols) > 0 {
+		tx.Select(cols)
+	}
+	tx.Where("user_id = ? And friend_id = ?", userid, friendid).Last(contactsRequest)
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			return nil, ErrRecordNotFound
@@ -133,7 +143,7 @@ func CreateContactsRequest(contactsRequest *ContactsRequest) error {
 		return gorm.ErrInvalidDB
 	}
 
-	tx := database.Scopes(UseContactsRequestTable(contactsRequest.FriendID)).Create(contactsRequest)
+	tx := database.Scopes(UseContactsRequestTable(contactsRequest.UserID)).Create(contactsRequest)
 	return tx.Error
 }
 
@@ -172,6 +182,7 @@ func AddContactsFromRequest(users, friend *Users, request *ContactsRequest, rema
 
 	return database.Transaction(func(tx *gorm.DB) error {
 		contacts := &Contacts{}
+		contactsRequest := &ContactsRequest{}
 		ret := tx.Scopes(UseContactsTable(contactsA.UserID)).Where("user_id = ? And friend_id = ?", contactsA.UserID, contactsA.FriendID).Take(contacts)
 		if errors.Is(ret.Error, gorm.ErrRecordNotFound) {
 			ret = tx.Scopes(UseContactsTable(contactsA.UserID)).Create(contactsA)
@@ -188,12 +199,12 @@ func AddContactsFromRequest(users, friend *Users, request *ContactsRequest, rema
 			}
 		}
 
-		ret = tx.Scopes(UseContactsRequestTable(request.UserID)).Where("user_id = ? And friend_id = ?", contactsA.UserID, contactsA.FriendID).Delete(contacts)
+		ret = tx.Scopes(UseContactsRequestTable(request.UserID)).Where("user_id = ? And friend_id = ?", contactsA.UserID, contactsA.FriendID).Delete(contactsRequest)
 		if ret.Error != nil {
 			return ret.Error
 		}
 
-		tx.Scopes(UseContactsRequestTable(request.UserID)).Where("user_id = ? And friend_id = ?", contactsB.UserID, contactsB.FriendID).Delete(contacts)
+		tx.Scopes(UseContactsRequestTable(request.UserID)).Where("user_id = ? And friend_id = ?", contactsB.UserID, contactsB.FriendID).Delete(contactsRequest)
 		return nil
 	})
 }
@@ -218,7 +229,7 @@ func RefuseAddContact(users, friend *Users, request *ContactsRequest) error {
 	}
 
 	return database.Transaction(func(tx *gorm.DB) error {
-		ret := tx.Scopes(UseContactsRequestTable(users.ID)).Where("user_id = ? And friend_id = ?", users.ID, friend.ID).Updates(map[string]interface{}{"status": 2, "messages": request.Messages, "version": time.Now().Unix()})
+		ret := tx.Scopes(UseContactsRequestTable(users.ID)).Where("user_id = ? And friend_id = ?", users.ID, friend.ID).Updates(map[string]interface{}{"status": 1, "messages": request.Messages, "version": time.Now().Unix()})
 		if ret.Error != nil {
 			return ret.Error
 		}
@@ -242,14 +253,77 @@ func UpdateContactsRequestStatusByID(userid, friendid uint64, status int) error 
 	return tx.Error
 }
 
-// ID        uint64 `gorm:"<-:create;primaryKey;autoIncrement"`
-// 		UserID    uint64 `gorm:"<-:create;index;index:userid_friendid;priority:1"`
-// 		FriendID  uint64 `gorm:"<-:create;index;index:userid_friendid;priority:2"`
-// 		FromID    uint64
-// 		FNickname string `gorm:"size:50"`
-// 		FHeadimg  string `gorm:"size:256"`
-// 		FSex      int8
-// 		Remark    string `gorm:"size:50"`    // 备注
-// 		Messages  string `gorm:"size:10000"` // size消息
-// 		Status    int8   // 状态  -1 已经过期 0 正常 1 拒绝
-// 		CreatedAt int64  `gorm:"autoCreateTime"`
+// FindContactsRequestByUserID 获取列表
+func FindContactsRequestByUserID(userid uint64, page, size int32, version int64, cols ...string) ([]*ContactsRequest, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+
+	if size > 50 {
+		size = 50
+	} else if size < 1 {
+		size = 10
+	}
+
+	offset := (page - 1) * size
+	if database == nil {
+		return nil, 0, gorm.ErrInvalidDB
+	}
+
+	var count int64
+	data := make([]*ContactsRequest, 0)
+
+	tx := database.Scopes(UseContactsRequestTable(userid)).Select("id").Where("user_id = ? AND version > ? ", userid, version).Count(&count)
+	if tx.Error != nil {
+		return nil, 0, gorm.ErrInvalidDB
+	}
+
+	tx = database.Scopes(UseContactsRequestTable(userid))
+	if len(cols) > 0 {
+		tx.Select(cols)
+	}
+
+	tx.Where("user_id = ? AND version > ? ", userid, version).Offset(int(offset)).Limit(int(size)).Find(&data)
+	if tx.Error != nil {
+		return nil, 0, gorm.ErrInvalidDB
+	}
+
+	return data, count, nil
+}
+
+// FindContactsByUserID 获取联系人
+func FindContactsByUserID(userid uint64, page, size int32, version int64, cols ...string) ([]*Contacts, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+
+	if size > 50 {
+		size = 50
+	} else if size < 1 {
+		size = 10
+	}
+
+	offset := (page - 1) * size
+	if database == nil {
+		return nil, 0, gorm.ErrInvalidDB
+	}
+
+	var count int64
+	data := make([]*Contacts, 0)
+
+	tx := database.Scopes(UseContactsTable(userid)).Where("user_id = ? AND version > ? AND status = 0", userid, version).Count(&count)
+	if tx.Error != nil {
+		return nil, 0, gorm.ErrInvalidDB
+	}
+
+	tx = database.Scopes(UseContactsTable(userid))
+	if len(cols) > 1 {
+		tx.Select(cols)
+	}
+	tx.Where("user_id = ? AND version > ? AND status = 0", userid, version).Offset(int(offset)).Limit(int(size)).Find(&data)
+	if tx.Error != nil {
+		return nil, 0, gorm.ErrInvalidDB
+	}
+
+	return data, count, nil
+}

@@ -10,6 +10,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"gorm.io/plugin/dbresolver"
 )
@@ -29,7 +30,11 @@ var (
 
 // Open 打开数据库
 func Open(c conf.DBMySQLConfig, rc conf.Redis) error {
-	gormConfig := &gorm.Config{}
+	gormConfig := &gorm.Config{
+		Logger:                 logger.Default.LogMode(logger.Info),
+		SkipDefaultTransaction: false,
+		QueryFields:            true,
+	}
 	if c.TablePrefix != "" {
 		gormConfig.NamingStrategy = schema.NamingStrategy{
 			TablePrefix: c.TablePrefix,
@@ -130,9 +135,5 @@ func RDBNamer(name ...string) string {
 
 // DBNamer 创建table key
 func DBNamer(name ...string) string {
-	prefix := dbPrefix
-	if prefix != "" {
-		prefix += "_"
-	}
-	return prefix + strings.Join(name, "_")
+	return dbPrefix + strings.Join(name, "_")
 }

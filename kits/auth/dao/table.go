@@ -5,7 +5,6 @@ import (
 	"hash/crc32"
 	"reflect"
 	"strconv"
-	"strings"
 
 	"gorm.io/gorm"
 )
@@ -29,7 +28,7 @@ func useTable(v interface{}, table Table, maxRecord, maxTable uint32) func(tx *g
 	}
 
 	return func(tx *gorm.DB) *gorm.DB {
-		tablename := strings.Trim(table.TableName(), " ") + strconv.FormatUint(uint64(c32), 10)
+		tablename := table.TableName() + strconv.FormatUint(uint64(c32), 10)
 		_, ok := tableCacher.Get(tablename)
 		if !ok {
 			if !tx.Migrator().HasTable(tablename) {

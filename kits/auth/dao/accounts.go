@@ -133,44 +133,10 @@ func GetAccountsSchemeNameIdx(schema, name string) (*AccountsSchemaNameIdx, erro
 
 // UseAccountsTableFromUint64 动态表名
 func UseAccountsTableFromUint64(id uint64) func(tx *gorm.DB) *gorm.DB {
-	c32 := makeTablenameFromUint64(id, defaultAccountsMaxRecord, defaultAccountsMaxTable)
-	return func(tx *gorm.DB) *gorm.DB {
-		accounts := &Accounts{}
-		tablename := DBNamer(accounts.TableName(), strconv.FormatUint(uint64(c32), 10))
-		_, ok := tableCacher.Get(tablename)
-		if !ok {
-			if !tx.Migrator().HasTable(tablename) {
-				if err := tx.Table(tablename).AutoMigrate(accounts); err != nil {
-					tx.AddError(err)
-				} else {
-					tableCacher.Set(tablename, true, 0)
-				}
-			} else {
-				tableCacher.Set(tablename, true, 0)
-			}
-		}
-		return tx.Table(tablename)
-	}
+	return useTable(id, &Accounts{}, defaultAccountsMaxRecord, defaultAccountsMaxTable)
 }
 
 // UseAccountsSchemeNameIdxTableFromString 动态表名
 func UseAccountsSchemeNameIdxTableFromString(schema, name string) func(tx *gorm.DB) *gorm.DB {
-	c32 := makeTablenameFromString(strings.ToLower(schema+name), defaultAccountsSchemaNameIdxMaxRecord, defaultAccountsSchemaNameIdxMaxTable)
-	return func(tx *gorm.DB) *gorm.DB {
-		accounts := &AccountsSchemaNameIdx{}
-		tablename := DBNamer(accounts.TableName(), strconv.FormatUint(uint64(c32), 10))
-		_, ok := tableCacher.Get(tablename)
-		if !ok {
-			if !tx.Migrator().HasTable(tablename) {
-				if err := tx.Table(tablename).AutoMigrate(accounts); err != nil {
-					tx.AddError(err)
-				} else {
-					tableCacher.Set(tablename, true, 0)
-				}
-			} else {
-				tableCacher.Set(tablename, true, 0)
-			}
-		}
-		return tx.Table(tablename)
-	}
+	return useTable(strings.ToLower(schema+name), &AccountsSchemaNameIdx{}, defaultAccountsSchemaNameIdxMaxRecord, defaultAccountsSchemaNameIdxMaxTable)
 }
