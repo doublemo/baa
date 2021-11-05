@@ -150,8 +150,14 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	}
 
 	// 更新用户在线状态
-	noc, err := updateUserStatus(&pb.USRT_User{ID: account.ID, Type: "password", Value: sd.Endpoint().ID()})
-	if err != nil || len(noc) > 0 {
+	online, _ := grpcproto.Marshal(&pb.SM_User_Action_Online{
+		UserId:   account.UserID,
+		Platform: "pc",
+		Agent:    "",
+		Token:    accountInfo.Token,
+	})
+
+	if err := publishUserState(&pb.SM_Event{Action: pb.SM_ActionUserOnline, Data: online}); err != nil {
 		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, "change status falied"), nil
 	}
 

@@ -41,7 +41,7 @@ func (br *ResolverBuilder) Build(target resolver.Target, cc resolver.ClientConn,
 	}
 
 	// 注册通知
-	r.endpointer.Register(br.scheme, r.rn)
+	r.endpointer.Register(r.rn)
 
 	r.wg.Add(1)
 	go r.watch()
@@ -99,6 +99,7 @@ func (r *dnsResolver) resolve() {
 		if len(addr) < 1 {
 			continue
 		}
+
 		addrs = append(addrs, resolver.Address{Addr: addr})
 	}
 	r.cc.UpdateState(resolver.State{Addresses: addrs})
@@ -112,7 +113,7 @@ func (r *dnsResolver) ResolveNow(o resolver.ResolveNowOptions) {
 }
 
 func (r *dnsResolver) Close() {
-	r.endpointer.Deregister(r.target.Scheme)
+	r.endpointer.Deregister(r.rn)
 	r.ctxCancel()
 	r.wg.Wait()
 }

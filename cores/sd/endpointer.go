@@ -9,8 +9,8 @@ type (
 	// Endpointer 节点
 	Endpointer interface {
 		Endpoints() ([]Endpoint, error)
-		Register(string, chan<- struct{})
-		Deregister(string)
+		Register(chan<- struct{})
+		Deregister(chan<- struct{})
 	}
 
 	// EndpointerLocal 本地节点
@@ -18,7 +18,7 @@ type (
 		cache     *endpointCache
 		instancer Instancer
 		ch        chan Event
-		registry  map[string]chan<- struct{}
+		registry  map[chan<- struct{}]bool
 		mutx      sync.RWMutex
 	}
 
@@ -36,14 +36,14 @@ func (e *EndpointerLocal) Endpoints() ([]Endpoint, error) {
 	return e.cache.Endpoints()
 }
 
-func (e *EndpointerLocal) Register(name string, ch chan<- struct{}) {
+func (e *EndpointerLocal) Register(ch chan<- struct{}) {
 	e.mutx.Lock()
-	e.registry[name] = ch
+	e.registry[ch] = true
 	e.mutx.Unlock()
 }
-func (e *EndpointerLocal) Deregister(name string) {
+func (e *EndpointerLocal) Deregister(ch chan<- struct{}) {
 	e.mutx.Lock()
-	delete(e.registry, name)
+	delete(e.registry, ch)
 	e.mutx.Unlock()
 }
 
@@ -55,10 +55,8 @@ func (e *EndpointerLocal) receive() {
 			continue
 		}
 
-		// 如果没有错误那么广播
-		time.Sleep(time.Millisecond)
 		e.mutx.RLock()
-		for _, ch := range e.registry {
+		for ch := range e.registry {
 			e.mutx.RUnlock()
 			select {
 			case ch <- struct{}{}:
@@ -87,7 +85,7 @@ func NewEndpointer(src Instancer, options ...EndpointerOption) *EndpointerLocal 
 		cache:     newEndpointCache(opts),
 		instancer: src,
 		ch:        make(chan Event),
-		registry:  make(map[string]chan<- struct{}),
+		registry:  make(map[chan<- struct{}]bool),
 	}
 
 	go el.receive()

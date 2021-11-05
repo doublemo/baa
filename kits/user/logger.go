@@ -2,7 +2,7 @@ package user
 
 import (
 	"github.com/doublemo/baa/cores/log"
-	logLocal "github.com/doublemo/baa/kits/usrt/log"
+	logLocal "github.com/doublemo/baa/kits/user/log"
 )
 
 // SetLogger 设置日志

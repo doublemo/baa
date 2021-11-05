@@ -41,7 +41,7 @@ func Init(etcd conf.Etcd, e sd.Endpoint) error {
 
 	client = c
 	prefix = etcd.BasePath
-	endpointer = sd.NewEndpointer(instance)
+	endpointer = sd.NewEndpointer(instance, sd.InvalidateOnError(time.Second))
 	endpoint = e
 	instancer = instance
 	return nil

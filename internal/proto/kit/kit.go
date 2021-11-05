@@ -11,9 +11,21 @@ const (
 	SNID
 	IM
 	IMF
-	USRT
+	SM
 	User
 	Robot
+)
+
+const (
+	AgentServiceName string = "agent"
+	SFUServiceName   string = "sfu"
+	AuthServiceName  string = "auth"
+	SNIDServiceName  string = "snid"
+	IMServiceName    string = "im"
+	IMFServiceName   string = "imf"
+	SMServiceName    string = "sm"
+	UserServiceName  string = "user"
+	RobotServiceName string = "robot"
 )
 
 // MakeErrCode 为不同组件创建对应的错误代码

@@ -7,7 +7,7 @@ import (
 )
 
 func TestMakeErrCode(t *testing.T) {
-	t.Log(MakeErrCode(USRT, 500))
+	t.Log(MakeErrCode(SM, 500))
 	for i := -32767; i < 32767; i++ {
 		for j := 1; j < 4096; j++ {
 			for k := 0; k < 4; k++ {

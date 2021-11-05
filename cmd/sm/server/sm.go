@@ -14,8 +14,8 @@ import (
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/sd"
-	"github.com/doublemo/baa/kits/usrt"
-	"github.com/doublemo/baa/kits/usrt/dao"
+	"github.com/doublemo/baa/kits/sm"
+	"github.com/doublemo/baa/kits/sm/dao"
 )
 
 type Config struct {
@@ -47,7 +47,7 @@ type Config struct {
 	Nats conf.Nats `alias:"nats"`
 }
 
-type USRT struct {
+type StateManagementServer struct {
 	// exitChan 退出信息
 	exitChan chan struct{}
 
@@ -61,7 +61,7 @@ type USRT struct {
 	actors *os.Process
 }
 
-func (s *USRT) Start() error {
+func (s *StateManagementServer) Start() error {
 	defer func() {
 		close(s.exitChan)
 	}()
@@ -78,10 +78,10 @@ func (s *USRT) Start() error {
 
 	// 设置日志
 	Logger(o.Runmode)
-	usrt.SetLogger(logger)
+	sm.SetLogger(logger)
 
 	// 服务发现
-	endpoint := coressd.NewEndpoint(o.MachineID, usrt.ServiceName, o.RPC.Addr)
+	endpoint := coressd.NewEndpoint(o.MachineID, sm.ServiceName, o.RPC.Addr)
 	endpoint.Set("group", o.RPC.Group)
 	endpoint.Set("weight", strconv.Itoa(o.RPC.Weight))
 	endpoint.Set("domain", o.Domain)
@@ -93,7 +93,7 @@ func (s *USRT) Start() error {
 	// 检查机器码信息
 	r, _ := regexp.Compile(`^[a-zA-Z]{1}\w+(\.\w+)+$`)
 	if !r.MatchString(o.MachineID) {
-		return errors.New("Invalid machineID:" + o.MachineID + ", eg:usrt1.cn.sc.cd")
+		return errors.New("Invalid machineID:" + o.MachineID + ", eg:sm1.cn.sc.cd")
 	}
 
 	if err := dao.Open(o.Redis, o.Cacher); err != nil {
@@ -101,39 +101,39 @@ func (s *USRT) Start() error {
 	}
 
 	// 路由
-	usrt.InitRouter()
+	sm.InitRouter()
 	o.Nats.Name = o.MachineID
 
 	// 注册运行服务
-	s.actors.Add(s.mustProcessActor(usrt.NewNatsProcessActor(o.Nats)), true)
-	s.actors.Add(s.mustProcessActor(usrt.NewRPCServerActor(o.RPC)), true)
-	s.actors.Add(s.mustProcessActor(usrt.NewServiceDiscoveryProcessActor()), true)
+	s.actors.Add(s.mustProcessActor(sm.NewNatsProcessActor(o.Nats)), true)
+	s.actors.Add(s.mustProcessActor(sm.NewRPCServerActor(o.RPC)), true)
+	s.actors.Add(s.mustProcessActor(sm.NewServiceDiscoveryProcessActor()), true)
 	return s.actors.Run()
 }
 
-func (s *USRT) Readyed() bool {
+func (s *StateManagementServer) Readyed() bool {
 	return true
 }
 
-func (s *USRT) Shutdown() {
+func (s *StateManagementServer) Shutdown() {
 	s.actors.Stop()
 }
 
-func (s *USRT) Reload() {}
+func (s *StateManagementServer) Reload() {}
 
-func (s *USRT) ServiceName() string {
+func (s *StateManagementServer) ServiceName() string {
 	return ""
 }
 
-func (s *USRT) OtherCommand(cmd int) {
+func (s *StateManagementServer) OtherCommand(cmd int) {
 
 }
 
-func (s *USRT) QuitCh() <-chan struct{} {
+func (s *StateManagementServer) QuitCh() <-chan struct{} {
 	return s.exitChan
 }
 
-func (s *USRT) mustProcessActor(actor *os.ProcessActor, err error) *os.ProcessActor {
+func (s *StateManagementServer) mustProcessActor(actor *os.ProcessActor, err error) *os.ProcessActor {
 	if err != nil {
 		log.Error(logger).Log("error", err)
 		panic(err)
@@ -143,8 +143,8 @@ func (s *USRT) mustProcessActor(actor *os.ProcessActor, err error) *os.ProcessAc
 }
 
 // New 创建服务
-func New(opts *ConfigureOptions) *USRT {
-	return &USRT{
+func New(opts *ConfigureOptions) *StateManagementServer {
+	return &StateManagementServer{
 		exitChan:         make(chan struct{}),
 		readyedChan:      make(chan struct{}),
 		configureOptions: opts,

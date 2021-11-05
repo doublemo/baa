@@ -41,9 +41,9 @@ func InitRouter(config RouterConfig) {
 
 	// 订阅处理
 	nrRouter.Register(kit.IMF.Int32(), router.New()).HandleFunc(command.IMFCheck, handleMsgInspectionReport)
-	nrRouter.Register(kit.USRT.Int32(), router.New()).
-		HandleFunc(command.USRTDeleteUserStatus, resetUserStatusCache).
-		HandleFunc(command.USRTUpdateUserStatus, resetUserStatusCache)
+	// nrRouter.Register(kit.USRT.Int32(), router.New()).
+	// 	HandleFunc(command.USRTDeleteUserStatus, resetUserStatusCache).
+	// 	HandleFunc(command.USRTUpdateUserStatus, resetUserStatusCache)
 
 	// 注册内部使用路由
 	snserv := newSnidRouter(config.ServiceSNID)
@@ -55,11 +55,11 @@ func InitRouter(config RouterConfig) {
 	// cache
 	cache.SnowflakeCacherOnFill(func(i int) ([]uint64, error) { return getSNID(int32(i)) })
 
-	usrtserv := newUSRTRouter(config.ServiceUSRT)
-	muxRouter.Register(kit.USRT.Int32(), router.New()).
-		Handle(command.USRTGetUserStatus, usrtserv).
-		Handle(command.USRTDeleteUserStatus, usrtserv).
-		Handle(command.USRTUpdateUserStatus, usrtserv)
+	// usrtserv := newUSRTRouter(config.ServiceUSRT)
+	// muxRouter.Register(kit.USRT.Int32(), router.New()).
+	// 	Handle(command.USRTGetUserStatus, usrtserv).
+	// 	Handle(command.USRTDeleteUserStatus, usrtserv).
+	// 	Handle(command.USRTUpdateUserStatus, usrtserv)
 
 	time.AfterFunc(time.Second*10, testSend)
 }

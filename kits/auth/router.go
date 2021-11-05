@@ -1,6 +1,9 @@
 package auth
 
 import (
+	"fmt"
+	"time"
+
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
@@ -47,9 +50,7 @@ func InitRouter(config RouterConfig) {
 	muxRouter.Register(kit.SNID.Int32(), router.New())
 	muxRouter.Handle(kit.SNID.Int32(), command.SNIDSnowflake, newSnidRouter(config.ServiceSNID))
 
-	usrtr := newUSRTRouter(config.ServiceUSRT)
-	muxRouter.Register(kit.USRT.Int32(), router.New())
-	muxRouter.Handle(kit.USRT.Int32(), command.USRTGetUserStatus, usrtr)
-	muxRouter.Handle(kit.USRT.Int32(), command.USRTDeleteUserStatus, usrtr)
-	muxRouter.Handle(kit.USRT.Int32(), command.USRTUpdateUserStatus, usrtr)
+	time.AfterFunc(time.Second*10, func() {
+		fmt.Println(getSNID(1))
+	})
 }

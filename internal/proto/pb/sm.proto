@@ -1,0 +1,49 @@
+syntax = "proto3";
+package pb;
+option go_package = "github.com/doublemo/baa/internal/proto/pb";
+
+message SM {
+    enum Action {
+        ActionUserStatusUpdate = 0;
+        ActionUserOnline  = 1;
+        ActionUserOffline = 2;
+    }
+
+    message Event{
+        Action Action = 1;
+        bytes  Data   = 2;
+    }
+
+   message User{
+       message Status {
+           uint64 UserId = 1;
+           map<string, string> Values = 2;
+       }
+
+       message Action {
+           message Update {
+               repeated Status Data = 1;
+           }
+
+           message Online {
+               uint64 UserId    = 1;
+               string Platform  = 2;
+               string Agent     = 3;
+               string Token = 4;
+           }
+
+           message Offline {
+               uint64 UserId    = 1;
+               string Platform  = 2;
+           }
+       }
+
+       message Request{
+           repeated uint64 Values = 1; 
+        }
+
+        message Reply{
+            repeated Status Values = 2;
+        } 
+   }
+}

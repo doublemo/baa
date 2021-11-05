@@ -6,7 +6,6 @@ import (
 	"github.com/doublemo/baa/cores/crypto/id"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/proto/pb"
-	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/auth/dao"
 	"github.com/doublemo/baa/kits/auth/errcode"
 	grpcproto "github.com/golang/protobuf/proto"
@@ -107,7 +106,15 @@ func offline(r *corespb.Request) (*corespb.Response, error) {
 		return w, nil
 	}
 
-	deleteUserStatus(&pb.USRT_User{ID: accounts.ID, Type: accounts.Schema, Value: sd.Endpoint().ID()})
+	// 更新用户在线状态
+	online, _ := grpcproto.Marshal(&pb.SM_User_Action_Offline{
+		UserId:   accounts.UserID,
+		Platform: "pc",
+	})
+
+	if err := publishUserState(&pb.SM_Event{Action: pb.SM_ActionUserOffline, Data: online}); err != nil {
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, "change status falied"), nil
+	}
 	dao.UpdatesAccountByID(accounts.ID, "peer_id", "")
 	return w, nil
 }

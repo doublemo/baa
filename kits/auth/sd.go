@@ -1,11 +1,8 @@
 package auth
 
 import (
-	"fmt"
-
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/os"
-	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/cores/sd/etcdv3"
 	"github.com/doublemo/baa/internal/sd"
 )
@@ -16,17 +13,6 @@ const ServiceName string = "auth"
 // NewServiceDiscoveryProcessActor 创建服务发现
 func NewServiceDiscoveryProcessActor() (*os.ProcessActor, error) {
 	registrar := etcdv3.NewRegistrar(sd.Client(), etcdv3.Service{Prefix: sd.Prefix(), Endpoint: sd.Endpoint()})
-	watchCh := make(chan struct{})
-	endpointer := coressd.NewEndpointer(sd.Instancer())
-	endpointer.Register("user", watchCh)
-	go func() {
-		for {
-			select {
-			case <-watchCh:
-				fmt.Println(sd.Endpoints())
-			}
-		}
-	}()
 	ch := make(chan struct{})
 	return &os.ProcessActor{
 		Exec: func() error {

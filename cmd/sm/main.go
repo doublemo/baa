@@ -16,7 +16,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/doublemo/baa/cmd/usrt/server"
+	"github.com/doublemo/baa/cmd/sm/server"
 	coresos "github.com/doublemo/baa/cores/os"
 )
 
@@ -69,8 +69,8 @@ func main() {
 	fs.Usage = usage
 	fs.BoolVar(&showHelp, "h", false, "Show this message.")
 	fs.BoolVar(&showHelp, "help", false, "Show this message.")
-	fs.StringVar(&fp, "c", "conf/usrt.conf", "Configuration file")
-	fs.StringVar(&fp, "config", "conf/usrt.conf", "Configuration file")
+	fs.StringVar(&fp, "c", "conf/sm.conf", "Configuration file")
+	fs.StringVar(&fp, "config", "conf/sm.conf", "Configuration file")
 	fs.BoolVar(&showVersion, "version", false, "Print version information.")
 	fs.BoolVar(&showVersion, "v", false, "Print version information.")
 

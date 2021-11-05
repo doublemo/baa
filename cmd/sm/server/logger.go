@@ -12,7 +12,7 @@ var logger log.Logger
 
 func init() {
 	logger = log.NewLogfmtLogger(os.Stderr)
-	logger = log.WithPrefix(logger, "[kit]", "usrt")
+	logger = log.WithPrefix(logger, "[kit]", "sm")
 	logger = log.With(logger, "ts", log.TimestampFormat(func() time.Time { return time.Now() }, time.RFC3339Nano))
 }
 

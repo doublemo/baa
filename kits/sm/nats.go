@@ -1,6 +1,9 @@
-package usrt
+package sm
 
 import (
+	"errors"
+	"time"
+
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/os"
 	"github.com/doublemo/baa/cores/pool/worker"
@@ -12,8 +15,11 @@ import (
 )
 
 const (
-	// NatsUserStatusWatchSubject 状态变更时通知通道
-	NatsUserStatusWatchSubject = "usrt.status.watch"
+	// ChannelStateEventBroadcast 状态变更时通知通道
+	ChannelStateEventBroadcast = "sm.broadcast"
+
+	// ChannelStateEventReceiver 接收状态事件通道
+	ChannelStateEventReceiver = "sm.receiver"
 )
 
 // NewNatsProcessActor nats
@@ -24,7 +30,7 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 
 	nc := nats.Conn()
 	msgChan := make(chan *natsgo.Msg, 1)
-	nc.ChanSubscribe(config.Name, msgChan)
+	nc.ChanQueueSubscribe(ChannelStateEventReceiver, ChannelStateEventReceiver, msgChan)
 	exitChan := make(chan struct{})
 	return &os.ProcessActor{
 		Exec: func() error {
@@ -97,4 +103,17 @@ func onFromNatsMessage(msg *natsgo.Msg) {
 	if err := msg.Respond(reply); err != nil {
 		log.Error(Logger()).Log("action", "msg.Respond", "error", err)
 	}
+}
+
+func broadcast(data []byte) error {
+	nc := nats.Conn()
+	if nc == nil {
+		return errors.New("nats is nil")
+	}
+
+	if err := nc.Publish(ChannelStateEventBroadcast, data); err != nil {
+		return err
+	}
+
+	return nc.FlushTimeout(time.Second)
 }

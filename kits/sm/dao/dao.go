@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -21,6 +22,11 @@ var (
 	rdb       redis.UniversalClient
 	rdbPrefix string
 	cacher    = memcacher.New(defaultCacheExpiration*time.Minute, defaultCacheCleanupInterval*time.Minute)
+)
+
+var (
+	ErrRecordIsFound  = errors.New("RecordIsFound")
+	ErrRecordNotFound = errors.New("RecordNotFound")
 )
 
 // CacherConfig 缓存配置

@@ -8,7 +8,7 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/nats"
-	usrt "github.com/doublemo/baa/kits/usrt"
+	"github.com/doublemo/baa/kits/sm"
 	natsgo "github.com/nats-io/nats.go"
 )
 
@@ -29,7 +29,7 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 	}
 
 	// 监听用户状态改变
-	if _, err := nc.ChanSubscribe(usrt.NatsUserStatusWatchSubject, msgChan); err != nil {
+	if _, err := nc.ChanSubscribe(sm.ChannelStateEventBroadcast, msgChan); err != nil {
 		return nil, err
 	}
 
