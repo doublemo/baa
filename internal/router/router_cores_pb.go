@@ -70,7 +70,6 @@ func (r *Router) Handler(req *corespb.Request) (*corespb.Response, error) {
 	if IsHTTP(req) {
 		return route.ServeHTTP(req)
 	}
-
 	return route.Serve(req)
 }
 

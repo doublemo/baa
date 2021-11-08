@@ -246,16 +246,14 @@ func broadcast(req *corespb.Request) (*corespb.Response, error) {
 		}
 	}
 
-	var w corespb.Response
-	{
-		if err := grpcproto.Unmarshal(frame.Payload, &w); err != nil {
+	for _, value := range frame.Messages {
+		w := &corespb.Response{}
+		if err := grpcproto.Unmarshal(value.Payload, w); err != nil {
 			return nil, err
 		}
-	}
 
-	msg, _ := proto.NewResponseBytes(coresproto.Command(frame.Command), &w).Marshal()
-	for _, receiver := range frame.Receiver {
-		peers, ok := session.GetDict(receiver)
+		msg, _ := proto.NewResponseBytes(coresproto.Command(value.Command), w).Marshal()
+		peers, ok := session.GetDict(value.Receiver)
 		if !ok {
 			continue
 		}
@@ -271,6 +269,5 @@ func broadcast(req *corespb.Request) (*corespb.Response, error) {
 			}
 		}
 	}
-
 	return nil, nil
 }

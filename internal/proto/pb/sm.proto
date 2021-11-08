@@ -7,6 +7,7 @@ message SM {
         ActionUserStatusUpdate = 0;
         ActionUserOnline  = 1;
         ActionUserOffline = 2;
+        ActionUserCleanCache = 3;
     }
 
     message Event{
@@ -15,9 +16,19 @@ message SM {
     }
 
    message User{
+       message Info {
+           uint64 UserId = 1;
+           string AgentServer = 2;
+           string Platform = 3;
+           string Token = 4;
+           int64  OnlineAt = 5;
+           string IMServer = 6;
+           string IDServer = 7;
+       }
+
        message Status {
            uint64 UserId = 1;
-           map<string, string> Values = 2;
+           repeated Info Values = 2;
        }
 
        message Action {
@@ -35,6 +46,10 @@ message SM {
            message Offline {
                uint64 UserId    = 1;
                string Platform  = 2;
+           }
+
+           message CleanCache {
+               uint64 UserId    = 1;
            }
        }
 

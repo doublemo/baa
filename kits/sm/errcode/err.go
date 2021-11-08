@@ -8,7 +8,7 @@ import (
 
 var (
 	// ErrInternalServer 服务器内部错误
-	ErrInternalServer = types.NewErrCode(kit.MakeErrCode(kit.USRT, 1), "Internal Server Error")
+	ErrInternalServer = types.NewErrCode(kit.MakeErrCode(kit.SM, 1), "Internal Server Error")
 )
 
 // Bad 错误处理

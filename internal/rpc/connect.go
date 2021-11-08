@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/doublemo/baa/internal/conf"
@@ -31,6 +32,29 @@ func NewConnect(c conf.RPCClient) (*grpc.ClientConn, error) {
 		opts = append(opts, grpc.WithInsecure())
 	}
 	return grpc.Dial(fmt.Sprintf("%s:///%s", c.Name, c.Group), opts...)
+}
+
+// NewConnectContext 创建连接
+func NewConnectContext(ctx context.Context, c conf.RPCClient) (*grpc.ClientConn, error) {
+	opts := []grpc.DialOption{
+		grpc.WithDefaultServiceConfig(makePolicy(c)), // This sets the initial balancing policy.
+	}
+
+	if len(c.Key) > 0 && len(c.Salt) > 0 {
+		creds, err := credentials.NewClientTLSFromFile(c.Salt, c.Key)
+		if err != nil {
+			return nil, err
+		}
+
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+		opts = append(opts, grpc.WithPerRPCCredentials(oauth.NewOauthAccess(
+			&oauth2.Token{AccessToken: c.ServiceSecurityKey},
+		)))
+
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+	}
+	return grpc.DialContext(ctx, fmt.Sprintf("%s:///%s", c.Name, c.Group), opts...)
 }
 
 func makePolicy(c conf.RPCClient) string {

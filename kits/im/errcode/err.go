@@ -19,6 +19,9 @@ var (
 	// ErrInvalidUserStatus 无法获取用户实时状态
 	ErrInvalidUserStatus = types.NewErrCode(kit.MakeErrCode(kit.IM, 4), "User status couldn't be created")
 
+	// ErrNotFriend 还不是好朋友
+	ErrNotFriend = types.NewErrCode(kit.MakeErrCode(kit.IM, 5), "You haven’t established a friendship yet, so you can’t trust each other yet")
+
 	// ErrInternalServer 服务器内部错误
 	ErrInternalServer = types.NewErrCode(kit.MakeErrCode(kit.IM, 500), "Internal Server Error")
 )

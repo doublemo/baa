@@ -8,4 +8,7 @@ import (
 const (
 	// SMEvent 状态事件
 	SMEvent coresproto.Command = kit.SM + iota + 1
+
+	// SMUserStatus 获取用户状态
+	SMUserStatus
 )

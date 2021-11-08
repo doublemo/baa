@@ -17,4 +17,7 @@ const (
 
 	// UserRegister 注册
 	UserRegister
+
+	// UserCheckIsMyFriend 检查是否是好朋友
+	UserCheckIsMyFriend
 )

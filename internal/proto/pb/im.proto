@@ -63,7 +63,7 @@ message IM {
                 ContentType.Emoticon Emoticon = 10;
             }
             Group Group = 11;
-            string Topic = 12;
+            uint64 Topic = 12;
             int64 SendAt = 13;
         }
 

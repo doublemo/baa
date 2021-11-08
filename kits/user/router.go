@@ -37,6 +37,7 @@ func InitRouter(config RouterConfig) {
 	r.HandleFunc(command.UserContacts, func(req *corespb.Request) (*corespb.Response, error) { return contact(req, config.User) })
 	r.HandleFunc(command.UserContactsRequest, func(req *corespb.Request) (*corespb.Response, error) { return friendRequestList(req, config.User) })
 	r.HandleFunc(command.UserRegister, func(req *corespb.Request) (*corespb.Response, error) { return register(req, config.User) })
+	r.HandleFunc(command.UserCheckIsMyFriend, checkIsMyFriend)
 
 	// 内部调用
 	muxRouter.Register(kit.Auth.Int32(), router.New()).Handle(command.AuthAccountInfo, router.NewCall(config.ServiceAuth))
@@ -50,7 +51,7 @@ func InitRouter(config RouterConfig) {
 func testSend() {
 	fmt.Println("test start ........")
 	req := &corespb.Request{
-		Command: command.UserContactsRequest.Int32(),
+		Command: command.UserContacts.Int32(),
 		Header:  map[string]string{"UserId": "XDzgT9EkkQc", "AccountID": "D5ChBlQ1da4"}, // "Content-Type": "json"
 	}
 
@@ -83,15 +84,15 @@ func testSend() {
 	// 	},
 	// }
 
-	// frame2 := &pb.User_Contacts_Request{
-	// 	Payload: &pb.User_Contacts_Request_Accept{
-	// 		Accept: &pb.User_Contacts_Accept{
-	// 			FriendId: "gcAKnnyepiE",
-	// 			Remark:   "XX",
-	// 			UserId:   "XDzgT9EkkQc",
-	// 		},
-	// 	},
-	// }
+	frame2 := &pb.User_Contacts_Request{
+		Payload: &pb.User_Contacts_Request_Accept{
+			Accept: &pb.User_Contacts_Accept{
+				FriendId: "gcAKnnyepiE",
+				Remark:   "XX",
+				UserId:   "XDzgT9EkkQc",
+			},
+		},
+	}
 
 	// frame2 := &pb.User_Contacts_Request{
 	// 	Payload: &pb.User_Contacts_Request_Refuse{
@@ -103,12 +104,12 @@ func testSend() {
 	// 	},
 	// }
 
-	frame2 := &pb.User_Contacts_FriendRequestList{
-		UserId:  "XDzgT9EkkQc",
-		Page:    1,
-		Size:    10,
-		Version: 0,
-	}
+	// frame2 := &pb.User_Contacts_FriendRequestList{
+	// 	UserId:  "XDzgT9EkkQc",
+	// 	Page:    1,
+	// 	Size:    10,
+	// 	Version: 0,
+	// }
 
 	req.Payload, _ = grpcproto.Marshal(frame2)
 	// jsonpbM := &jsonpb.Marshaler{}

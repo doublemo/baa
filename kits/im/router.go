@@ -26,7 +26,8 @@ var (
 // RouterConfig 路由配置
 type RouterConfig struct {
 	ServiceSNID conf.RPCClient `alias:"snid"`
-	ServiceUSRT conf.RPCClient `alias:"usrt"`
+	ServiceSM   conf.RPCClient `alias:"sm"`
+	ServiceUser conf.RPCClient `alias:"user"`
 	Chat        ChatConfig     `alias:"chat"`
 }
 
@@ -34,7 +35,8 @@ type RouterConfig struct {
 func InitRouter(config RouterConfig) {
 	// Register grpc load balance
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceSNID.Name, config.ServiceSNID.Group, sd.Endpointer()))
-	resolver.Register(coressd.NewResolverBuilder(config.ServiceUSRT.Name, config.ServiceUSRT.Group, sd.Endpointer()))
+	resolver.Register(coressd.NewResolverBuilder(config.ServiceSM.Name, config.ServiceSM.Group, sd.Endpointer()))
+	resolver.Register(coressd.NewResolverBuilder(config.ServiceUser.Name, config.ServiceUser.Group, sd.Endpointer()))
 
 	// 注册处理请求
 	r.HandleFunc(command.IMSend, func(req *corespb.Request) (*corespb.Response, error) { return send(req, config.Chat) })
@@ -46,20 +48,20 @@ func InitRouter(config RouterConfig) {
 	// 	HandleFunc(command.USRTUpdateUserStatus, resetUserStatusCache)
 
 	// 注册内部使用路由
-	snserv := newSnidRouter(config.ServiceSNID)
+	snserv := router.NewCall(config.ServiceSNID)
 	muxRouter.Register(kit.SNID.Int32(), router.New()).
 		Handle(command.SNIDSnowflake, snserv).
 		Handle(command.SNIDAutoincrement, snserv).
-		Handle(command.SNIDMoreAutoincrement, newSnuidRouter(config.ServiceSNID))
+		Handle(command.SNIDMoreAutoincrement, snserv)
 
 	// cache
 	cache.SnowflakeCacherOnFill(func(i int) ([]uint64, error) { return getSNID(int32(i)) })
 
-	// usrtserv := newUSRTRouter(config.ServiceUSRT)
-	// muxRouter.Register(kit.USRT.Int32(), router.New()).
-	// 	Handle(command.USRTGetUserStatus, usrtserv).
-	// 	Handle(command.USRTDeleteUserStatus, usrtserv).
-	// 	Handle(command.USRTUpdateUserStatus, usrtserv)
+	sm := router.NewCall(config.ServiceSM)
+	muxRouter.Register(kit.SM.Int32(), router.New()).Handle(command.SMUserStatus, sm)
+
+	user := router.NewCall(config.ServiceUser)
+	muxRouter.Register(kit.User.Int32(), router.New()).Handle(command.UserCheckIsMyFriend, user)
 
 	time.AfterFunc(time.Second*10, testSend)
 }
@@ -76,10 +78,11 @@ func testSend() {
 			Values: []*pb.IM_Msg_Content{
 				&pb.IM_Msg_Content{
 					SeqID:   1,
-					To:      "NS07bbD2yLM",
+					To:      "XDzgT9EkkQc",
 					Payload: &pb.IM_Msg_Content_Text{Text: &pb.IM_Msg_ContentType_Text{Content: "你是不是个SB, 狗日的"}},
-					From:    "2FRx9KAc-Jw",
+					From:    "gcAKnnyepiE",
 					Group:   pb.IM_Msg_ToC,
+					Topic:   4515859851735686089,
 				},
 			},
 		},
@@ -109,7 +112,7 @@ func testSend() {
 
 	for i := 0; i < 1; i++ {
 		go func(idx int) {
-			r.Handler(req)
+			fmt.Println(r.Handler(req))
 			// for x := 0; x < 10; x++ {
 			// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 			// 	id, err := cache.GetSnowflakeID(ctx)

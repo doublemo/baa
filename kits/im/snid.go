@@ -1,100 +1,15 @@
 package im
 
 import (
-	"context"
 	"errors"
-	"sync"
-	"time"
+	"strconv"
 
-	grpcpool "github.com/doublemo/baa/cores/pool/grpc"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
-	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/proto/command"
 	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
-	"github.com/doublemo/baa/internal/rpc"
 	grpcproto "github.com/golang/protobuf/proto"
-	"google.golang.org/grpc"
 )
-
-type snidRouter struct {
-	c     conf.RPCClient
-	pool  *grpcpool.Pool
-	mutex sync.RWMutex
-}
-
-func (r *snidRouter) Serve(req *corespb.Request) (*corespb.Response, error) {
-	var err error
-	r.mutex.RLock()
-	p := r.pool
-	r.mutex.RUnlock()
-
-	if p == nil {
-		p, err = r.createPool()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	conn, err := p.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second*5)
-	defer func() {
-		conn.Close()
-		cancel2()
-	}()
-
-	client := corespb.NewServiceClient(conn.ClientConn)
-	resp, err := client.Call(ctx2, req)
-	return resp, err
-}
-
-func (r *snidRouter) ServeHTTP(req *corespb.Request) (*corespb.Response, error) {
-	return nil, errors.New("notsupported")
-}
-
-func (r *snidRouter) createPool() (*grpcpool.Pool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	fn := func(ctx context.Context) (*grpc.ClientConn, error) {
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		default:
-		}
-
-		conn, err := rpc.NewConnect(r.c)
-		if err != nil {
-			return nil, err
-		}
-
-		return conn, nil
-	}
-
-	p, err := grpcpool.NewWithContext(ctx, fn, r.c.Pool.Init, r.c.Pool.Capacity, time.Duration(r.c.Pool.IdleTimeout)*time.Minute, time.Duration(r.c.Pool.MaxLife)*time.Minute)
-	if err != nil {
-		return nil, err
-	}
-
-	r.mutex.Lock()
-	if r.pool == nil {
-		r.pool = p
-	} else {
-		p = r.pool
-	}
-	r.mutex.Unlock()
-	return p, nil
-}
-
-func newSnidRouter(c conf.RPCClient) *snidRouter {
-	return &snidRouter{c: c}
-}
 
 func getSNID(num int32) ([]uint64, error) {
 	if num > 1000 {
@@ -124,6 +39,68 @@ func getSNID(num int32) ([]uint64, error) {
 	case *corespb.Response_Error:
 		return nil, errors.New(payload.Error.Message)
 	}
-
 	return nil, errors.New("snid failed")
+}
+
+func namerUserTimeline(id uint64) string {
+	return strconv.FormatUint(id, 10) + ":timelineid"
+}
+
+func getTimelines(nocache bool, values ...uint64) (map[uint64]uint64, error) {
+	status, err := getCacheUsersStatus(nocache, values...)
+	if err != nil {
+		return nil, err
+	}
+
+	servers := make(map[uint64]string)
+	for _, id := range values {
+		if server, ok := findServersAddr(id, kit.SNIDServiceName, status); ok {
+			servers[id] = server[0]
+		}
+	}
+
+	// 分组获取
+	serversMap := make(map[string][]uint64)
+	for id, addr := range servers {
+		if _, ok := serversMap[addr]; !ok {
+			serversMap[addr] = make([]uint64, 0)
+		}
+		serversMap[addr] = append(serversMap[addr], id)
+	}
+
+	retValues := make(map[uint64]uint64)
+	for addr, users := range serversMap {
+		frame := &pb.SNID_MoreRequest{
+			Request: make([]*pb.SNID_Request, len(users)),
+		}
+
+		for i, value := range users {
+			frame.Request[i] = &pb.SNID_Request{K: namerUserTimeline(value), N: 1}
+		}
+
+		b, _ := grpcproto.Marshal(frame)
+		resp, err := muxRouter.Handler(kit.SNID.Int32(), &corespb.Request{Command: command.SNIDMoreAutoincrement.Int32(), Payload: b, Header: map[string]string{"Host": addr}})
+		if err != nil {
+			return nil, err
+		}
+
+		switch payload := resp.Payload.(type) {
+		case *corespb.Response_Content:
+			resp := pb.SNID_MoreReply{}
+			if err := grpcproto.Unmarshal(payload.Content, &resp); err != nil {
+				return nil, err
+			}
+
+			for _, id := range values {
+				if m, ok := resp.Values[namerUserTimeline(id)]; ok && len(m.Values) > 0 {
+					retValues[id] = m.Values[0]
+				}
+			}
+
+		case *corespb.Response_Error:
+			return nil, errors.New(payload.Error.Message)
+		}
+	}
+
+	return retValues, nil
 }

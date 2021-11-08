@@ -27,3 +27,18 @@ func eventHandler(req *corespb.Request) (*corespb.Response, error) {
 
 	return nil, nil
 }
+
+func internalEventHandler(req *corespb.Request) (*corespb.Response, error) {
+	var frame pb.SM_Event
+	{
+		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+			return nil, err
+		}
+	}
+
+	switch frame.Action {
+	case pb.SM_ActionUserCleanCache:
+		return nil, cleanCache(&frame)
+	}
+	return nil, nil
+}

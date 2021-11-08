@@ -30,9 +30,13 @@ message Agent {
         repeated string PeerID = 1;
     }
 
+    message BroadcastMessage {
+        string  Receiver = 1;
+        int32   Command  = 2;
+        bytes Payload    = 3;
+    }
+
     message Broadcast{
-        repeated string Receiver = 1;
-        bytes Payload  = 2;
-        int32 Command  = 3;
+        repeated BroadcastMessage Messages = 1;
     }
 }

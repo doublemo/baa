@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	r        = router.New()
-	nrRouter = router.NewMux()
+	r               = router.New()
+	nrRouter        = router.NewMux()
+	nInternalRouter = router.New()
 )
 
 // RouterConfig 路由配置
@@ -26,12 +27,13 @@ func InitRouter() {
 	// Register grpc load balance
 
 	// 注册处理请求
-	// r.HandleFunc(command.USRTUpdateUserStatus, updateUserStatus)
+	r.HandleFunc(command.SMUserStatus, getUsersStatus)
 	// r.HandleFunc(command.USRTDeleteUserStatus, deleteUserStatus)
 	// r.HandleFunc(command.USRTGetUserStatus, getUserStatus)
 
 	// 订阅处理
 	nrRouter.Register(kit.SM.Int32(), router.New()).HandleFunc(command.SMEvent, eventHandler)
+	nInternalRouter.HandleFunc(command.SMEvent, internalEventHandler)
 	time.AfterFunc(time.Second*10, testSend)
 }
 
@@ -58,7 +60,6 @@ func testSend() {
 
 	req.Payload, _ = grpcproto.Marshal(frame)
 	fmt.Println(nrRouter.Handler(kit.SM.Int32(), req))
-
 	//fmt.Println(id.Encrypt(344709394144956418, []byte("7581BDD8E8DA3839")))
 
 }

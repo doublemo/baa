@@ -1,7 +1,6 @@
 package dao
 
 import (
-	"context"
 	"testing"
 
 	"github.com/doublemo/baa/internal/conf"
@@ -16,5 +15,5 @@ func TestUserStatusChange(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(AssignServers(context.Background(), 1, "auth", "im", "user"))
+	//t.Log(AssignServers(context.Background(), 1, "auth", "im", "user"))
 }

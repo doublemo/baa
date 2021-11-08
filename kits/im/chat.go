@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"sort"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
-	"github.com/doublemo/baa/kits/auth/platform"
 	"github.com/doublemo/baa/kits/im/cache"
 	"github.com/doublemo/baa/kits/im/dao"
 	"github.com/doublemo/baa/kits/im/errcode"
@@ -102,7 +100,6 @@ func sendto(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb
 }
 
 func sendtoC(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb.IM_Msg_AckFailed) {
-	// 检查是否是好友
 	msg, err := makeMessage(frame, []byte(c.IDSecret))
 	if err != nil {
 		return nil, &pb.IM_Msg_AckFailed{
@@ -113,29 +110,15 @@ func sendtoC(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *p
 	}
 
 	// todo 检查是否彼此为好友
-	backLoop := 0
-	statusNoCache := false
-back:
-	userStatus, err := getCacheUserStatus(statusNoCache, msg.To, msg.From)
-	if err != nil {
+	if ok, err := checkIsMyFriend(msg.From, msg.To, msg.Topic); !ok || err != nil {
 		return nil, &pb.IM_Msg_AckFailed{
 			SeqID:      frame.SeqID,
-			ErrCode:    errcode.ErrInvalidUserStatus.Code(),
-			ErrMessage: err.Error(),
+			ErrCode:    errcode.ErrNotFriend.Code(),
+			ErrMessage: errcode.ErrNotFriend.Error(),
 		}
 	}
 
-	timeline, nomatch, err := getUID(userStatus, msg.To, msg.From)
-	if err == ErrRematchServiceID && len(nomatch) > 0 && backLoop < 10 {
-		backLoop++
-
-		// todo auth server rematch
-		fmt.Println("-----goto back", nomatch)
-		time.Sleep(time.Millisecond)
-		statusNoCache = true
-		goto back
-	}
-
+	timelines, err := getTimelines(false, msg.From, msg.To)
 	if err != nil {
 		return nil, &pb.IM_Msg_AckFailed{
 			SeqID:      frame.SeqID,
@@ -144,8 +127,8 @@ back:
 		}
 	}
 
-	ttid, ok1 := timeline[msg.To]
-	ftid, ok2 := timeline[msg.From]
+	ttid, ok1 := timelines[msg.To]
+	ftid, ok2 := timelines[msg.From]
 	if !ok1 || !ok2 {
 		return nil, &pb.IM_Msg_AckFailed{
 			SeqID:      frame.SeqID,
@@ -243,32 +226,28 @@ func makeMessage(frame *pb.IM_Msg_Content, secret []byte) (*dao.Messages, error)
 }
 
 func gatherUsersAgent(users ...uint64) (map[uint64][]string, error) {
-	userStatus, err := getCacheUserStatus(false, users...)
+	status, err := getCacheUsersStatus(false, users...)
 	if err != nil {
 		return nil, err
 	}
 
-	addrs := make(map[uint64][]string)
-	addrsmap := make(map[uint64]map[string]bool)
+	servers := make(map[uint64]map[string]bool)
 	for _, id := range users {
-		infos, ok := userStatus[id]
-		if !ok {
-			continue
-		}
-
-		if _, ok := addrs[id]; !ok {
-			addrs[id] = make([]string, 0)
-			addrsmap[id] = make(map[string]bool)
-		}
-
-		for k, v := range infos {
-			switch k {
-			case platform.PC, platform.Pad, platform.Phone, platform.Web:
-				if !addrsmap[id][v] {
-					addrs[id] = append(addrs[id], v)
-					addrsmap[id][v] = true
+		if server, ok := findServersID(id, kit.AgentServiceName, status); ok {
+			for _, s := range server {
+				if _, ok := servers[id]; !ok {
+					servers[id] = make(map[string]bool)
 				}
+				servers[id][s] = true
 			}
+		}
+	}
+
+	addrs := make(map[uint64][]string)
+	for id, sers := range servers {
+		addrs[id] = make([]string, 0)
+		for addr := range sers {
+			addrs[id] = append(addrs[id], addr)
 		}
 	}
 	return addrs, nil
@@ -285,7 +264,7 @@ func pushMessage(idsecret []byte, msg ...dao.Messages) error {
 		return err
 	}
 
-	nc := nats.Conn()
+	data := make(map[string][]*pb.Agent_BroadcastMessage)
 	for _, m := range msg {
 		addrs, ok := agents[m.To]
 		if !ok {
@@ -306,22 +285,37 @@ func pushMessage(idsecret []byte, msg ...dao.Messages) error {
 		bytes, _ := grpcproto.Marshal(&pb.IM_Notify{Payload: &pb.IM_Notify_List{List: &pb.IM_Msg_List{Values: []*pb.IM_Msg_Content{frame}}}})
 		w.Payload = &corespb.Response_Content{Content: bytes}
 		bytesW, _ := grpcproto.Marshal(w)
+		called := make(map[string]bool)
+		for _, addr := range addrs {
+			if _, ok := data[addr]; !ok {
+				data[addr] = make([]*pb.Agent_BroadcastMessage, 0)
+			}
+
+			if called[addr] {
+				continue
+			}
+
+			data[addr] = append(data[addr], &pb.Agent_BroadcastMessage{Receiver: frame.To, Command: command.IMPush.Int32(), Payload: bytesW})
+		}
+	}
+
+	nc := nats.Conn()
+	if len(data) < 1 {
+		return nil
+	}
+
+	for addr, values := range data {
+		frame := pb.Agent_Broadcast{Messages: values}
+
 		req := &corespb.Request{
 			Command: command.AgentBroadcast.Int32(),
 			Header:  map[string]string{"service": ServiceName, "addr": sd.Endpoint().Addr(), "id": sd.Endpoint().ID()},
 		}
 
-		req.Payload, _ = grpcproto.Marshal(&pb.Agent_Broadcast{
-			Receiver: []string{frame.To},
-			Payload:  bytesW,
-			Command:  kit.IM.Int32(),
-		})
-
+		req.Payload, _ = grpcproto.Marshal(&frame)
 		bytesMsg, _ := grpcproto.Marshal(req)
-		for _, addr := range addrs {
-			if err := nc.Publish(addr, bytesMsg); err != nil {
-				return err
-			}
+		if err := nc.Publish(addr, bytesMsg); err != nil {
+			return err
 		}
 	}
 	return nil

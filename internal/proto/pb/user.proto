@@ -77,6 +77,12 @@ message User{
             string UserId  = 2;
         }
 
+        message IsFriend {
+            uint64 FriendId = 1; 
+            uint64 UserId  = 2;
+            uint64 Topic   = 3;
+        }
+
         message FriendRequest {
             string FriendId = 1;
             string FNickname = 2;

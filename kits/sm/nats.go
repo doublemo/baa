@@ -2,6 +2,7 @@ package sm
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	log "github.com/doublemo/baa/cores/log/level"
@@ -11,6 +12,9 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/nats"
+	"github.com/doublemo/baa/internal/proto/kit"
+	"github.com/doublemo/baa/internal/proto/pb"
+	grpcproto "github.com/golang/protobuf/proto"
 	natsgo "github.com/nats-io/nats.go"
 )
 
@@ -20,6 +24,9 @@ const (
 
 	// ChannelStateEventReceiver 接收状态事件通道
 	ChannelStateEventReceiver = "sm.receiver"
+
+	// ChannelStateEventInternalBroadcast 内部广播数据同步
+	ChannelStateEventInternalBroadcast = "sm.internal.broadcast"
 )
 
 // NewNatsProcessActor nats
@@ -30,7 +37,15 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 
 	nc := nats.Conn()
 	msgChan := make(chan *natsgo.Msg, 1)
-	nc.ChanQueueSubscribe(ChannelStateEventReceiver, ChannelStateEventReceiver, msgChan)
+	if _, err := nc.ChanQueueSubscribe(ChannelStateEventReceiver, ChannelStateEventReceiver, msgChan); err != nil {
+		return nil, err
+	}
+
+	msgInternalChan := make(chan *natsgo.Msg, 1)
+	if _, err := nc.ChanSubscribe(ChannelStateEventInternalBroadcast, msgInternalChan); err != nil {
+		return nil, err
+	}
+
 	exitChan := make(chan struct{})
 	return &os.ProcessActor{
 		Exec: func() error {
@@ -49,6 +64,12 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 				}
 			}
 
+			internalfn := func(m *natsgo.Msg) func() {
+				return func() {
+					onFromNatsInternalMessage(m)
+				}
+			}
+
 			for {
 				select {
 				case msg, ok := <-msgChan:
@@ -56,6 +77,12 @@ func NewNatsProcessActor(config conf.Nats) (*os.ProcessActor, error) {
 						return nil
 					}
 					workers.Submit(fn(msg))
+
+				case internalMsg, ok := <-msgInternalChan:
+					if !ok {
+						return nil
+					}
+					workers.Submit(internalfn(internalMsg))
 
 				case <-exitChan:
 					return nil
@@ -105,6 +132,21 @@ func onFromNatsMessage(msg *natsgo.Msg) {
 	}
 }
 
+func onFromNatsInternalMessage(msg *natsgo.Msg) {
+	req := coresproto.RequestBytes{}
+	if err := req.Unmarshal(msg.Data); err != nil {
+		log.Error(Logger()).Log("action", "onFromNatsInternalMessage", "error", err, "frame", msg.Data)
+		return
+	}
+
+	fmt.Println("okkkk-----")
+	_, err := nInternalRouter.Handler(&corespb.Request{Header: make(map[string]string), Command: req.SubCmd.Int32(), Payload: req.Content})
+	if err != nil {
+		log.Error(Logger()).Log("action", "onFromNatsInternalMessage", "error", err)
+		return
+	}
+}
+
 func broadcast(data []byte) error {
 	nc := nats.Conn()
 	if nc == nil {
@@ -112,6 +154,36 @@ func broadcast(data []byte) error {
 	}
 
 	if err := nc.Publish(ChannelStateEventBroadcast, data); err != nil {
+		return err
+	}
+
+	return nc.FlushTimeout(time.Second)
+}
+
+func internalBroadcast(cmd coresproto.Command, evt *pb.SM_Event) error {
+	req := coresproto.RequestBytes{
+		Cmd:    kit.SM,
+		SubCmd: cmd,
+		SeqID:  1,
+	}
+
+	evtBytes, err := grpcproto.Marshal(evt)
+	if err != nil {
+		return err
+	}
+
+	req.Content = evtBytes
+	data, err := req.Marshal()
+	if err != nil {
+		return err
+	}
+
+	nc := nats.Conn()
+	if nc == nil {
+		return errors.New("nats is nil")
+	}
+
+	if err := nc.Publish(ChannelStateEventInternalBroadcast, data); err != nil {
 		return err
 	}
 

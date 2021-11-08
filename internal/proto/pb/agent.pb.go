@@ -250,20 +250,81 @@ func (x *Agent_KickedOut) GetPeerID() []string {
 	return nil
 }
 
+type Agent_BroadcastMessage struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Receiver string `protobuf:"bytes,1,opt,name=Receiver,proto3" json:"Receiver,omitempty"`
+	Command  int32  `protobuf:"varint,2,opt,name=Command,proto3" json:"Command,omitempty"`
+	Payload  []byte `protobuf:"bytes,3,opt,name=Payload,proto3" json:"Payload,omitempty"`
+}
+
+func (x *Agent_BroadcastMessage) Reset() {
+	*x = Agent_BroadcastMessage{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_pb_agent_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Agent_BroadcastMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Agent_BroadcastMessage) ProtoMessage() {}
+
+func (x *Agent_BroadcastMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_pb_agent_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Agent_BroadcastMessage.ProtoReflect.Descriptor instead.
+func (*Agent_BroadcastMessage) Descriptor() ([]byte, []int) {
+	return file_internal_proto_pb_agent_proto_rawDescGZIP(), []int{0, 4}
+}
+
+func (x *Agent_BroadcastMessage) GetReceiver() string {
+	if x != nil {
+		return x.Receiver
+	}
+	return ""
+}
+
+func (x *Agent_BroadcastMessage) GetCommand() int32 {
+	if x != nil {
+		return x.Command
+	}
+	return 0
+}
+
+func (x *Agent_BroadcastMessage) GetPayload() []byte {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
 type Agent_Broadcast struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Receiver []string `protobuf:"bytes,1,rep,name=Receiver,proto3" json:"Receiver,omitempty"`
-	Payload  []byte   `protobuf:"bytes,2,opt,name=Payload,proto3" json:"Payload,omitempty"`
-	Command  int32    `protobuf:"varint,3,opt,name=Command,proto3" json:"Command,omitempty"`
+	Messages []*Agent_BroadcastMessage `protobuf:"bytes,1,rep,name=Messages,proto3" json:"Messages,omitempty"`
 }
 
 func (x *Agent_Broadcast) Reset() {
 	*x = Agent_Broadcast{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_agent_proto_msgTypes[5]
+		mi := &file_internal_proto_pb_agent_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -276,7 +337,7 @@ func (x *Agent_Broadcast) String() string {
 func (*Agent_Broadcast) ProtoMessage() {}
 
 func (x *Agent_Broadcast) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_agent_proto_msgTypes[5]
+	mi := &file_internal_proto_pb_agent_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -289,28 +350,14 @@ func (x *Agent_Broadcast) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Agent_Broadcast.ProtoReflect.Descriptor instead.
 func (*Agent_Broadcast) Descriptor() ([]byte, []int) {
-	return file_internal_proto_pb_agent_proto_rawDescGZIP(), []int{0, 4}
+	return file_internal_proto_pb_agent_proto_rawDescGZIP(), []int{0, 5}
 }
 
-func (x *Agent_Broadcast) GetReceiver() []string {
+func (x *Agent_Broadcast) GetMessages() []*Agent_BroadcastMessage {
 	if x != nil {
-		return x.Receiver
+		return x.Messages
 	}
 	return nil
-}
-
-func (x *Agent_Broadcast) GetPayload() []byte {
-	if x != nil {
-		return x.Payload
-	}
-	return nil
-}
-
-func (x *Agent_Broadcast) GetCommand() int32 {
-	if x != nil {
-		return x.Command
-	}
-	return 0
 }
 
 type Agent_Webrtc_Trickle struct {
@@ -324,7 +371,7 @@ type Agent_Webrtc_Trickle struct {
 func (x *Agent_Webrtc_Trickle) Reset() {
 	*x = Agent_Webrtc_Trickle{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_agent_proto_msgTypes[6]
+		mi := &file_internal_proto_pb_agent_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -337,7 +384,7 @@ func (x *Agent_Webrtc_Trickle) String() string {
 func (*Agent_Webrtc_Trickle) ProtoMessage() {}
 
 func (x *Agent_Webrtc_Trickle) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_agent_proto_msgTypes[6]
+	mi := &file_internal_proto_pb_agent_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -375,7 +422,7 @@ type Agent_Webrtc_Signal struct {
 func (x *Agent_Webrtc_Signal) Reset() {
 	*x = Agent_Webrtc_Signal{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_agent_proto_msgTypes[7]
+		mi := &file_internal_proto_pb_agent_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -388,7 +435,7 @@ func (x *Agent_Webrtc_Signal) String() string {
 func (*Agent_Webrtc_Signal) ProtoMessage() {}
 
 func (x *Agent_Webrtc_Signal) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_agent_proto_msgTypes[7]
+	mi := &file_internal_proto_pb_agent_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -459,7 +506,7 @@ var File_internal_proto_pb_agent_proto protoreflect.FileDescriptor
 var file_internal_proto_pb_agent_proto_rawDesc = []byte{
 	0x0a, 0x1d, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x2f, 0x70, 0x62, 0x2f, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
-	0x02, 0x70, 0x62, 0x22, 0xa9, 0x03, 0x0a, 0x05, 0x41, 0x67, 0x65, 0x6e, 0x74, 0x1a, 0x2b, 0x0a,
+	0x02, 0x70, 0x62, 0x22, 0xf5, 0x03, 0x0a, 0x05, 0x41, 0x67, 0x65, 0x6e, 0x74, 0x1a, 0x2b, 0x0a,
 	0x09, 0x48, 0x61, 0x6e, 0x64, 0x73, 0x68, 0x61, 0x6b, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x45, 0x31,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x02, 0x45, 0x31, 0x12, 0x0e, 0x0a, 0x02, 0x45, 0x32,
 	0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x02, 0x45, 0x32, 0x1a, 0x1b, 0x0a, 0x0b, 0x48, 0x65,
@@ -480,16 +527,20 @@ var file_internal_proto_pb_agent_proto_rawDesc = []byte{
 	0x74, 0x65, 0x42, 0x09, 0x0a, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x1a, 0x23, 0x0a,
 	0x09, 0x4b, 0x69, 0x63, 0x6b, 0x65, 0x64, 0x4f, 0x75, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x50, 0x65,
 	0x65, 0x72, 0x49, 0x44, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x50, 0x65, 0x65, 0x72,
-	0x49, 0x44, 0x1a, 0x5b, 0x0a, 0x09, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x12,
-	0x1a, 0x0a, 0x08, 0x52, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x03, 0x28,
-	0x09, 0x52, 0x08, 0x52, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x50,
-	0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x50, 0x61,
-	0x79, 0x6c, 0x6f, 0x61, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64,
-	0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x42,
-	0x2b, 0x5a, 0x29, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f,
-	0x75, 0x62, 0x6c, 0x65, 0x6d, 0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72,
-	0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x49, 0x44, 0x1a, 0x62, 0x0a, 0x10, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x4d,
+	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x52, 0x65, 0x63, 0x65, 0x69, 0x76,
+	0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x52, 0x65, 0x63, 0x65, 0x69, 0x76,
+	0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x07, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x18, 0x0a, 0x07,
+	0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x50,
+	0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x1a, 0x43, 0x0a, 0x09, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63,
+	0x61, 0x73, 0x74, 0x12, 0x36, 0x0a, 0x08, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x18,
+	0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x70, 0x62, 0x2e, 0x41, 0x67, 0x65, 0x6e, 0x74,
+	0x2e, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67,
+	0x65, 0x52, 0x08, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x42, 0x2b, 0x5a, 0x29, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f, 0x75, 0x62, 0x6c, 0x65,
+	0x6d, 0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -504,24 +555,26 @@ func file_internal_proto_pb_agent_proto_rawDescGZIP() []byte {
 	return file_internal_proto_pb_agent_proto_rawDescData
 }
 
-var file_internal_proto_pb_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_internal_proto_pb_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_internal_proto_pb_agent_proto_goTypes = []interface{}{
-	(*Agent)(nil),                // 0: pb.Agent
-	(*Agent_Handshake)(nil),      // 1: pb.Agent.Handshake
-	(*Agent_Heartbeater)(nil),    // 2: pb.Agent.Heartbeater
-	(*Agent_Webrtc)(nil),         // 3: pb.Agent.Webrtc
-	(*Agent_KickedOut)(nil),      // 4: pb.Agent.KickedOut
-	(*Agent_Broadcast)(nil),      // 5: pb.Agent.Broadcast
-	(*Agent_Webrtc_Trickle)(nil), // 6: pb.Agent.Webrtc.Trickle
-	(*Agent_Webrtc_Signal)(nil),  // 7: pb.Agent.Webrtc.Signal
+	(*Agent)(nil),                  // 0: pb.Agent
+	(*Agent_Handshake)(nil),        // 1: pb.Agent.Handshake
+	(*Agent_Heartbeater)(nil),      // 2: pb.Agent.Heartbeater
+	(*Agent_Webrtc)(nil),           // 3: pb.Agent.Webrtc
+	(*Agent_KickedOut)(nil),        // 4: pb.Agent.KickedOut
+	(*Agent_BroadcastMessage)(nil), // 5: pb.Agent.BroadcastMessage
+	(*Agent_Broadcast)(nil),        // 6: pb.Agent.Broadcast
+	(*Agent_Webrtc_Trickle)(nil),   // 7: pb.Agent.Webrtc.Trickle
+	(*Agent_Webrtc_Signal)(nil),    // 8: pb.Agent.Webrtc.Signal
 }
 var file_internal_proto_pb_agent_proto_depIdxs = []int32{
-	6, // 0: pb.Agent.Webrtc.Signal.Trickle:type_name -> pb.Agent.Webrtc.Trickle
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	5, // 0: pb.Agent.Broadcast.Messages:type_name -> pb.Agent.BroadcastMessage
+	7, // 1: pb.Agent.Webrtc.Signal.Trickle:type_name -> pb.Agent.Webrtc.Trickle
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_internal_proto_pb_agent_proto_init() }
@@ -591,7 +644,7 @@ func file_internal_proto_pb_agent_proto_init() {
 			}
 		}
 		file_internal_proto_pb_agent_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Agent_Broadcast); i {
+			switch v := v.(*Agent_BroadcastMessage); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -603,7 +656,7 @@ func file_internal_proto_pb_agent_proto_init() {
 			}
 		}
 		file_internal_proto_pb_agent_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Agent_Webrtc_Trickle); i {
+			switch v := v.(*Agent_Broadcast); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -615,6 +668,18 @@ func file_internal_proto_pb_agent_proto_init() {
 			}
 		}
 		file_internal_proto_pb_agent_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Agent_Webrtc_Trickle); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_pb_agent_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Agent_Webrtc_Signal); i {
 			case 0:
 				return &v.state
@@ -627,7 +692,7 @@ func file_internal_proto_pb_agent_proto_init() {
 			}
 		}
 	}
-	file_internal_proto_pb_agent_proto_msgTypes[7].OneofWrappers = []interface{}{
+	file_internal_proto_pb_agent_proto_msgTypes[8].OneofWrappers = []interface{}{
 		(*Agent_Webrtc_Signal_Description)(nil),
 		(*Agent_Webrtc_Signal_Trickle)(nil),
 		(*Agent_Webrtc_Signal_IceConnectionState)(nil),
@@ -638,7 +703,7 @@ func file_internal_proto_pb_agent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_internal_proto_pb_agent_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

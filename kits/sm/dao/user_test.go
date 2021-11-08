@@ -14,13 +14,13 @@ func TestOnline(t *testing.T) {
 	}
 
 	err = Online(context.Background(), &Users{
-		ID:          1,
-		AgentServer: "aggg",
+		ID:          344702845066416130,
+		AgentServer: "agent1.cn.sc.cd",
 		Platform:    "web",
 		Token:       "xxx",
 		OnlineAt:    10000,
-		IMServer:    "im",
-		IDServer:    "id",
+		IMServer:    "im1.cn.sc.cd",
+		IDServer:    "snid1.cn.sc.cd",
 	})
 
 	if err != nil {

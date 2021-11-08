@@ -19,7 +19,7 @@ message IMF {
     message Content{
         uint64 MsgId = 1;
         uint64 SeqId = 2;
-        string Topic = 3;
+        uint64 Topic = 3;
         int32  Group = 4;
         string Content = 5;
         uint64 To = 6;

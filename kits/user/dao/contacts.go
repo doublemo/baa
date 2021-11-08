@@ -36,7 +36,7 @@ type (
 		Mute        int8   // 消息免打扰
 		StickyOnTop int8   // 聊天置顶
 		Type        int8   // 好友类型
-		Topic       uint64 // crc32
+		Topic       uint64 `gorm:"index"` // crc32
 		Status      int8   // 好友状态 0 正常 1 拉黑
 		Version     int64  // 好友信息更新版本号
 		CreateAt    int64  `gorm:"autoCreateTime"`
@@ -93,6 +93,30 @@ func FindContactsByUserIDAndFriendID(userid, friendid uint64, cols ...string) (*
 	}
 
 	tx.Where("user_id = ? And friend_id = ?", userid, friendid).Take(contacts)
+	if tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+
+		return nil, tx.Error
+	}
+
+	return contacts, nil
+}
+
+// FindContactsByUserIDAndTopic 查询是否已经为好友
+func FindContactsByUserIDAndTopic(userid, topic uint64, cols ...string) (*Contacts, error) {
+	if database == nil {
+		return nil, gorm.ErrInvalidDB
+	}
+
+	contacts := &Contacts{}
+	tx := database.Scopes(UseContactsTable(userid))
+	if len(cols) > 0 {
+		tx.Select(cols)
+	}
+
+	tx.Where("topic = ?", topic).Take(contacts)
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			return nil, ErrRecordNotFound

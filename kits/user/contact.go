@@ -406,7 +406,6 @@ func friendRequestList(req *corespb.Request, c UserConfig) (*corespb.Response, e
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
 	}
-
 	list, count, err := dao.FindContactsRequestByUserID(uid, frame.Page, frame.Size, frame.Version)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
@@ -527,5 +526,39 @@ func contacts(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 		}
 	}
 	w.Payload = &corespb.Response_Content{Content: respBytes}
+	return w, nil
+}
+
+func checkIsMyFriend(req *corespb.Request) (*corespb.Response, error) {
+	var frame pb.User_Contacts_IsFriend
+	{
+		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+			return nil, err
+		}
+	}
+
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  req.Header,
+	}
+
+	resp := pb.User_Contacts_Reply{
+		OK: false,
+	}
+
+	bytes, _ := grpcproto.Marshal(&resp)
+	w.Payload = &corespb.Response_Content{Content: bytes}
+	contacts, err := dao.FindContactsByUserIDAndTopic(frame.UserId, frame.Topic, "friend_id", "status")
+	if err != nil {
+		return w, nil
+	}
+
+	if contacts.FriendID != frame.FriendId || contacts.Status != 0 {
+		return w, nil
+	}
+
+	resp.OK = true
+	bytes, _ = grpcproto.Marshal(&resp)
+	w.Payload = &corespb.Response_Content{Content: bytes}
 	return w, nil
 }

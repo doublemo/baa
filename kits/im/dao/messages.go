@@ -17,7 +17,7 @@ type Messages struct {
 	Content     string
 	Group       int32
 	ContentType string
-	Topic       string
+	Topic       uint64
 	Status      int32
 	CreatedAt   time.Time
 }
