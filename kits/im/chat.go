@@ -4,21 +4,23 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"math"
 	"sort"
 	"time"
 
 	"github.com/doublemo/baa/cores/crypto/id"
 	log "github.com/doublemo/baa/cores/log/level"
+	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/nats"
 	"github.com/doublemo/baa/internal/proto/command"
 	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
-	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/im/cache"
 	"github.com/doublemo/baa/kits/im/dao"
 	"github.com/doublemo/baa/kits/im/errcode"
 	"github.com/doublemo/baa/kits/im/mime"
+	"github.com/doublemo/baa/kits/im/worker"
 	grpcproto "github.com/golang/protobuf/proto"
 )
 
@@ -91,15 +93,8 @@ func sendto(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb
 			ErrMessage: err.Error(),
 		}
 	}
-
 	cancel()
-	if frame.Group == pb.IM_Msg_ToG {
-		return sendtoG(frame, c)
-	}
-	return sendtoC(frame, c)
-}
 
-func sendtoC(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb.IM_Msg_AckFailed) {
 	msg, err := makeMessage(frame, []byte(c.IDSecret))
 	if err != nil {
 		return nil, &pb.IM_Msg_AckFailed{
@@ -109,10 +104,17 @@ func sendtoC(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *p
 		}
 	}
 
+	if frame.Group == pb.IM_Msg_ToG {
+		return sendtoG(msg, c)
+	}
+	return sendtoC(msg, c)
+}
+
+func sendtoC(msg *dao.Messages, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb.IM_Msg_AckFailed) {
 	// todo 检查是否彼此为好友
 	if ok, err := checkIsMyFriend(msg.From, msg.To, msg.Topic); !ok || err != nil {
 		return nil, &pb.IM_Msg_AckFailed{
-			SeqID:      frame.SeqID,
+			SeqID:      msg.SeqId,
 			ErrCode:    errcode.ErrNotFriend.Code(),
 			ErrMessage: errcode.ErrNotFriend.Error(),
 		}
@@ -121,7 +123,7 @@ func sendtoC(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *p
 	timelines, err := getTimelines(false, msg.From, msg.To)
 	if err != nil {
 		return nil, &pb.IM_Msg_AckFailed{
-			SeqID:      frame.SeqID,
+			SeqID:      msg.SeqId,
 			ErrCode:    errcode.ErrInternalServer.Code(),
 			ErrMessage: err.Error(),
 		}
@@ -131,7 +133,7 @@ func sendtoC(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *p
 	ftid, ok2 := timelines[msg.From]
 	if !ok1 || !ok2 {
 		return nil, &pb.IM_Msg_AckFailed{
-			SeqID:      frame.SeqID,
+			SeqID:      msg.SeqId,
 			ErrCode:    errcode.ErrInvalidUserIdToken.Code(),
 			ErrMessage: errcode.ErrInvalidUserIdToken.Error(),
 		}
@@ -145,7 +147,7 @@ func sendtoC(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *p
 	defer cancel()
 	if err := dao.WriteInboxC(ctx, msg); err != nil {
 		return nil, &pb.IM_Msg_AckFailed{
-			SeqID:      frame.SeqID,
+			SeqID:      msg.SeqId,
 			ErrCode:    errcode.ErrInternalServer.Code(),
 			ErrMessage: err.Error(),
 		}
@@ -155,9 +157,19 @@ func sendtoC(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *p
 	msgInspectionReport(msg)
 
 	// 推送信息
-	if err := pushMessage([]byte(c.IDSecret), *msg); err != nil {
-		log.Error(Logger()).Log("action", "pushMessage", "error", err)
-	}
+	worker.Submit(func() {
+		data, err := makeBroadcastMessages([]byte(c.IDSecret), *msg)
+		if err != nil {
+			log.Error(Logger()).Log("action", "makeBroadcastMessages", "error", err)
+		}
+
+		for addr, messages := range data {
+			if err := pushMessages(addr, messages...); err != nil {
+				log.Error(Logger()).Log("action", "pushMessages", "error", err)
+			}
+		}
+	})
+
 	return &pb.IM_Msg_AckReceived{
 		Id:       msg.ID,
 		SeqID:    msg.SeqId,
@@ -165,8 +177,101 @@ func sendtoC(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *p
 	}, nil
 }
 
-func sendtoG(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb.IM_Msg_AckFailed) {
-	return nil, nil
+func sendtoG(msg *dao.Messages, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb.IM_Msg_AckFailed) {
+	// todo 检查是否在群中
+	if ok, err := checkInGroup(msg.From, msg.Topic); !ok || err != nil {
+		return nil, &pb.IM_Msg_AckFailed{
+			SeqID:      msg.SeqId,
+			ErrCode:    errcode.ErrNotFriend.Code(),
+			ErrMessage: errcode.ErrNotFriend.Error(),
+		}
+	}
+
+	timelines, err := getTimelines(false, msg.To)
+	if err != nil {
+		return nil, &pb.IM_Msg_AckFailed{
+			SeqID:      msg.SeqId,
+			ErrCode:    errcode.ErrInternalServer.Code(),
+			ErrMessage: err.Error(),
+		}
+	}
+
+	ttid, ok := timelines[msg.To]
+	if !ok {
+		return nil, &pb.IM_Msg_AckFailed{
+			SeqID:      msg.SeqId,
+			ErrCode:    errcode.ErrInvalidUserIdToken.Code(),
+			ErrMessage: errcode.ErrInvalidUserIdToken.Error(),
+		}
+	}
+
+	msg.TSeqId = ttid
+	msg.FSeqId = ttid
+
+	// 开始存储数据
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	if err := dao.WriteInboxG(ctx, msg); err != nil {
+		return nil, &pb.IM_Msg_AckFailed{
+			SeqID:      msg.SeqId,
+			ErrCode:    errcode.ErrInternalServer.Code(),
+			ErrMessage: err.Error(),
+		}
+	}
+
+	// 消息送检
+	msgInspectionReport(msg)
+
+	gid, _ := id.Encrypt(msg.To, []byte(c.IDSecret))
+
+	// 推送信息
+	fn := func(users []uint64) func() {
+		return func() {
+			data, err := makeGroupBroadcastMessages(*msg, []byte(c.IDSecret), users...)
+			if err != nil {
+				log.Error(Logger()).Log("action", "makeBroadcastMessages", "error", err)
+			}
+
+			for addr, message := range data {
+				if err := pushMessages(addr, message); err != nil {
+					log.Error(Logger()).Log("action", "pushMessages", "error", err)
+				}
+			}
+		}
+	}
+	var (
+		page      int32 = 0
+		size      int32 = 100
+		pageCount int32 = 0
+	)
+loop:
+	page++
+	members, count, err := groupMembersID(gid, page, size)
+	if err != nil {
+		return nil, &pb.IM_Msg_AckFailed{
+			SeqID:      msg.SeqId,
+			ErrCode:    errcode.ErrInternalServer.Code(),
+			ErrMessage: err.Error(),
+		}
+	}
+
+	if pageCount == 0 {
+		pageCount = int32(math.Ceil(float64(count) / float64(size)))
+	}
+
+	if len(members) > 0 {
+		worker.Submit(fn(members))
+	}
+
+	if page <= pageCount {
+		goto loop
+	}
+
+	return &pb.IM_Msg_AckReceived{
+		Id:       msg.ID,
+		SeqID:    msg.SeqId,
+		NewSeqID: ttid,
+	}, nil
 }
 
 func validationMsg(msg *pb.IM_Msg_Content) bool {
@@ -253,7 +358,33 @@ func gatherUsersAgent(users ...uint64) (map[uint64][]string, error) {
 	return addrs, nil
 }
 
-func pushMessage(idsecret []byte, msg ...dao.Messages) error {
+func pushMessages(addr string, msg ...*pb.Agent_BroadcastMessage) error {
+	nc := nats.Conn()
+	if nc == nil {
+		return errors.New("conn is nil")
+	}
+
+	frame := &pb.Agent_Broadcast{Messages: msg}
+	req := coresproto.RequestBytes{
+		Cmd:    kit.Agent,
+		SubCmd: command.AgentBroadcast,
+		SeqID:  1,
+	}
+
+	req.Content, _ = grpcproto.Marshal(frame)
+	bytes, err := req.Marshal()
+	if err != nil {
+		return err
+	}
+
+	if err := nc.Publish(addr, bytes); err != nil {
+		return err
+	}
+
+	return nc.FlushTimeout(time.Second * 10)
+}
+
+func makeBroadcastMessages(idsecret []byte, msg ...dao.Messages) (map[string][]*pb.Agent_BroadcastMessage, error) {
 	users := make([]uint64, len(msg))
 	for i, m := range msg {
 		users[i] = m.To
@@ -261,7 +392,7 @@ func pushMessage(idsecret []byte, msg ...dao.Messages) error {
 
 	agents, err := gatherUsersAgent(users...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	data := make(map[string][]*pb.Agent_BroadcastMessage)
@@ -273,18 +404,11 @@ func pushMessage(idsecret []byte, msg ...dao.Messages) error {
 
 		frame, err := makeMessageToPB(m, idsecret)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		frame.SeqID = m.TSeqId
-		w := &corespb.Response{
-			Command: command.IMPush.Int32(),
-			Header:  make(map[string]string),
-		}
-
 		bytes, _ := grpcproto.Marshal(&pb.IM_Notify{Payload: &pb.IM_Notify_List{List: &pb.IM_Msg_List{Values: []*pb.IM_Msg_Content{frame}}}})
-		w.Payload = &corespb.Response_Content{Content: bytes}
-		bytesW, _ := grpcproto.Marshal(w)
 		called := make(map[string]bool)
 		for _, addr := range addrs {
 			if _, ok := data[addr]; !ok {
@@ -294,31 +418,50 @@ func pushMessage(idsecret []byte, msg ...dao.Messages) error {
 			if called[addr] {
 				continue
 			}
-
-			data[addr] = append(data[addr], &pb.Agent_BroadcastMessage{Receiver: frame.To, Command: command.IMPush.Int32(), Payload: bytesW})
+			data[addr] = append(data[addr], &pb.Agent_BroadcastMessage{Receiver: []string{frame.To}, Command: kit.IM.Int32(), SubCommand: command.IMPush.Int32(), Payload: bytes})
 		}
 	}
 
-	nc := nats.Conn()
-	if len(data) < 1 {
-		return nil
+	return data, nil
+}
+
+func makeGroupBroadcastMessages(msg dao.Messages, idsecret []byte, users ...uint64) (map[string]*pb.Agent_BroadcastMessage, error) {
+	agents, err := gatherUsersAgent(users...)
+	if err != nil {
+		return nil, err
 	}
 
-	for addr, values := range data {
-		frame := pb.Agent_Broadcast{Messages: values}
+	frame, err := makeMessageToPB(msg, idsecret)
+	if err != nil {
+		return nil, err
+	}
 
-		req := &corespb.Request{
-			Command: command.AgentBroadcast.Int32(),
-			Header:  map[string]string{"service": ServiceName, "addr": sd.Endpoint().Addr(), "id": sd.Endpoint().ID()},
+	frame.SeqID = msg.TSeqId
+	bytes, _ := grpcproto.Marshal(&pb.IM_Notify{Payload: &pb.IM_Notify_List{List: &pb.IM_Msg_List{Values: []*pb.IM_Msg_Content{frame}}}})
+	data := make(map[string]*pb.Agent_BroadcastMessage)
+	for _, userid := range users {
+		addrs, ok := agents[userid]
+		if !ok {
+			continue
 		}
 
-		req.Payload, _ = grpcproto.Marshal(&frame)
-		bytesMsg, _ := grpcproto.Marshal(req)
-		if err := nc.Publish(addr, bytesMsg); err != nil {
-			return err
+		uid, _ := id.Encrypt(userid, idsecret)
+
+		called := make(map[string]bool)
+		for _, addr := range addrs {
+			if called[addr] {
+				continue
+			}
+
+			called[addr] = true
+			if _, ok := data[addr]; ok {
+				data[addr].Receiver = append(data[addr].Receiver, uid)
+			} else {
+				data[addr] = &pb.Agent_BroadcastMessage{Receiver: []string{uid}, Command: kit.IM.Int32(), SubCommand: command.IMPush.Int32(), Payload: bytes}
+			}
 		}
 	}
-	return nil
+	return data, nil
 }
 
 func makeMessageToPB(m dao.Messages, secret []byte) (*pb.IM_Msg_Content, error) {

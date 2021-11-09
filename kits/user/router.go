@@ -25,7 +25,8 @@ var (
 // RouterConfig 路由配置
 type RouterConfig struct {
 	ServiceAuth conf.RPCClient `alias:"auth"`
-	User        UserConfig     `alias:"user"`
+	User        UserConfig     `alias:"usersettings"`
+	Group       GroupConfig    `alias:"groupsettings"`
 }
 
 // InitRouter init
@@ -38,6 +39,9 @@ func InitRouter(config RouterConfig) {
 	r.HandleFunc(command.UserContactsRequest, func(req *corespb.Request) (*corespb.Response, error) { return friendRequestList(req, config.User) })
 	r.HandleFunc(command.UserRegister, func(req *corespb.Request) (*corespb.Response, error) { return register(req, config.User) })
 	r.HandleFunc(command.UserCheckIsMyFriend, checkIsMyFriend)
+	r.HandleFunc(command.UserCheckInGroup, checkInGroup)
+	r.HandleFunc(command.UserGroupMembers, func(req *corespb.Request) (*corespb.Response, error) { return groupMembers(req, config.Group) })
+	r.HandleFunc(command.UserGroupMembersValidID, func(req *corespb.Request) (*corespb.Response, error) { return groupMembersID(req, config.Group) })
 
 	// 内部调用
 	muxRouter.Register(kit.Auth.Int32(), router.New()).Handle(command.AuthAccountInfo, router.NewCall(config.ServiceAuth))

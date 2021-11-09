@@ -31,6 +31,7 @@ func WriteInboxC(ctx context.Context, msg *Messages) error {
 	message["TSeqId"] = msg.TSeqId
 	message["FSeqId"] = msg.FSeqId
 	message["Status"] = msg.Status
+	message["Topic"] = msg.Topic
 
 	var (
 		retInbox   []*redis.IntCmd
@@ -45,6 +46,51 @@ func WriteInboxC(ctx context.Context, msg *Messages) error {
 		retMessage = pipe.HMSet(ctx, messageNamer, message)
 		pipe.LTrim(ctx, tinboxNamer, 0, 10000)
 		pipe.LTrim(ctx, finboxNamer, 0, 10000)
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, ret := range retInbox {
+		err = ret.Err()
+		if err != nil {
+			return err
+		}
+	}
+	return retMessage.Err()
+}
+
+// WriteInboxG 写到群信息箱
+func WriteInboxG(ctx context.Context, msg *Messages) error {
+	tinboxNamer := RDBNamer(defaultInboxKey, strconv.FormatUint(msg.To, 10))
+	messageNamer := RDBNamer(defaultInboxMessageKey, strconv.FormatUint(msg.ID, 10))
+
+	message := make(map[string]interface{})
+	message["ID"] = msg.ID
+	message["SeqId"] = msg.SeqId
+	message["To"] = msg.To
+	message["From"] = msg.From
+	message["Content"] = msg.Content
+	message["Group"] = msg.Group
+	message["ContentType"] = msg.ContentType
+	message["CreatedAt"] = time.Now().Unix()
+	message["TSeqId"] = msg.TSeqId
+	message["FSeqId"] = msg.FSeqId
+	message["Status"] = msg.Status
+	message["Topic"] = msg.Topic
+
+	var (
+		retInbox   []*redis.IntCmd
+		retMessage *redis.BoolCmd
+	)
+
+	tvalue := strconv.FormatUint(msg.TSeqId, 10) + ":" + strconv.FormatUint(msg.ID, 10)
+	_, err := rdb.Pipelined(ctx, func(pipe redis.Pipeliner) error {
+		retInbox = append(retInbox, pipe.LPush(ctx, tinboxNamer, tvalue))
+		retMessage = pipe.HMSet(ctx, messageNamer, message)
+		pipe.LTrim(ctx, tinboxNamer, 0, 10000)
 		return nil
 	})
 

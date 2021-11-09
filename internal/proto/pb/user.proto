@@ -154,14 +154,38 @@ message User{
             string UserId = 1;
             string Nickname = 2;
             string Headimg = 3;
-            string Sex = 4;
+            int32 Sex = 4;
             uint64 Topic = 5;
             string Alias = 6;
+            int64 Version = 7; 
         }
 
+        message MembersListRequest {
+            string GroupId = 1; 
+            int32 Page = 2;
+            int32 Size = 3;
+            int64 Version = 4;
+        }
 
-        message Members {
+        message MembersListReply {
             repeated Member Values = 1;
+            int32  Page = 2;
+            int32  Size = 3;
+            int32 RecordCount = 4;
+        }
+
+        message MembersIDListRequest {
+            string GroupId = 1; 
+            int32 Page = 2;
+            int32 Size = 3;
+            int64 Version = 4;
+        }
+
+        message MembersIDListReply {
+            repeated uint64 Values = 1;
+            int32  Page = 2;
+            int32  Size = 3;
+            int32 RecordCount = 4;
         }
 
         message Add{
@@ -182,6 +206,11 @@ message User{
 
         message Cancel {
             string GroupId = 1; 
+        }
+
+        message In{
+            uint64 GroupId = 1; 
+            uint64 UserId = 2;
         }
 
         message MemberRequest {

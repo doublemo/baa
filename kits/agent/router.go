@@ -247,25 +247,26 @@ func broadcast(req *corespb.Request) (*corespb.Response, error) {
 	}
 
 	for _, value := range frame.Messages {
-		w := &corespb.Response{}
-		if err := grpcproto.Unmarshal(value.Payload, w); err != nil {
-			return nil, err
+		w := &corespb.Response{
+			Command: value.SubCommand,
+			Payload: &corespb.Response_Content{Content: value.Payload},
 		}
-
 		msg, _ := proto.NewResponseBytes(coresproto.Command(value.Command), w).Marshal()
-		peers, ok := session.GetDict(value.Receiver)
-		if !ok {
-			continue
-		}
-
-		for _, id := range peers {
-			peer, ok := session.GetPeer(id)
+		for _, recv := range value.Receiver {
+			peers, ok := session.GetDict(recv)
 			if !ok {
 				continue
 			}
 
-			if err := peer.Send(session.PeerMessagePayload{Channel: session.PeerMessageChannelWebrtc, Data: msg}); err != nil {
-				log.Error(Logger()).Log("action", "broadcast", "error", err)
+			for _, id := range peers {
+				peer, ok := session.GetPeer(id)
+				if !ok {
+					continue
+				}
+
+				if err := peer.Send(session.PeerMessagePayload{Channel: session.PeerMessageChannelWebrtc, Data: msg}); err != nil {
+					log.Error(Logger()).Log("action", "broadcast", "error", err)
+				}
 			}
 		}
 	}

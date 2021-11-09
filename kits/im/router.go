@@ -61,7 +61,10 @@ func InitRouter(config RouterConfig) {
 	muxRouter.Register(kit.SM.Int32(), router.New()).Handle(command.SMUserStatus, sm)
 
 	user := router.NewCall(config.ServiceUser)
-	muxRouter.Register(kit.User.Int32(), router.New()).Handle(command.UserCheckIsMyFriend, user)
+	muxRouter.Register(kit.User.Int32(), router.New()).Handle(command.UserCheckIsMyFriend, user).
+		Handle(command.UserCheckInGroup, user).
+		Handle(command.UserGroupMembers, user).
+		Handle(command.UserGroupMembersValidID, user)
 
 	time.AfterFunc(time.Second*10, testSend)
 }

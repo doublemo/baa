@@ -2,7 +2,6 @@ package user
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 
 	"github.com/doublemo/baa/cores/crypto/id"
@@ -59,8 +58,6 @@ func register(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 		Command: req.Command,
 		Header:  req.Header,
 	}
-
-	fmt.Println(accountId, frame.AccountId)
 
 	if accountId != frame.AccountId {
 		return errcode.Bad(w, errcode.ErrInvalidAccountID), nil

@@ -20,4 +20,13 @@ const (
 
 	// UserCheckIsMyFriend 检查是否是好朋友
 	UserCheckIsMyFriend
+
+	// UserCheckInGroup 检查是否在群中
+	UserCheckInGroup
+
+	// UserGroupMembers  获取群成员信息
+	UserGroupMembers
+
+	// UserGroupMembersValidID  获取群有效成员ID
+	UserGroupMembersValidID
 )

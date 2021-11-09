@@ -31,9 +31,10 @@ message Agent {
     }
 
     message BroadcastMessage {
-        string  Receiver = 1;
+        repeated string  Receiver = 1;
         int32   Command  = 2;
-        bytes Payload    = 3;
+        bytes  Payload    = 3;
+        int32  SubCommand = 4;
     }
 
     message Broadcast{

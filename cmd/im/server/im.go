@@ -17,6 +17,7 @@ import (
 	"github.com/doublemo/baa/kits/im"
 	"github.com/doublemo/baa/kits/im/cache"
 	"github.com/doublemo/baa/kits/im/dao"
+	"github.com/doublemo/baa/kits/im/worker"
 )
 
 type Config struct {
@@ -51,6 +52,9 @@ type Config struct {
 
 	// Nats
 	Nats conf.Nats `alias:"nats"`
+
+	// workers 工人设置
+	Worker worker.Config `alias:"worker"`
 }
 
 type IM struct {
@@ -112,6 +116,9 @@ func (s *IM) Start() error {
 	// 路由
 	im.InitRouter(o.Router)
 	o.Nats.Name = o.MachineID
+
+	// 工人
+	worker.Init(o.Worker)
 
 	// 注册运行服务
 	s.actors.Add(s.mustProcessActor(im.NewNatsProcessActor(o.Nats)), true)
