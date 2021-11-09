@@ -1,4 +1,4 @@
-package user
+package robot
 
 import (
 	log "github.com/doublemo/baa/cores/log/level"
