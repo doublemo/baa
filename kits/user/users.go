@@ -101,6 +101,119 @@ func register(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 	return w, nil
 }
 
+func getUserInfo(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
+	var frame pb.User_InfoRequest
+	{
+		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+			return nil, err
+		}
+	}
+
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  req.Header,
+	}
+
+	switch payload := frame.Payload.(type) {
+	case *pb.User_InfoRequest_UserId:
+		return findUserInfo(req, payload.UserId, c)
+
+	case *pb.User_InfoRequest_MoreUserId:
+		return findUserInfos(req, payload.MoreUserId.Values, c)
+
+	case *pb.User_InfoRequest_UserIdFromString:
+		uid, err := id.Decrypt(payload.UserIdFromString, []byte(c.IDSecret))
+		if err != nil {
+			return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+		}
+
+		return findUserInfo(req, uid, c)
+
+	case *pb.User_InfoRequest_MoreUserIdString:
+		data := make([]uint64, len(payload.MoreUserIdString.Values))
+		for i, value := range payload.MoreUserIdString.Values {
+			uid, err := id.Decrypt(value, []byte(c.IDSecret))
+			if err != nil {
+				return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+			}
+
+			data[i] = uid
+		}
+
+		return findUserInfos(req, data, c)
+	}
+
+	return nil, errors.New("notsupported")
+}
+
+func findUserInfo(req *corespb.Request, userid uint64, c UserConfig) (*corespb.Response, error) {
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  req.Header,
+	}
+
+	users, err := dao.FindUsersByID(userid)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	uid, _ := id.Encrypt(userid, []byte(c.IDSecret))
+	frame := &pb.User_InfoReply{
+		Payload: &pb.User_InfoReply_Value{
+			Value: &pb.User_Info{
+				UserId:   uid,
+				Nickname: users.Nickname,
+				Headimg:  users.Headimg,
+				Age:      int32(users.Age),
+				Sex:      int32(users.Sex),
+				Idcard:   users.Idcard,
+				Phone:    users.Phone,
+				IndexNo:  users.IndexNo,
+			},
+		},
+	}
+
+	bytes, _ := grpcproto.Marshal(frame)
+	w.Payload = &corespb.Response_Content{Content: bytes}
+	return w, nil
+}
+
+func findUserInfos(req *corespb.Request, userid []uint64, c UserConfig) (*corespb.Response, error) {
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  req.Header,
+	}
+
+	users, err := dao.FindUsersByMoreID(userid...)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	values := &pb.User_MoreInfo{Values: make([]*pb.User_Info, len(users))}
+	for i, user := range users {
+		uid, _ := id.Encrypt(user.ID, []byte(c.IDSecret))
+		values.Values[i] = &pb.User_Info{
+			UserId:   uid,
+			Nickname: user.Nickname,
+			Headimg:  user.Headimg,
+			Age:      int32(user.Age),
+			Sex:      int32(user.Sex),
+			Idcard:   user.Idcard,
+			Phone:    user.Phone,
+			IndexNo:  user.IndexNo,
+		}
+	}
+
+	frame := &pb.User_InfoReply{
+		Payload: &pb.User_InfoReply_Values{
+			Values: values,
+		},
+	}
+	bytes, _ := grpcproto.Marshal(frame)
+	w.Payload = &corespb.Response_Content{Content: bytes}
+	return w, nil
+}
+
 func getAccountInfo(accountId, userId string, secret []byte) (uint64, uint64, error) {
 	auid, err := id.Decrypt(accountId, secret)
 	if err != nil {

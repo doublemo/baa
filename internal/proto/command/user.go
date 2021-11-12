@@ -29,4 +29,7 @@ const (
 
 	// UserGroupMembersValidID  获取群有效成员ID
 	UserGroupMembersValidID
+
+	// UserInfo 用户信息
+	UserInfo
 )

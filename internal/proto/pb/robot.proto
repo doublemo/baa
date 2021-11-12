@@ -1,0 +1,49 @@
+syntax = "proto3";
+package pb;
+option go_package = "github.com/doublemo/baa/internal/proto/pb";
+
+
+message Robot{
+    message Info{
+        uint64 ID = 1;
+        uint64 AccountID = 2;
+        uint64 UnionID = 3;
+        uint64 UserID = 4;
+        string Nickname = 5;
+        string Headimg = 6;
+        int32  Age = 7;
+        int32  Sex = 8;
+        string Idcard = 9;
+        string Phone = 10;
+    }
+
+    message Create {
+        message Request{
+            oneof Payload {
+                Account Account   = 1;
+                Register Register = 2;
+            }
+        }
+
+        message Reply{
+            bool OK = 1;
+        }
+
+        message Account{
+            string Name = 1;
+            string Secret = 2;
+        }
+
+        message Register{
+            string Schema = 1;
+            string Name = 2;
+            string Secret = 3;
+            string Nickname = 4;
+            string Headimg = 5;
+            int32  Age = 6;
+            int32  Sex = 7;
+            string Idcard = 8;
+            string Phone = 9;
+        }
+    }
+}

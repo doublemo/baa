@@ -25,18 +25,22 @@ var (
 // RouterConfig 路由配置
 type RouterConfig struct {
 	ServiceAuth conf.RPCClient `alias:"auth"`
+	ServiceUser conf.RPCClient `alias:"user"`
+	Robot       RobotConfig    `alias:"robotsettings"`
 }
 
 // InitRouter init
 func InitRouter(config RouterConfig) {
 	// Register grpc load balance
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceAuth.Name, config.ServiceAuth.Group, sd.Endpointer()))
+	resolver.Register(coressd.NewResolverBuilder(config.ServiceUser.Name, config.ServiceUser.Group, sd.Endpointer()))
 
 	// 注册处理请求
-	r.HandleFunc(command.UserContacts, func(req *corespb.Request) (*corespb.Response, error) { return nil, nil })
+	r.HandleFunc(command.RobotCreate, func(req *corespb.Request) (*corespb.Response, error) { return createRobot(req, config.Robot) })
 
 	// 内部调用
-	muxRouter.Register(kit.Auth.Int32(), router.New()).Handle(command.AuthAccountInfo, router.NewCall(config.ServiceAuth))
+	muxRouter.Register(kit.Auth.Int32(), router.New()).Handle(command.AuthLogin, router.NewCall(config.ServiceAuth))
+	muxRouter.Register(kit.User.Int32(), router.New()).Handle(command.UserInfo, router.NewCall(config.ServiceUser))
 
 	// 订阅处理
 	// nrRouter.Register(kit.USRT.Int32(), router.New()).HandleFunc(command.USRTDeleteUserStatus, deleteUserStatus)

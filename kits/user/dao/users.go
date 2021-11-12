@@ -132,3 +132,31 @@ func FindUsersByID(id uint64, cols ...string) (*Users, error) {
 	}
 	return users, nil
 }
+
+// FindUsersByMoreID 查询用户
+func FindUsersByMoreID(users ...uint64) ([]*Users, error) {
+	if database == nil {
+		return nil, gorm.ErrInvalidDB
+	}
+
+	usersMap := make(map[string][]uint64)
+	for _, id := range users {
+		m := makeTablename(id, &Users{}, defaultUsersMaxRecord, defaultUsersMaxTable)
+		if _, ok := usersMap[m]; !ok {
+			usersMap[m] = make([]uint64, 0)
+		}
+		usersMap[m] = append(usersMap[m], id)
+	}
+
+	var data []*Users
+	retData := make([]*Users, 0)
+	for table, values := range usersMap {
+		tx := database.Table(table).Select("id", "index_no", "nickname", "headimg", "age", "sex", "idcard", "phone").Where("id IN (?)", values).Find(&data)
+		if tx.Error != nil {
+			return nil, tx.Error
+		}
+
+		retData = append(retData, data...)
+	}
+	return retData, nil
+}

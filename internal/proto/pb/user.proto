@@ -10,7 +10,36 @@ message User{
         int32 Age = 4;
         int32 Sex = 5;
         string Idcard = 6;
-        string phone = 7;
+        string Phone = 7;
+        string IndexNo = 8;
+    }
+
+    message MoreUserId {
+        repeated uint64 Values = 1;
+    }
+
+    message MoreUserIdString {
+        repeated string Values = 1;
+    }
+
+    message MoreInfo {
+        repeated Info Values = 1;
+    }
+
+    message InfoRequest {
+        oneof Payload {
+            uint64 UserId = 1;
+            string UserIdFromString = 2;
+            MoreUserId MoreUserId = 3;
+            MoreUserIdString MoreUserIdString = 4;
+        }
+    }
+
+    message InfoReply {
+       oneof Payload {
+           Info Value = 1;
+           MoreInfo Values = 2;
+       }
     }
 
     message Register {

@@ -42,6 +42,7 @@ func InitRouter(config RouterConfig) {
 	r.HandleFunc(command.UserCheckInGroup, checkInGroup)
 	r.HandleFunc(command.UserGroupMembers, func(req *corespb.Request) (*corespb.Response, error) { return groupMembers(req, config.Group) })
 	r.HandleFunc(command.UserGroupMembersValidID, func(req *corespb.Request) (*corespb.Response, error) { return groupMembersID(req, config.Group) })
+	r.HandleFunc(command.UserInfo, func(req *corespb.Request) (*corespb.Response, error) { return getUserInfo(req, config.User) })
 
 	// 内部调用
 	muxRouter.Register(kit.Auth.Int32(), router.New()).Handle(command.AuthAccountInfo, router.NewCall(config.ServiceAuth))
