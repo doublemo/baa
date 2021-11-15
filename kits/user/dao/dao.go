@@ -135,5 +135,9 @@ func RDBNamer(name ...string) string {
 
 // DBNamer 创建table key
 func DBNamer(name ...string) string {
-	return dbPrefix + strings.Join(name, "_")
+	m := strings.Join(name, "_")
+	if strings.HasPrefix(m, dbPrefix) {
+		return m
+	}
+	return dbPrefix + m
 }

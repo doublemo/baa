@@ -5,6 +5,7 @@ import (
 	"hash/crc32"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -15,20 +16,8 @@ type Table interface {
 }
 
 func useTable(v interface{}, table Table, maxRecord, maxTable uint32) func(tx *gorm.DB) *gorm.DB {
-	var c32 uint32
-	switch v := reflect.ValueOf(v); v.Kind() {
-	case reflect.String:
-		c32 = makeTablenameFromString(v.String(), maxRecord, maxTable)
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		c32 = makeTablenameFromUint64(uint64(v.Int()), maxRecord, maxTable)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		c32 = makeTablenameFromUint64(v.Uint(), maxRecord, maxTable)
-	default:
-		panic(fmt.Sprintf("unhandled kind %s", v.Kind()))
-	}
-
+	tablename := makeTablename(v, table, maxRecord, maxTable)
 	return func(tx *gorm.DB) *gorm.DB {
-		tablename := table.TableName() + strconv.FormatUint(uint64(c32), 10)
 		_, ok := tableCacher.Get(tablename)
 		if !ok {
 			if !tx.Migrator().HasTable(tablename) {
@@ -43,6 +32,21 @@ func useTable(v interface{}, table Table, maxRecord, maxTable uint32) func(tx *g
 		}
 		return tx.Table(tablename)
 	}
+}
+
+func makeTablename(v interface{}, table Table, maxRecord, maxTable uint32) string {
+	var c32 uint32
+	switch v := reflect.ValueOf(v); v.Kind() {
+	case reflect.String:
+		c32 = makeTablenameFromString(v.String(), maxRecord, maxTable)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		c32 = makeTablenameFromUint64(uint64(v.Int()), maxRecord, maxTable)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		c32 = makeTablenameFromUint64(v.Uint(), maxRecord, maxTable)
+	default:
+		panic(fmt.Sprintf("unhandled kind %s", v.Kind()))
+	}
+	return strings.Trim(table.TableName(), " ") + strconv.FormatUint(uint64(c32), 10)
 }
 
 // 计算表名

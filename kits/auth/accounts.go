@@ -36,7 +36,7 @@ func accountInfo(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
 
 	resp := &pb.Authentication_Account_Info{
 		Token:     "",
-		Schema:    info.Schema,
+		Schema:    info.SchemaName,
 		Name:      info.Name,
 		Status:    int32(info.Status),
 		ExpiresAt: info.ExpiresAt,

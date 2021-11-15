@@ -13,10 +13,11 @@ import (
 func internalAccountLogin(name, secret string) (*pb.Authentication_Form_AccountInfo, error) {
 	req := &corespb.Request{
 		Command: command.AuthLogin.Int32(),
-		Header:  make(map[string]string),
+		Header:  map[string]string{"PeerId": "Robot"},
 	}
 
 	frame := &pb.Authentication_Form_Login{
+		Scheme: "password",
 		Payload: &pb.Authentication_Form_Login_Account{
 			Account: &pb.Authentication_Form_LoginAccount{
 				Username: name,

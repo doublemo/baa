@@ -58,6 +58,9 @@ type (
 
 		// SMS 短信配置
 		SMS SMSConfig `alias:"sms"`
+
+		// AcceptRobotRegister 接受机器人注册
+		AcceptRobotRegister bool `alias:"acceptRobotRegister" default:"true"`
 	}
 )
 
@@ -144,7 +147,7 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	}
 
 	account.PeerID = peerID
-	accountInfo, err := makeAuthenticationFormAccountInfo(account, c)
+	accountInfo, err := makeAuthenticationFormAccountInfo(account, c, false)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, err.Error()), nil
 	}
@@ -268,6 +271,9 @@ func register(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
 
 	case *pb.Authentication_Form_Register_CheckUsername:
 		return registerCheckUsername(req, &frame, payload, c)
+
+	case *pb.Authentication_Form_Register_Robot:
+		return registerRobot(req, &frame, payload, c)
 	}
 
 	return nil, errors.New("InvalidProtoType")
@@ -327,6 +333,10 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 		Command: req.Command,
 	}
 
+	if req.Header == nil {
+		req.Header = make(map[string]string)
+	}
+
 	// ^[\u4e00-\u9fa5]
 	reg := regexp.MustCompile(`^[a-z0-9A-Z\p{Han}]+([\.|_|@][a-z0-9A-Z\p{Han}]+)*$`)
 	if !reg.MatchString(r.Account.Username) {
@@ -377,12 +387,13 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 	}
 
 	accounts := dao.Accounts{
-		ID:      idvalues[0],
-		UnionID: idvalues[1],
-		UserID:  idvalues[2],
-		Schema:  "password",
-		Name:    r.Account.Username,
-		Secret:  string(password),
+		ID:         idvalues[0],
+		UnionID:    idvalues[1],
+		UserID:     idvalues[2],
+		Type:       dao.AccountsTypeDefault,
+		SchemaName: "password",
+		Name:       r.Account.Username,
+		Secret:     string(password),
 	}
 
 	err = dao.CreateAccount(&accounts)
@@ -407,6 +418,80 @@ func registerAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Regi
 				ID:      accountID,
 				UnionID: unionID,
 			},
+		},
+	}
+
+	b, _ := grpcproto.Marshal(resp)
+	w.Payload = &corespb.Response_Content{Content: b}
+	return w, nil
+}
+
+func registerRobot(req *corespb.Request, reqFrame *pb.Authentication_Form_Register, r *pb.Authentication_Form_Register_Robot, c LRConfig) (*corespb.Response, error) {
+	w := &corespb.Response{
+		Command: req.Command,
+	}
+
+	if req.Header == nil {
+		req.Header = make(map[string]string)
+	}
+
+	if m, ok := req.Header["From"]; !ok || m != "Robot" {
+		return errcode.Bad(w, errcode.ErrInternalServer, "Unknown source, registration of robot account is not supported"), nil
+	}
+
+	if !c.AcceptRobotRegister {
+		return errcode.Bad(w, errcode.ErrInternalServer, "Registration of robot account is not supported"), nil
+	}
+
+	// ^[\u4e00-\u9fa5]
+	reg := regexp.MustCompile(`^[a-z0-9A-Z\p{Han}]+([\.|_|@][a-z0-9A-Z\p{Han}]+)*$`)
+	if !reg.MatchString(r.Robot.Username) {
+		return errcode.Bad(w, errcode.ErrAccountNameLettersInvalid), nil
+	}
+
+	if !isValidPassword(r.Robot.Password, c.PasswordMinLen, c.PasswordMaxLen) {
+		return errcode.Bad(w, errcode.ErrPasswordLettersInvalid, fmt.Sprintf(errcode.ErrPasswordLettersInvalid.Error(), c.PasswordMinLen, c.PasswordMaxLen)), nil
+	}
+
+	_, err := dao.GetAccoutsBySchemaAndName(reqFrame.Scheme, r.Robot.Username)
+	if err != gorm.ErrRecordNotFound {
+		return errcode.Bad(w, errcode.ErrAccountIsExists), nil
+	}
+
+	idvalues, err := getSNID(3)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	password, err := bcrypt.GenerateFromPassword([]byte(r.Robot.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	accounts := dao.Accounts{
+		ID:         idvalues[0],
+		UnionID:    idvalues[1],
+		UserID:     idvalues[2],
+		SchemaName: "password",
+		Name:       r.Robot.Username,
+		Type:       dao.AccountsTypeRobot,
+		Secret:     string(password),
+	}
+
+	err = dao.CreateAccount(&accounts)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	accountInfo, err := makeAuthenticationFormAccountInfo(&accounts, c, true)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	resp := &pb.Authentication_Form_RegisterReply{
+		Scheme: reqFrame.Scheme,
+		Payload: &pb.Authentication_Form_RegisterReply_Account{
+			Account: accountInfo,
 		},
 	}
 
@@ -478,7 +563,7 @@ func isValidPassword(str string, minLen, maxLen int) bool {
 	return (isUpper && isLower) && (isNumber || isSpecial)
 }
 
-func makeAuthenticationFormAccountInfo(account *dao.Accounts, c LRConfig) (*pb.Authentication_Form_AccountInfo, error) {
+func makeAuthenticationFormAccountInfo(account *dao.Accounts, c LRConfig, passToken bool) (*pb.Authentication_Form_AccountInfo, error) {
 	accountID, err := id.Encrypt(account.ID, []byte(c.IDSecret))
 	if err != nil {
 		return nil, err
@@ -494,9 +579,12 @@ func makeAuthenticationFormAccountInfo(account *dao.Accounts, c LRConfig) (*pb.A
 		return nil, err
 	}
 
-	token, err := helper.GenerateToken(account.ID, account.UnionID, time.Duration(c.TokenExpireAt)*time.Second, []byte(c.TokenSecret))
-	if err != nil {
-		return nil, err
+	token := ""
+	if !passToken {
+		token, err = helper.GenerateToken(account.ID, account.UnionID, time.Duration(c.TokenExpireAt)*time.Second, []byte(c.TokenSecret))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &pb.Authentication_Form_AccountInfo{

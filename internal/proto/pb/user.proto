@@ -50,6 +50,7 @@ message User{
 
         message Reply{
             string UserId = 1;
+            string IndexNo = 2;
         }
     }
 

@@ -1,13 +1,26 @@
 package robot
 
 import (
+	"encoding/base64"
 	"errors"
+	"fmt"
+	"math/rand"
+	"net"
+	"regexp"
+	"strconv"
+	"time"
+	"unicode"
 
+	"github.com/doublemo/baa/cores/crypto/aes"
 	"github.com/doublemo/baa/cores/crypto/id"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
+	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
+	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/robot/dao"
 	"github.com/doublemo/baa/kits/robot/errcode"
+	"github.com/doublemo/baa/kits/robot/session"
 	grpcproto "github.com/golang/protobuf/proto"
 )
 
@@ -15,6 +28,94 @@ import (
 type RobotConfig struct {
 	// IDSecret 用户ID 加密key 16位
 	IDSecret string `alias:"idSecret" default:"7581BDD8E8DA3839"`
+
+	// PasswordSecret 密码 加密key 16位
+	PasswordSecret string `alias:"passwordSecret" default:"7531BDD8E5DA38397531BDD8E5DA3839"`
+
+	// PasswordMinLen 密码最少字符
+	PasswordMinLen int `alias:"passwordMinLen" default:"8"`
+
+	// PasswordMaxLen 密码最大字符
+	PasswordMaxLen int `alias:"passwordMaxLen" default:"16"`
+
+	// NicknameMaxLength 昵称最大长度
+	NicknameMaxLength int `alias:"nicknameMaxLength" default:"34"`
+
+	// StartIntervalTime 机器人启动时间间隔
+	StartIntervalTime int `alias:"startIntervalTime" default:"34"`
+
+	// ReadBufferSize 读取缓存大小 32767
+	ReadBufferSize int `alias:"readbuffersize" default:"32767"`
+
+	// WriteBufferSize 写入缓存大小 32767
+	WriteBufferSize int `alias:"writebuffersize" default:"32767"`
+
+	// ReadDeadline 读取超时
+	ReadDeadline int `alias:"readdeadline" default:"310"`
+
+	// WriteDeadline 写入超时
+	WriteDeadline int `alias:"writedeadline"`
+}
+
+func startRobots(req *corespb.Request, c RobotConfig) (*corespb.Response, error) {
+	var frame pb.Robot_Start_Request
+	{
+		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+			return nil, err
+		}
+	}
+
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  req.Header,
+	}
+
+	valuesLen := len(frame.Values)
+	if valuesLen > 1000 || valuesLen < 1 {
+		return errcode.Bad(w, errcode.ErrRobotsTooMany), nil
+	}
+
+	robots, err := dao.FindRobotsInID(frame.Values...)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	successed := make([]uint64, 0)
+	successedmap := make(map[uint64]bool)
+	failed := make([]uint64, 0)
+	failedmap := make(map[uint64]bool)
+	for _, robot := range robots {
+		successed = append(successed, robot.ID)
+		successedmap[robot.ID] = true
+		startch := make(chan error)
+		go func(rob *dao.Robots, ch chan error) {
+			//runRobot(rob, c, ch)
+		}(robot, startch)
+
+		if err := <-startch; err != nil {
+			failedmap[robot.ID] = true
+			failed = append(failed, robot.ID)
+		}
+
+		if c.StartIntervalTime > 0 {
+			time.Sleep(time.Duration(c.StartIntervalTime) * time.Millisecond)
+		}
+	}
+
+	for _, id := range frame.Values {
+		if !successedmap[id] && !failedmap[id] {
+			failed = append(failed, id)
+			failedmap[id] = true
+		}
+	}
+
+	bytes, err := grpcproto.Marshal(&pb.Robot_Start_Reply{Succeeded: successed, Failed: failed})
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	w.Payload = &corespb.Response_Content{Content: bytes}
+	return w, nil
 }
 
 func createRobot(req *corespb.Request, c RobotConfig) (*corespb.Response, error) {
@@ -52,6 +153,10 @@ func createRobotByAccount(req *corespb.Request, frame *pb.Robot_Create_Request_A
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
 
+	if rob, err := dao.FindRobotsByAccountID(aid, "id"); err == nil && rob.ID > 0 {
+		return errcode.Bad(w, errcode.ErrRobotsIsExists), nil
+	}
+
 	unid, err := id.Decrypt(account.UnionID, []byte(c.IDSecret))
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
@@ -62,25 +167,30 @@ func createRobotByAccount(req *corespb.Request, frame *pb.Robot_Create_Request_A
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
 
-	userinfo, err := internalUserinfo(account.ID)
+	userinfo, err := internalGetUserinfo(account.ID)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	password, err := encryptPassword(frame.Account.Secret, []byte(c.PasswordSecret))
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
 
 	robot := dao.Robots{
-		AccountID: aid,
-		UnionID:   unid,
-		UserID:    uid,
-		Schema:    "Account",
-		Name:      frame.Account.Name,
-		Secret:    frame.Account.Secret,
-		IndexNo:   userinfo.IndexNo,
-		Nickname:  userinfo.Nickname,
-		Headimg:   userinfo.Headimg,
-		Age:       int8(userinfo.Age),
-		Sex:       int8(userinfo.Sex),
-		Idcard:    userinfo.Idcard,
-		Phone:     userinfo.Phone,
+		AccountID:  aid,
+		UnionID:    unid,
+		UserID:     uid,
+		SchemaName: "password",
+		Name:       frame.Account.Name,
+		Secret:     password,
+		IndexNo:    userinfo.IndexNo,
+		Nickname:   userinfo.Nickname,
+		Headimg:    userinfo.Headimg,
+		Age:        int8(userinfo.Age),
+		Sex:        int8(userinfo.Sex),
+		Idcard:     userinfo.Idcard,
+		Phone:      userinfo.Phone,
 	}
 
 	// 获取账户信息
@@ -98,5 +208,254 @@ func createRobotByAccount(req *corespb.Request, frame *pb.Robot_Create_Request_A
 }
 
 func createRobotByRegister(req *corespb.Request, frame *pb.Robot_Create_Request_Register, c RobotConfig) (*corespb.Response, error) {
-	return nil, nil
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  req.Header,
+	}
+
+	// ^[\u4e00-\u9fa5]
+	reg := regexp.MustCompile(`^[a-z0-9A-Z\p{Han}]+([\.|_|@][a-z0-9A-Z\p{Han}]+)*$`)
+	if !reg.MatchString(frame.Register.Name) {
+		return errcode.Bad(w, errcode.ErrAccountNameLettersInvalid), nil
+	}
+
+	if !isValidPassword(frame.Register.Secret, c.PasswordMinLen, c.PasswordMaxLen) {
+		return errcode.Bad(w, errcode.ErrPasswordLettersInvalid, fmt.Sprintf(errcode.ErrPasswordLettersInvalid.Error(), c.PasswordMinLen, c.PasswordMaxLen)), nil
+	}
+
+	if len(frame.Register.Nickname) > c.NicknameMaxLength {
+		return errcode.Bad(w, errcode.ErrAccountNameLettersInvalid), nil
+	}
+
+	if rob, err := dao.FindRobotsBySchemaName("password", frame.Register.Name, "id"); err == nil && rob.ID > 0 {
+		return errcode.Bad(w, errcode.ErrRobotsIsExists), nil
+	}
+
+	frame.Register.Schema = "password"
+	request := &corespb.Request{
+		Header:  map[string]string{"From": "Robot"},
+		Command: int32(command.AuthRegister),
+	}
+
+	request.Payload, _ = grpcproto.Marshal(&pb.Authentication_Form_Register{
+		Scheme: "password",
+		Payload: &pb.Authentication_Form_Register_Robot{
+			Robot: &pb.Authentication_Form_RegisterRobot{
+				Username: frame.Register.Name,
+				Password: frame.Register.Secret,
+			},
+		},
+	})
+
+	resp, err := muxRouter.Handler(kit.Auth.Int32(), request)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	var accountInfo *pb.Authentication_Form_AccountInfo
+	switch payload := resp.Payload.(type) {
+	case *corespb.Response_Content:
+		var data pb.Authentication_Form_RegisterReply
+		if err := grpcproto.Unmarshal(payload.Content, &data); err != nil {
+			return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+		}
+
+		switch p := data.Payload.(type) {
+		case *pb.Authentication_Form_RegisterReply_Account:
+			accountInfo = p.Account
+		default:
+			return errcode.Bad(w, errcode.ErrInternalServer), nil
+		}
+
+	case *corespb.Response_Error:
+		return errcode.Bad(w, errcode.ErrInternalServer, payload.Error.Message), nil
+	default:
+		return errcode.Bad(w, errcode.ErrInternalServer), nil
+	}
+
+	accountsId, err := id.Decrypt(accountInfo.ID, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	unionId, err := id.Decrypt(accountInfo.UnionID, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	userId, err := id.Decrypt(accountInfo.UserID, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	password, err := encryptPassword(frame.Register.Secret, []byte(c.PasswordSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	robots := dao.Robots{
+		AccountID:  accountsId,
+		UnionID:    unionId,
+		UserID:     userId,
+		SchemaName: "password",
+		Name:       frame.Register.Name,
+		Secret:     password,
+		IndexNo:    "",
+		Nickname:   frame.Register.Nickname,
+		Headimg:    frame.Register.Headimg,
+		Age:        int8(frame.Register.Age),
+		Sex:        int8(frame.Register.Sex),
+		Idcard:     frame.Register.Idcard,
+		Phone:      frame.Register.Phone,
+	}
+
+	if err := dao.CreateRobot(&robots); err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	infoRequest := &corespb.Request{
+		Header:  map[string]string{"UserID": accountInfo.UserID, "AccountID": accountInfo.ID},
+		Command: int32(command.UserRegister),
+	}
+
+	infoRequest.Payload, _ = grpcproto.Marshal(&pb.User_Register_Request{
+		AccountId: accountInfo.ID,
+		Info: &pb.User_Info{
+			UserId:   accountInfo.UserID,
+			Nickname: robots.Nickname,
+			Headimg:  robots.Headimg,
+			Age:      int32(robots.Age),
+			Sex:      int32(robots.Sex),
+			Idcard:   robots.Idcard,
+			Phone:    robots.Phone,
+		},
+	})
+
+	resp, err = muxRouter.Handler(kit.User.Int32(), infoRequest)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	var userReply pb.User_Register_Reply
+	switch payload := resp.Payload.(type) {
+	case *corespb.Response_Content:
+		if err := grpcproto.Unmarshal(payload.Content, &userReply); err != nil {
+			return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+		}
+
+	case *corespb.Response_Error:
+		return errcode.Bad(w, errcode.ErrInternalServer, payload.Error.Message), nil
+	default:
+		return errcode.Bad(w, errcode.ErrInternalServer), nil
+	}
+
+	if _, err := dao.UpdatesRobotsByID(robots.ID, "index_no", userReply.IndexNo); err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	respFrame := pb.Robot_Create_Reply{
+		OK: true,
+	}
+
+	bytes, _ := grpcproto.Marshal(&respFrame)
+	w.Payload = &corespb.Response_Content{Content: bytes}
+	return w, nil
+}
+
+func isValidPassword(str string, minLen, maxLen int) bool {
+	var (
+		isUpper   = false
+		isLower   = false
+		isNumber  = false
+		isSpecial = false
+	)
+
+	if len(str) < minLen || len(str) > maxLen {
+		return false
+	}
+
+	for _, s := range str {
+		switch {
+		case unicode.IsUpper(s):
+			isUpper = true
+		case unicode.IsLower(s):
+			isLower = true
+		case unicode.IsNumber(s):
+			isNumber = true
+		case unicode.IsPunct(s) || unicode.IsSymbol(s):
+			isSpecial = true
+		default:
+		}
+	}
+	return (isUpper && isLower) && (isNumber || isSpecial)
+}
+
+func encryptPassword(password string, key []byte) (string, error) {
+	dst, err := aes.Encrypt([]byte(password), key)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(dst), nil
+}
+
+func decryptPassword(password string, key []byte) (string, error) {
+	m, err := base64.URLEncoding.WithPadding(base64.NoPadding).DecodeString(password)
+	if err != nil {
+		return "", err
+	}
+
+	w, err := aes.Decrypt(m, key)
+	if err != nil {
+		return "", err
+	}
+
+	return string(w), nil
+}
+
+func runRobot(robot *dao.Robots, c RobotConfig, exitChan chan struct{}) error {
+	peer, ok := session.GetPeer(strconv.FormatUint(robot.ID, 0))
+	if ok {
+		peer.Close()
+		session.RemovePeer(peer)
+	}
+
+	agent, err := randomAgent()
+	if err != nil {
+		return err
+	}
+
+	conn, err := net.DialTimeout("tcp", agent, 30*time.Second)
+	if err != nil {
+		return err
+	}
+
+	peer = session.NewPeerSocket(strconv.FormatUint(robot.ID, 0), conn, time.Duration(c.ReadDeadline)*time.Second, time.Duration(c.WriteDeadline)*time.Second, exitChan)
+	peer.OnReceive(onMessage)
+	peer.OnClose(func(p session.Peer) {
+		session.RemovePeer(p)
+	})
+
+	peer.Go()
+	session.AddPeer(peer)
+	return nil
+}
+
+func randomAgent() (string, error) {
+	eds, err := sd.Endpoints()
+	if err != nil {
+		return "", err
+	}
+
+	agents := make([]string, 0)
+	for _, ed := range eds {
+		if ed.Name() == kit.AgentServiceName {
+			agents = append(agents, ed.Addr())
+		}
+	}
+
+	if len(agents) < 1 {
+		return "", errors.New("No gateway server can be used")
+	}
+	return agents[rand.Intn(len(agents))], nil
 }

@@ -90,6 +90,7 @@ message Authentication {
             RegisterAcount Account = 2;
             MobilePhoneSMSCode SMS = 3;
             RegisterCheckUsername CheckUsername = 4;
+            RegisterRobot Robot = 5;
          }
       }
 
@@ -107,6 +108,11 @@ message Authentication {
          string Password = 2;
          string Phone    = 3;
          string PhoneCode =4;
+      }
+
+      message RegisterRobot{
+         string Username = 1;
+         string Password = 2;
       }
 
       message RegisterCheckUsername {

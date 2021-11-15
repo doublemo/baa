@@ -47,21 +47,19 @@ func (r *Call) Serve(req *corespb.Request) (*corespb.Response, error) {
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
 	conn, err := p.Get(ctx)
-	cancel()
 	if err != nil {
 		return nil, err
 	}
 
-	ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second*5)
 	defer func() {
 		conn.Close()
-		cancel2()
 	}()
 
 	client := corespb.NewServiceClient(conn.ClientConn)
-	resp, err := client.Call(ctx2, req)
+	resp, err := client.Call(ctx, req)
 	return resp, err
 }
 

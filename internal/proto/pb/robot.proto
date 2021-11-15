@@ -46,4 +46,25 @@ message Robot{
             string Phone = 9;
         }
     }
+
+    message Start {
+        message Request {
+            repeated uint64 Values = 1;
+        }
+
+        message Reply{
+            repeated uint64 Succeeded = 1;
+            repeated uint64 Failed = 2; 
+        }
+    }
+
+    message Status {
+        message Info {
+            uint64 ID = 1;
+            string Nickname = 2;
+            string Headimg = 3;
+            int32  Age = 4;
+            int32  Sex = 5;
+        }
+    }
 }

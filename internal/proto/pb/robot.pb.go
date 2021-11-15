@@ -220,6 +220,82 @@ func (*Robot_Create) Descriptor() ([]byte, []int) {
 	return file_internal_proto_pb_robot_proto_rawDescGZIP(), []int{0, 1}
 }
 
+type Robot_Start struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *Robot_Start) Reset() {
+	*x = Robot_Start{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_pb_robot_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Robot_Start) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Robot_Start) ProtoMessage() {}
+
+func (x *Robot_Start) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_pb_robot_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Robot_Start.ProtoReflect.Descriptor instead.
+func (*Robot_Start) Descriptor() ([]byte, []int) {
+	return file_internal_proto_pb_robot_proto_rawDescGZIP(), []int{0, 2}
+}
+
+type Robot_Status struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *Robot_Status) Reset() {
+	*x = Robot_Status{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_pb_robot_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Robot_Status) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Robot_Status) ProtoMessage() {}
+
+func (x *Robot_Status) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_pb_robot_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Robot_Status.ProtoReflect.Descriptor instead.
+func (*Robot_Status) Descriptor() ([]byte, []int) {
+	return file_internal_proto_pb_robot_proto_rawDescGZIP(), []int{0, 3}
+}
+
 type Robot_Create_Request struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -234,7 +310,7 @@ type Robot_Create_Request struct {
 func (x *Robot_Create_Request) Reset() {
 	*x = Robot_Create_Request{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_robot_proto_msgTypes[3]
+		mi := &file_internal_proto_pb_robot_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -247,7 +323,7 @@ func (x *Robot_Create_Request) String() string {
 func (*Robot_Create_Request) ProtoMessage() {}
 
 func (x *Robot_Create_Request) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_robot_proto_msgTypes[3]
+	mi := &file_internal_proto_pb_robot_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -311,7 +387,7 @@ type Robot_Create_Reply struct {
 func (x *Robot_Create_Reply) Reset() {
 	*x = Robot_Create_Reply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_robot_proto_msgTypes[4]
+		mi := &file_internal_proto_pb_robot_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -324,7 +400,7 @@ func (x *Robot_Create_Reply) String() string {
 func (*Robot_Create_Reply) ProtoMessage() {}
 
 func (x *Robot_Create_Reply) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_robot_proto_msgTypes[4]
+	mi := &file_internal_proto_pb_robot_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -359,7 +435,7 @@ type Robot_Create_Account struct {
 func (x *Robot_Create_Account) Reset() {
 	*x = Robot_Create_Account{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_robot_proto_msgTypes[5]
+		mi := &file_internal_proto_pb_robot_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -372,7 +448,7 @@ func (x *Robot_Create_Account) String() string {
 func (*Robot_Create_Account) ProtoMessage() {}
 
 func (x *Robot_Create_Account) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_robot_proto_msgTypes[5]
+	mi := &file_internal_proto_pb_robot_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -421,7 +497,7 @@ type Robot_Create_Register struct {
 func (x *Robot_Create_Register) Reset() {
 	*x = Robot_Create_Register{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_robot_proto_msgTypes[6]
+		mi := &file_internal_proto_pb_robot_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -434,7 +510,7 @@ func (x *Robot_Create_Register) String() string {
 func (*Robot_Create_Register) ProtoMessage() {}
 
 func (x *Robot_Create_Register) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_robot_proto_msgTypes[6]
+	mi := &file_internal_proto_pb_robot_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -513,12 +589,193 @@ func (x *Robot_Create_Register) GetPhone() string {
 	return ""
 }
 
+type Robot_Start_Request struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Values []uint64 `protobuf:"varint,1,rep,packed,name=Values,proto3" json:"Values,omitempty"`
+}
+
+func (x *Robot_Start_Request) Reset() {
+	*x = Robot_Start_Request{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_pb_robot_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Robot_Start_Request) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Robot_Start_Request) ProtoMessage() {}
+
+func (x *Robot_Start_Request) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_pb_robot_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Robot_Start_Request.ProtoReflect.Descriptor instead.
+func (*Robot_Start_Request) Descriptor() ([]byte, []int) {
+	return file_internal_proto_pb_robot_proto_rawDescGZIP(), []int{0, 2, 0}
+}
+
+func (x *Robot_Start_Request) GetValues() []uint64 {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
+type Robot_Start_Reply struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Succeeded []uint64 `protobuf:"varint,1,rep,packed,name=Succeeded,proto3" json:"Succeeded,omitempty"`
+	Failed    []uint64 `protobuf:"varint,2,rep,packed,name=Failed,proto3" json:"Failed,omitempty"`
+}
+
+func (x *Robot_Start_Reply) Reset() {
+	*x = Robot_Start_Reply{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_pb_robot_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Robot_Start_Reply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Robot_Start_Reply) ProtoMessage() {}
+
+func (x *Robot_Start_Reply) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_pb_robot_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Robot_Start_Reply.ProtoReflect.Descriptor instead.
+func (*Robot_Start_Reply) Descriptor() ([]byte, []int) {
+	return file_internal_proto_pb_robot_proto_rawDescGZIP(), []int{0, 2, 1}
+}
+
+func (x *Robot_Start_Reply) GetSucceeded() []uint64 {
+	if x != nil {
+		return x.Succeeded
+	}
+	return nil
+}
+
+func (x *Robot_Start_Reply) GetFailed() []uint64 {
+	if x != nil {
+		return x.Failed
+	}
+	return nil
+}
+
+type Robot_Status_Info struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ID       uint64 `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`
+	Nickname string `protobuf:"bytes,2,opt,name=Nickname,proto3" json:"Nickname,omitempty"`
+	Headimg  string `protobuf:"bytes,3,opt,name=Headimg,proto3" json:"Headimg,omitempty"`
+	Age      int32  `protobuf:"varint,4,opt,name=Age,proto3" json:"Age,omitempty"`
+	Sex      int32  `protobuf:"varint,5,opt,name=Sex,proto3" json:"Sex,omitempty"`
+}
+
+func (x *Robot_Status_Info) Reset() {
+	*x = Robot_Status_Info{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_pb_robot_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Robot_Status_Info) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Robot_Status_Info) ProtoMessage() {}
+
+func (x *Robot_Status_Info) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_pb_robot_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Robot_Status_Info.ProtoReflect.Descriptor instead.
+func (*Robot_Status_Info) Descriptor() ([]byte, []int) {
+	return file_internal_proto_pb_robot_proto_rawDescGZIP(), []int{0, 3, 0}
+}
+
+func (x *Robot_Status_Info) GetID() uint64 {
+	if x != nil {
+		return x.ID
+	}
+	return 0
+}
+
+func (x *Robot_Status_Info) GetNickname() string {
+	if x != nil {
+		return x.Nickname
+	}
+	return ""
+}
+
+func (x *Robot_Status_Info) GetHeadimg() string {
+	if x != nil {
+		return x.Headimg
+	}
+	return ""
+}
+
+func (x *Robot_Status_Info) GetAge() int32 {
+	if x != nil {
+		return x.Age
+	}
+	return 0
+}
+
+func (x *Robot_Status_Info) GetSex() int32 {
+	if x != nil {
+		return x.Sex
+	}
+	return 0
+}
+
 var File_internal_proto_pb_robot_proto protoreflect.FileDescriptor
 
 var file_internal_proto_pb_robot_proto_rawDesc = []byte{
 	0x0a, 0x1d, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x2f, 0x70, 0x62, 0x2f, 0x72, 0x6f, 0x62, 0x6f, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
-	0x02, 0x70, 0x62, 0x22, 0xb2, 0x05, 0x0a, 0x05, 0x52, 0x6f, 0x62, 0x6f, 0x74, 0x1a, 0xee, 0x01,
+	0x02, 0x70, 0x62, 0x22, 0x99, 0x07, 0x0a, 0x05, 0x52, 0x6f, 0x62, 0x6f, 0x74, 0x1a, 0xee, 0x01,
 	0x0a, 0x04, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x04, 0x52, 0x02, 0x49, 0x44, 0x12, 0x1c, 0x0a, 0x09, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e,
 	0x74, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x41, 0x63, 0x63, 0x6f, 0x75,
@@ -561,10 +818,25 @@ var file_internal_proto_pb_robot_proto_rawDesc = []byte{
 	0x07, 0x20, 0x01, 0x28, 0x05, 0x52, 0x03, 0x53, 0x65, 0x78, 0x12, 0x16, 0x0a, 0x06, 0x49, 0x64,
 	0x63, 0x61, 0x72, 0x64, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x49, 0x64, 0x63, 0x61,
 	0x72, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x50, 0x68, 0x6f, 0x6e, 0x65, 0x18, 0x09, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x05, 0x50, 0x68, 0x6f, 0x6e, 0x65, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x69, 0x74, 0x68,
-	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f, 0x75, 0x62, 0x6c, 0x65, 0x6d, 0x6f, 0x2f,
-	0x62, 0x61, 0x61, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x09, 0x52, 0x05, 0x50, 0x68, 0x6f, 0x6e, 0x65, 0x1a, 0x69, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x72,
+	0x74, 0x1a, 0x21, 0x0a, 0x07, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06,
+	0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x04, 0x52, 0x06, 0x56, 0x61,
+	0x6c, 0x75, 0x65, 0x73, 0x1a, 0x3d, 0x0a, 0x05, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x12, 0x1c, 0x0a,
+	0x09, 0x53, 0x75, 0x63, 0x63, 0x65, 0x65, 0x64, 0x65, 0x64, 0x18, 0x01, 0x20, 0x03, 0x28, 0x04,
+	0x52, 0x09, 0x53, 0x75, 0x63, 0x63, 0x65, 0x65, 0x64, 0x65, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x46,
+	0x61, 0x69, 0x6c, 0x65, 0x64, 0x18, 0x02, 0x20, 0x03, 0x28, 0x04, 0x52, 0x06, 0x46, 0x61, 0x69,
+	0x6c, 0x65, 0x64, 0x1a, 0x7a, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x1a, 0x70, 0x0a,
+	0x04, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x04, 0x52, 0x02, 0x49, 0x44, 0x12, 0x1a, 0x0a, 0x08, 0x4e, 0x69, 0x63, 0x6b, 0x6e, 0x61, 0x6d,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x4e, 0x69, 0x63, 0x6b, 0x6e, 0x61, 0x6d,
+	0x65, 0x12, 0x18, 0x0a, 0x07, 0x48, 0x65, 0x61, 0x64, 0x69, 0x6d, 0x67, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x07, 0x48, 0x65, 0x61, 0x64, 0x69, 0x6d, 0x67, 0x12, 0x10, 0x0a, 0x03, 0x41,
+	0x67, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x03, 0x41, 0x67, 0x65, 0x12, 0x10, 0x0a,
+	0x03, 0x53, 0x65, 0x78, 0x18, 0x05, 0x20, 0x01, 0x28, 0x05, 0x52, 0x03, 0x53, 0x65, 0x78, 0x42,
+	0x2b, 0x5a, 0x29, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f,
+	0x75, 0x62, 0x6c, 0x65, 0x6d, 0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72,
+	0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -579,19 +851,24 @@ func file_internal_proto_pb_robot_proto_rawDescGZIP() []byte {
 	return file_internal_proto_pb_robot_proto_rawDescData
 }
 
-var file_internal_proto_pb_robot_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_internal_proto_pb_robot_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_internal_proto_pb_robot_proto_goTypes = []interface{}{
 	(*Robot)(nil),                 // 0: pb.Robot
 	(*Robot_Info)(nil),            // 1: pb.Robot.Info
 	(*Robot_Create)(nil),          // 2: pb.Robot.Create
-	(*Robot_Create_Request)(nil),  // 3: pb.Robot.Create.Request
-	(*Robot_Create_Reply)(nil),    // 4: pb.Robot.Create.Reply
-	(*Robot_Create_Account)(nil),  // 5: pb.Robot.Create.Account
-	(*Robot_Create_Register)(nil), // 6: pb.Robot.Create.Register
+	(*Robot_Start)(nil),           // 3: pb.Robot.Start
+	(*Robot_Status)(nil),          // 4: pb.Robot.Status
+	(*Robot_Create_Request)(nil),  // 5: pb.Robot.Create.Request
+	(*Robot_Create_Reply)(nil),    // 6: pb.Robot.Create.Reply
+	(*Robot_Create_Account)(nil),  // 7: pb.Robot.Create.Account
+	(*Robot_Create_Register)(nil), // 8: pb.Robot.Create.Register
+	(*Robot_Start_Request)(nil),   // 9: pb.Robot.Start.Request
+	(*Robot_Start_Reply)(nil),     // 10: pb.Robot.Start.Reply
+	(*Robot_Status_Info)(nil),     // 11: pb.Robot.Status.Info
 }
 var file_internal_proto_pb_robot_proto_depIdxs = []int32{
-	5, // 0: pb.Robot.Create.Request.Account:type_name -> pb.Robot.Create.Account
-	6, // 1: pb.Robot.Create.Request.Register:type_name -> pb.Robot.Create.Register
+	7, // 0: pb.Robot.Create.Request.Account:type_name -> pb.Robot.Create.Account
+	8, // 1: pb.Robot.Create.Request.Register:type_name -> pb.Robot.Create.Register
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -642,7 +919,7 @@ func file_internal_proto_pb_robot_proto_init() {
 			}
 		}
 		file_internal_proto_pb_robot_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Robot_Create_Request); i {
+			switch v := v.(*Robot_Start); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -654,7 +931,7 @@ func file_internal_proto_pb_robot_proto_init() {
 			}
 		}
 		file_internal_proto_pb_robot_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Robot_Create_Reply); i {
+			switch v := v.(*Robot_Status); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -666,7 +943,7 @@ func file_internal_proto_pb_robot_proto_init() {
 			}
 		}
 		file_internal_proto_pb_robot_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Robot_Create_Account); i {
+			switch v := v.(*Robot_Create_Request); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -678,6 +955,30 @@ func file_internal_proto_pb_robot_proto_init() {
 			}
 		}
 		file_internal_proto_pb_robot_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Robot_Create_Reply); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_pb_robot_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Robot_Create_Account); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_pb_robot_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Robot_Create_Register); i {
 			case 0:
 				return &v.state
@@ -689,8 +990,44 @@ func file_internal_proto_pb_robot_proto_init() {
 				return nil
 			}
 		}
+		file_internal_proto_pb_robot_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Robot_Start_Request); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_pb_robot_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Robot_Start_Reply); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_pb_robot_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Robot_Status_Info); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
-	file_internal_proto_pb_robot_proto_msgTypes[3].OneofWrappers = []interface{}{
+	file_internal_proto_pb_robot_proto_msgTypes[5].OneofWrappers = []interface{}{
 		(*Robot_Create_Request_Account)(nil),
 		(*Robot_Create_Request_Register)(nil),
 	}
@@ -700,7 +1037,7 @@ func file_internal_proto_pb_robot_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_internal_proto_pb_robot_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

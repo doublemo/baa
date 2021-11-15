@@ -94,7 +94,7 @@ func register(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
 
-	resp := &pb.User_Register_Reply{}
+	resp := &pb.User_Register_Reply{IndexNo: user.IndexNo}
 	resp.UserId, _ = id.Encrypt(user.ID, []byte(c.IDSecret))
 	respBytes, _ := grpcproto.Marshal(resp)
 	w.Payload = &corespb.Response_Content{Content: respBytes}

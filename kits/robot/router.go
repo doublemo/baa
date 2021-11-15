@@ -4,22 +4,28 @@ import (
 	"fmt"
 	"time"
 
+	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/proto/command"
 	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
-	"github.com/doublemo/baa/internal/router"
+	ir "github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/kits/robot/router"
+	"github.com/doublemo/baa/kits/robot/session"
 	grpcproto "github.com/golang/protobuf/proto"
+	"github.com/gorilla/websocket"
 	"google.golang.org/grpc/resolver"
 )
 
 var (
-	r         = router.New()
-	nrRouter  = router.NewMux()
-	muxRouter = router.NewMux()
+	r         = ir.New()
+	nrRouter  = ir.NewMux()
+	muxRouter = ir.NewMux()
+	netRouter = router.New()
+	dcRouter  = router.New()
 )
 
 // RouterConfig 路由配置
@@ -39,39 +45,53 @@ func InitRouter(config RouterConfig) {
 	r.HandleFunc(command.RobotCreate, func(req *corespb.Request) (*corespb.Response, error) { return createRobot(req, config.Robot) })
 
 	// 内部调用
-	muxRouter.Register(kit.Auth.Int32(), router.New()).Handle(command.AuthLogin, router.NewCall(config.ServiceAuth))
-	muxRouter.Register(kit.User.Int32(), router.New()).Handle(command.UserInfo, router.NewCall(config.ServiceUser))
+	auth := ir.NewCall(config.ServiceAuth)
+	muxRouter.Register(kit.Auth.Int32(), ir.New()).
+		Handle(command.AuthLogin, auth).
+		Handle(command.AuthRegister, auth)
+
+	user := ir.NewCall(config.ServiceUser)
+	muxRouter.Register(kit.User.Int32(), ir.New()).
+		Handle(command.UserInfo, user).
+		Handle(command.UserRegister, user)
 
 	// 订阅处理
 	// nrRouter.Register(kit.USRT.Int32(), router.New()).HandleFunc(command.USRTDeleteUserStatus, deleteUserStatus)
 
-	//time.AfterFunc(time.Second*10, testSend)
+	time.AfterFunc(time.Second*10, testSend)
 }
 
 func testSend() {
 	fmt.Println("test start ........")
 	req := &corespb.Request{
-		Command: command.UserContacts.Int32(),
+		Command: command.RobotCreate.Int32(),
 		Header:  map[string]string{"UserId": "XDzgT9EkkQc", "AccountID": "D5ChBlQ1da4"}, // "Content-Type": "json"
 	}
 
-	// frame0 := &pb.User_Register_Request{
-	// 	AccountId: "D5ChBlQ1da4",
-	// 	Info: &pb.User_Info{
-	// 		UserId:   "",
-	// 		Nickname: "小毛球",
-	// 		Phone:    "13896936556",
+	// frame0 := &pb.Robot_Create_Request{
+	// 	Payload: &pb.Robot_Create_Request_Account{
+	// 		Account: &pb.Robot_Create_Account{
+	// 			Name:   "4588ut",
+	// 			Secret: "Aa123456",
+	// 		},
 	// 	},
 	// }
 
-	// frame1 := &pb.User_Register_Request{
-	// 	AccountId: "jE6IsWqGCn4",
-	// 	Info: &pb.User_Info{
-	// 		UserId:   "",
-	// 		Nickname: "球球",
-	// 		Phone:    "13896936557",
-	// 	},
-	// }
+	frame0 := &pb.Robot_Create_Request{
+		Payload: &pb.Robot_Create_Request_Register{
+			Register: &pb.Robot_Create_Register{
+				Schema:   "password",
+				Name:     "robot03",
+				Secret:   "Aa123456",
+				Nickname: "Robot03",
+				Headimg:  "xxx",
+				Age:      28,
+				Sex:      2,
+				Idcard:   "12555555",
+				Phone:    "13896968989",
+			},
+		},
+	}
 
 	// frame2 := &pb.User_Contacts_Request{
 	// 	Payload: &pb.User_Contacts_Request_Add{
@@ -84,15 +104,15 @@ func testSend() {
 	// 	},
 	// }
 
-	frame2 := &pb.User_Contacts_Request{
-		Payload: &pb.User_Contacts_Request_Accept{
-			Accept: &pb.User_Contacts_Accept{
-				FriendId: "gcAKnnyepiE",
-				Remark:   "XX",
-				UserId:   "XDzgT9EkkQc",
-			},
-		},
-	}
+	// frame2 := &pb.User_Contacts_Request{
+	// 	Payload: &pb.User_Contacts_Request_Accept{
+	// 		Accept: &pb.User_Contacts_Accept{
+	// 			FriendId: "gcAKnnyepiE",
+	// 			Remark:   "XX",
+	// 			UserId:   "XDzgT9EkkQc",
+	// 		},
+	// 	},
+	// }
 
 	// frame2 := &pb.User_Contacts_Request{
 	// 	Payload: &pb.User_Contacts_Request_Refuse{
@@ -111,7 +131,7 @@ func testSend() {
 	// 	Version: 0,
 	// }
 
-	req.Payload, _ = grpcproto.Marshal(frame2)
+	req.Payload, _ = grpcproto.Marshal(frame0)
 	// jsonpbM := &jsonpb.Marshaler{}
 	// json, _ := jsonpbM.MarshalToString(frame2)
 	// req.Payload = []byte(json)
@@ -157,4 +177,53 @@ func testSend() {
 
 		time.Sleep(time.Millisecond * 1)
 	}
+}
+
+func onMessage(peer session.Peer, msg session.PeerMessagePayload) error {
+	var (
+		err error
+	)
+
+	switch peerLocal := peer.(type) {
+	case *session.PeerSocket:
+		if msg.Channel == session.PeerMessageChannelWebrtc {
+			err = handleFromDataChannelBinaryMessage(peer, msg.Data)
+		} else {
+			err = handleBinaryMessage(peer, msg.Data)
+		}
+
+	case *session.PeerWebsocket:
+		if msg.Channel == session.PeerMessageChannelWebrtc {
+			err = handleFromDataChannelBinaryMessage(peer, msg.Data)
+		} else {
+			if peerLocal.MessageType() == websocket.TextMessage {
+				err = handleTextMessage(peer, msg.Data)
+			} else {
+				err = handleBinaryMessage(peer, msg.Data)
+			}
+		}
+	}
+
+	return err
+}
+
+func handleTextMessage(peer session.Peer, frame []byte) error {
+	return nil
+}
+
+func handleBinaryMessage(peer session.Peer, frame []byte) error {
+	w := &coresproto.ResponseBytes{}
+	if err := w.Unmarshal(frame); err != nil {
+		return err
+	}
+
+	return netRouter.Handler(peer, w)
+}
+
+func handleFromDataChannelBinaryMessage(peer session.Peer, frame []byte) error {
+	w := &coresproto.ResponseBytes{}
+	if err := w.Unmarshal(frame); err != nil {
+		return err
+	}
+	return dcRouter.Handler(peer, w)
 }

@@ -23,7 +23,11 @@ var (
 
 // Open 打开数据库
 func Open(c conf.DBMySQLConfig, rc conf.Redis) error {
-	gormConfig := &gorm.Config{}
+	gormConfig := &gorm.Config{
+		SkipDefaultTransaction: false,
+		QueryFields:            true,
+	}
+
 	if c.TablePrefix != "" {
 		dbPrefix = c.TablePrefix
 		gormConfig.NamingStrategy = schema.NamingStrategy{
@@ -129,5 +133,9 @@ func RDBNamer(name ...string) string {
 
 // DBNamer db key
 func DBNamer(name ...string) string {
-	return dbPrefix + strings.Join(name, "_")
+	m := strings.Join(name, "_")
+	if strings.HasPrefix(m, dbPrefix) {
+		return m
+	}
+	return dbPrefix + m
 }

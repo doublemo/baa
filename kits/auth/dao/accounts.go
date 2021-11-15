@@ -16,27 +16,38 @@ const (
 	defaultAccountsSchemaNameIdxMaxTable  = 25
 )
 
+const (
+	// AccountsTypeDefault 普通 账户
+	AccountsTypeDefault int32 = 0
+
+	// AccountsTypeRobot 机器人
+	AccountsTypeRobot int32 = -1
+)
+
 type (
 	// Accounts 账户
 	Accounts struct {
-		ID        uint64 `gorm:"<-:create;primaryKey"`
-		UnionID   uint64 `gorm:"<-:create;index"`
-		UserID    uint64 `gorm:"<-:create;index"`
-		Schema    string `gorm:"<-:create;size:50;index:schema_name"`
-		Name      string `gorm:"<-:create;index:schema_name"`
-		Secret    string
-		Status    int
-		ExpiresAt int64
-		PeerID    string
-		CreatedAt time.Time
-		UpdatedAt time.Time
-		DeletedAt gorm.DeletedAt `gorm:"index"`
+		ID         uint64 `gorm:"<-:create;primaryKey"`
+		UnionID    uint64 `gorm:"<-:create;index"`
+		UserID     uint64 `gorm:"<-:create;index"`
+		SchemaName string `gorm:"<-:create;size:50;index:schema_name"`
+		Name       string `gorm:"<-:create;index:schema_name"`
+		Secret     string
+		Status     int
+		Type       int32 // 账户类型 0 普通 -1 机器人
+		ExpiresAt  int64
+		PeerID     string
+		CreatedAt  time.Time
+		UpdatedAt  time.Time
+		DeletedAt  gorm.DeletedAt `gorm:"index"`
 	}
 
 	// AccountsSchemaNameIdx 账户索引表
 	AccountsSchemaNameIdx struct {
-		ID    uint64 `gorm:"<-:create;primaryKey"`
-		Table uint32
+		ID         uint64 `gorm:"<-:create;primaryKey"`
+		SchemaName string `gorm:"<-:create;size:50;index:schema_name"`
+		Name       string `gorm:"<-:create;index:schema_name"`
+		Table      uint32
 	}
 )
 
@@ -47,7 +58,7 @@ func (accounts Accounts) TableName() string {
 
 // TableName 数据库表名称
 func (idx AccountsSchemaNameIdx) TableName() string {
-	return DBNamer("accounts", "scheme", "name", "idx")
+	return DBNamer("accounts", "schema", "name", "idx")
 }
 
 // GetAccoutsBySchemaAndName 根据条件 scheme, name 获取信息
@@ -62,12 +73,12 @@ func GetAccoutsBySchemaAndName(schema, name string, cols ...string) (*Accounts, 
 	}
 
 	accounts := &Accounts{}
-	table := DBNamer(accounts.TableName(), strconv.FormatUint(uint64(idx.Table), 10))
+	table := accounts.TableName() + strconv.FormatUint(uint64(idx.Table), 10)
 	tx := database.Table(table)
 	if len(cols) > 0 {
 		tx.Select(cols)
 	}
-	tx.Where("scheme = ? AND name = ?", schema, name).First(accounts)
+	tx.Where("schema_name = ? AND name = ?", schema, name).First(accounts)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
@@ -106,8 +117,8 @@ func CreateAccount(accounts *Accounts) error {
 			return errors.New("CreateFailed")
 		}
 
-		idx := makeTablenameFromString(strings.ToLower(accounts.Schema+accounts.Name), defaultAccountsSchemaNameIdxMaxRecord, defaultAccountsSchemaNameIdxMaxTable)
-		r = tx.Scopes(UseAccountsSchemeNameIdxTableFromString(accounts.Schema, accounts.Name)).Create(&AccountsSchemaNameIdx{ID: accounts.ID, Table: idx})
+		idx := makeTablenameFromString(strings.ToLower(accounts.SchemaName+accounts.Name), defaultAccountsSchemaNameIdxMaxRecord, defaultAccountsSchemaNameIdxMaxTable)
+		r = tx.Scopes(UseAccountsSchemeNameIdxTableFromString(accounts.SchemaName, accounts.Name)).Create(&AccountsSchemaNameIdx{ID: accounts.ID, SchemaName: accounts.SchemaName, Name: accounts.Name, Table: idx})
 		if r.Error != nil || r.RowsAffected != 1 {
 			return errors.New("CreateFailed")
 		}
@@ -131,7 +142,7 @@ func GetAccountsSchemeNameIdx(schema, name string) (*AccountsSchemaNameIdx, erro
 	}
 
 	idx := &AccountsSchemaNameIdx{}
-	tx := database.Scopes(UseAccountsSchemeNameIdxTableFromString(schema, name)).Select("id", "table").Where("scheme = ? AND name = ?", schema, name).First(idx)
+	tx := database.Scopes(UseAccountsSchemeNameIdxTableFromString(schema, name)).Select("id", "table").Where("schema_name = ? AND name = ?", schema, name).First(idx)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

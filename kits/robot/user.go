@@ -10,7 +10,7 @@ import (
 	grpcproto "github.com/golang/protobuf/proto"
 )
 
-func internalUserinfo(id string) (*pb.User_Info, error) {
+func internalGetUserinfo(id string) (*pb.User_Info, error) {
 	req := &corespb.Request{
 		Command: command.UserInfo.Int32(),
 		Header:  make(map[string]string),
@@ -23,7 +23,7 @@ func internalUserinfo(id string) (*pb.User_Info, error) {
 	}
 
 	req.Payload, _ = grpcproto.Marshal(frame)
-	resp, err := muxRouter.Handler(kit.Auth.Int32(), req)
+	resp, err := muxRouter.Handler(kit.User.Int32(), req)
 	if err != nil {
 		return nil, err
 	}
