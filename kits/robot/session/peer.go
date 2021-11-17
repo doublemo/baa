@@ -3,7 +3,7 @@ package session
 import (
 	"errors"
 
-	"github.com/doublemo/baa/kits/agent/webrtc"
+	"github.com/pion/webrtc/v3"
 )
 
 var (
@@ -34,6 +34,7 @@ type (
 		OnReceive(PeerOnReceiveCallback)
 		OnWrite(PeerOnWriteCallback)
 		OnClose(PeerOnCloseCallback)
+		OnTimeout(func(Peer) error)
 		Use(...PeerMessageMiddleware)
 		Send(PeerMessagePayload) error
 		LoadOrResetSeqNo(...uint32) uint32
@@ -41,7 +42,7 @@ type (
 		SetParams(string, interface{})
 		Close() error
 		DataChannel() *DataChannel
-		CreateDataChannel(webrtc.WebRTCTransportConfig) (*DataChannel, error)
+		CreateDataChannel(webrtc.Configuration) (*DataChannel, error)
 		Go()
 	}
 

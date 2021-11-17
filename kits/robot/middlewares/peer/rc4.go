@@ -3,7 +3,7 @@ package peer
 import (
 	"crypto/rc4"
 
-	"github.com/doublemo/baa/kits/agent/session"
+	"github.com/doublemo/baa/kits/robot/session"
 )
 
 type RC4 struct {
@@ -30,7 +30,6 @@ func (r *RC4) Receive() func(session.PeerMessageProcessor) session.PeerMessagePr
 
 func (r *RC4) Write() func(session.PeerMessageProcessor) session.PeerMessageProcessor {
 	encoder := r.encoder
-	first := true
 	return func(next session.PeerMessageProcessor) session.PeerMessageProcessor {
 		return session.PeerMessageProcessFunc(func(args session.PeerMessageProcessArgs) {
 			if args.Payload.Channel == session.PeerMessageChannelWebrtc {
@@ -38,13 +37,10 @@ func (r *RC4) Write() func(session.PeerMessageProcessor) session.PeerMessageProc
 				return
 			}
 
-			if encoder != nil && !first {
+			if encoder != nil {
 				encoder.XORKeyStream(args.Payload.Data, args.Payload.Data)
 			}
 
-			if first {
-				first = false
-			}
 			next.Process(args)
 		})
 	}

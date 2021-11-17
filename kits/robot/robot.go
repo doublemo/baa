@@ -13,15 +13,18 @@ import (
 
 	"github.com/doublemo/baa/cores/crypto/aes"
 	"github.com/doublemo/baa/cores/crypto/id"
+	log "github.com/doublemo/baa/cores/log/level"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/proto/command"
 	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/internal/worker"
 	"github.com/doublemo/baa/kits/robot/dao"
 	"github.com/doublemo/baa/kits/robot/errcode"
 	"github.com/doublemo/baa/kits/robot/session"
 	grpcproto "github.com/golang/protobuf/proto"
+	"github.com/pion/webrtc/v3"
 )
 
 // RobotConfig 机人配置
@@ -55,6 +58,8 @@ type RobotConfig struct {
 
 	// WriteDeadline 写入超时
 	WriteDeadline int `alias:"writedeadline"`
+
+	Datachannel webrtc.Configuration `alias:"-"`
 }
 
 func startRobots(req *corespb.Request, c RobotConfig) (*corespb.Response, error) {
@@ -84,17 +89,27 @@ func startRobots(req *corespb.Request, c RobotConfig) (*corespb.Response, error)
 	successedmap := make(map[uint64]bool)
 	failed := make([]uint64, 0)
 	failedmap := make(map[uint64]bool)
+	exitchan, err := session.GetCtlChannel()
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
 	for _, robot := range robots {
 		successed = append(successed, robot.ID)
 		successedmap[robot.ID] = true
-		startch := make(chan error)
-		go func(rob *dao.Robots, ch chan error) {
-			//runRobot(rob, c, ch)
-		}(robot, startch)
-
-		if err := <-startch; err != nil {
-			failedmap[robot.ID] = true
-			failed = append(failed, robot.ID)
+		if frame.Async {
+			worker.Submit(func(rob *dao.Robots, config RobotConfig) func() {
+				return func() {
+					if err := runRobot(rob, c, exitchan); err != nil {
+						log.Error(Logger()).Log("action", "runRobot", "error", err)
+					}
+				}
+			}(robot, c))
+		} else {
+			if err := runRobot(robot, c, exitchan); err != nil {
+				failed = append(failed, robot.ID)
+				failedmap[robot.ID] = true
+			}
 		}
 
 		if c.StartIntervalTime > 0 {
@@ -414,15 +429,28 @@ func decryptPassword(password string, key []byte) (string, error) {
 }
 
 func runRobot(robot *dao.Robots, c RobotConfig, exitChan chan struct{}) error {
-	peer, ok := session.GetPeer(strconv.FormatUint(robot.ID, 0))
+	peer, ok := session.GetPeer(strconv.FormatUint(robot.ID, 10))
 	if ok {
 		peer.Close()
 		session.RemovePeer(peer)
 	}
 
-	agent, err := randomAgent()
-	if err != nil {
-		return err
+	var agent string
+	re := regexp.MustCompile(`^[\d]{1,3}\.[\d]{1,3}\.[\d]{1,3}\.[\d]{1,3}(:\d{1,5})?$`)
+	if re.MatchString(robot.Agent) {
+		agent = robot.Agent
+	} else if robot.Agent != "" {
+		if m, err := selectAgent(robot.Agent); err == nil {
+			agent = m
+		}
+	} else {
+		if m, err := randomAgent(); err == nil {
+			agent = m
+		}
+	}
+
+	if agent == "" {
+		return errors.New("No gateway server can be used")
 	}
 
 	conn, err := net.DialTimeout("tcp", agent, 30*time.Second)
@@ -430,15 +458,22 @@ func runRobot(robot *dao.Robots, c RobotConfig, exitChan chan struct{}) error {
 		return err
 	}
 
-	peer = session.NewPeerSocket(strconv.FormatUint(robot.ID, 0), conn, time.Duration(c.ReadDeadline)*time.Second, time.Duration(c.WriteDeadline)*time.Second, exitChan)
+	peer = session.NewPeerSocket(strconv.FormatUint(robot.ID, 10), conn, time.Duration(c.ReadDeadline)*time.Second, time.Duration(c.WriteDeadline)*time.Second, exitChan)
 	peer.OnReceive(onMessage)
 	peer.OnClose(func(p session.Peer) {
 		session.RemovePeer(p)
+		log.Debug(Logger()).Log("Robot", p.ID(), "action", "shutdown")
 	})
-
+	peer.OnTimeout(doRequestHeartbeater)
 	peer.Go()
 	session.AddPeer(peer)
-	return nil
+
+	// 设置Peer数据
+	peer.SetParams("Robots", robot)
+
+	log.Debug(Logger()).Log("Robot", peer.ID(), "action", "started")
+	// 开始握手
+	return doRequestHandshake(peer)
 }
 
 func randomAgent() (string, error) {
@@ -450,12 +485,32 @@ func randomAgent() (string, error) {
 	agents := make([]string, 0)
 	for _, ed := range eds {
 		if ed.Name() == kit.AgentServiceName {
-			agents = append(agents, ed.Addr())
+			agents = append(agents, ed.Get("ip")+ed.Get("socket"))
 		}
 	}
 
 	if len(agents) < 1 {
 		return "", errors.New("No gateway server can be used")
 	}
+	return agents[rand.Intn(len(agents))], nil
+}
+
+func selectAgent(group string) (string, error) {
+	eds, err := sd.Endpoints()
+	if err != nil {
+		return "", err
+	}
+
+	agents := make([]string, 0)
+	for _, ed := range eds {
+		if ed.Name() == kit.AgentServiceName && ed.Get("group") == group {
+			agents = append(agents, ed.Get("ip")+ed.Get("socket"))
+		}
+	}
+
+	if len(agents) < 1 {
+		return "", errors.New("No gateway server can be used")
+	}
+
 	return agents[rand.Intn(len(agents))], nil
 }

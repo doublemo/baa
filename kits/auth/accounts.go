@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"strconv"
-
 	"github.com/doublemo/baa/cores/crypto/id"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/proto/pb"
@@ -52,7 +50,7 @@ func accountInfo(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
 }
 
 // 处理账户下线
-func offline(r *corespb.Request) (*corespb.Response, error) {
+func offline(r *corespb.Request, c LRConfig) (*corespb.Response, error) {
 	var (
 		accountID string
 		peerID    string
@@ -68,7 +66,7 @@ func offline(r *corespb.Request) (*corespb.Response, error) {
 		}
 	}
 
-	uid, err0 := strconv.ParseUint(accountID, 10, 64)
+	uid, err0 := id.Decrypt(accountID, []byte(c.IDSecret))
 	if err0 != nil {
 		return nil, err0
 	}

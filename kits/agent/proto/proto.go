@@ -30,7 +30,7 @@ func NewResponseBytes(cmd coresproto.Command, resp *corespb.Response) *coresprot
 	case *corespb.Response_Content:
 		w.Content = payload.Content
 	case *corespb.Response_Error:
-		w.Code = int16(payload.Error.Code)
+		w.Code = int32(payload.Error.Code)
 		w.Content = []byte(payload.Error.Message)
 	}
 	return w

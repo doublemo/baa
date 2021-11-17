@@ -4,6 +4,7 @@ import (
 	"crypto/rc4"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/doublemo/baa/cores/crypto/dh"
 	log "github.com/doublemo/baa/cores/log/level"
@@ -55,6 +56,7 @@ func InitRouter(config RouterConfig) {
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceSnid.Name, config.ServiceSnid.Group, sd.Endpointer()))
 
 	// 注册处理socket/websocket来的请求
+	fmt.Println("config.ServiceAuth", config.ServiceAuth)
 	sRouter.HandleFunc(kit.Agent, agentRouter)
 	sRouter.Handle(kit.SFU, router.NewStream(config.ServiceSFU, Logger(), sfuHookOnReceive))
 	sRouter.Handle(kit.Auth, router.NewCall(config.ServiceAuth, Logger(), authenticationHookAfter, authenticationHookDestroy))
@@ -115,7 +117,7 @@ func handleBinaryMessage(peer session.Peer, frame []byte) (coresproto.Response, 
 	}
 
 	if req.SID() != peer.LoadOrResetSeqNo() {
-		return proto.NewResponseBytes(req.Cmd, errcode.Bad(&corespb.Response{Command: req.Command().Int32()}, errcode.ErrorInvalidSEQID)), nil
+		return proto.NewResponseBytes(req.Cmd, errcode.Bad(&corespb.Response{Command: req.SubCmd.Int32()}, errcode.ErrorInvalidSEQID)), nil
 	}
 
 	resp, err := sRouter.Handler(peer, req)
@@ -124,7 +126,7 @@ func handleBinaryMessage(peer session.Peer, frame []byte) (coresproto.Response, 
 	}
 
 	if err == router.ErrNotFoundRouter {
-		return proto.NewResponseBytes(req.Cmd, errcode.Bad(&corespb.Response{Command: req.Command().Int32()}, errcode.ErrCommandInvalid)), nil
+		return proto.NewResponseBytes(req.Cmd, errcode.Bad(&corespb.Response{Command: req.SubCmd.Int32()}, errcode.ErrCommandInvalid)), nil
 	}
 
 	return resp, err
@@ -157,6 +159,7 @@ func agentRouter(peer session.Peer, req coresproto.Request) (coresproto.Response
 		return datachannel(peer, req)
 
 	case command.AgentHeartbeater:
+		return heartbeater(peer, req)
 	}
 	return nil, nil
 }
@@ -271,4 +274,31 @@ func broadcast(req *corespb.Request) (*corespb.Response, error) {
 		}
 	}
 	return nil, nil
+}
+
+func heartbeater(peer session.Peer, req coresproto.Request) (coresproto.Response, error) {
+	var frame pb.Agent_Heartbeater
+	{
+		if err := grpcproto.Unmarshal(req.Body(), &frame); err != nil {
+			return nil, err
+		}
+	}
+
+	frameResp := &pb.Agent_Heartbeater{
+		R: time.Now().Unix(),
+	}
+
+	bytes, err := grpcproto.Marshal(frameResp)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &coresproto.ResponseBytes{
+		Ver:     req.V(),
+		Cmd:     req.Command(),
+		SubCmd:  req.SubCommand(),
+		SID:     req.SID(),
+		Content: bytes,
+	}
+	return resp, err
 }

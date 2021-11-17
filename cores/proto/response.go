@@ -5,11 +5,11 @@ package proto
 // Response  定义响应协议
 // ----------------------------------------------------------------
 // |  CODE |  V   |  SID   | Command | SubCommand |  Payload  |
-// | int16 | int8 | uint32 |  int16  |    int16   |   bytes   |
+// | int32 | int8 | uint32 |  int16  |    int16   |   bytes   |
 // ----------------------------------------------------------------
 type Response interface {
 	// StatusCode 状态码
-	StatusCode() int16
+	StatusCode() int32
 
 	// V 版本号
 	V() int8

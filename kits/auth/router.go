@@ -43,7 +43,7 @@ func InitRouter(config RouterConfig) {
 		return login(r, config.LR)
 	})
 
-	r.HandleFunc(command.AuthOffline, offline)
+	r.HandleFunc(command.AuthOffline, func(r *corespb.Request) (*corespb.Response, error) { return offline(r, config.LR) })
 	r.HandleFunc(command.AuthAccountInfo, func(r *corespb.Request) (*corespb.Response, error) { return accountInfo(r, config.LR) })
 
 	// 注册内部使用路由

@@ -14,9 +14,11 @@ import (
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/internal/worker"
 	"github.com/doublemo/baa/kits/robot"
 	"github.com/doublemo/baa/kits/robot/cache"
 	"github.com/doublemo/baa/kits/robot/dao"
+	"github.com/doublemo/baa/kits/robot/session"
 )
 
 type Config struct {
@@ -51,6 +53,12 @@ type Config struct {
 
 	// Nats
 	Nats conf.Nats `alias:"nats"`
+
+	// workers 工人设置
+	Worker worker.Config `alias:"worker"`
+
+	// DataChannel 通道设置
+	DataChannel session.DataChannelConfig `alias:"dataChannel"`
 }
 
 type Robot struct {
@@ -110,8 +118,16 @@ func (s *Robot) Start() error {
 	cache.Init(o.Cache)
 
 	// 路由
+	webrtcConfig, err := session.MakeWebrtcConfiguration(o.DataChannel)
+	if err != nil {
+		return err
+	}
+	o.Router.Robot.Datachannel = webrtcConfig
 	robot.InitRouter(o.Router)
 	o.Nats.Name = o.MachineID
+
+	// 工人
+	worker.Init(o.Worker)
 
 	// 注册运行服务
 	s.actors.Add(s.mustProcessActor(robot.NewNatsProcessActor(o.Nats)), true)

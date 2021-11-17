@@ -24,9 +24,9 @@ type PeerSocket struct {
 	readDeadline       time.Duration
 	writeDeadline      time.Duration
 	cacheBytes         []byte
-	onReceive          PeerOnReceiveCallback
-	onWrite            PeerOnWriteCallback
-	onClose            PeerOnCloseCallback
+	onReceive          atomic.Value
+	onWrite            atomic.Value
+	onClose            atomic.Value
 	receiveMiddlewares PeerMessageMiddlewares
 	writeMiddlewares   PeerMessageMiddlewares
 	writeChan          chan PeerMessagePayload
@@ -66,23 +66,17 @@ func (p *PeerSocket) Use(middlewares ...PeerMessageMiddleware) {
 
 // OnReceive 处理当收到数据时
 func (p *PeerSocket) OnReceive(fn PeerOnReceiveCallback) {
-	p.mutexRW.Lock()
-	p.onReceive = fn
-	p.mutexRW.Unlock()
+	p.onReceive.Store(fn)
 }
 
 // OnWrite 处理当发到数据时
 func (p *PeerSocket) OnWrite(fn PeerOnWriteCallback) {
-	p.mutexRW.Lock()
-	p.onWrite = fn
-	p.mutexRW.Unlock()
+	p.onWrite.Store(fn)
 }
 
 // OnClose 处理关闭
 func (p *PeerSocket) OnClose(fn PeerOnCloseCallback) {
-	p.mutexRW.Lock()
-	p.onClose = fn
-	p.mutexRW.Unlock()
+	p.onClose.Store(fn)
 }
 
 // Send 发送数据
@@ -168,13 +162,12 @@ func (p *PeerSocket) receiver() {
 
 		p.LoadOrResetSeqNo(1)
 		p.mutexRW.RLock()
-		onReceiveCallback := p.onReceive
 		mws := newDCChain(p.receiveMiddlewares)
 		p.mutexRW.RUnlock()
 
 		m := mws.Process(PeerMessageProcessFunc(func(args PeerMessageProcessArgs) {
-			if onReceiveCallback != nil {
-				if err := onReceiveCallback(args.Peer, args.Payload); err != nil {
+			if handler, ok := p.onReceive.Load().(PeerOnReceiveCallback); ok && handler != nil {
+				if err := handler(args.Peer, args.Payload); err != nil {
 					kitlog.Error(Logger()).Log("error", "onReceiveCallback failed", "reason", err.Error())
 					args.Peer.Close()
 				}
@@ -200,7 +193,6 @@ func (p *PeerSocket) writer() {
 		p.stoped.Set(true)
 
 		p.mutexRW.RLock()
-		onCloseCallback := p.onClose
 		dc := p.dc
 		p.mutexRW.RUnlock()
 
@@ -208,8 +200,8 @@ func (p *PeerSocket) writer() {
 			dc.Close()
 		}
 
-		if onCloseCallback != nil {
-			onCloseCallback(p)
+		if handler, ok := p.onClose.Load().(PeerOnCloseCallback); ok && handler != nil {
+			handler(p)
 		}
 	}()
 
@@ -226,14 +218,13 @@ func (p *PeerSocket) writer() {
 			}
 
 			p.mutexRW.RLock()
-			onWriteCallback := p.onWrite
 			mws := newDCChain(p.writeMiddlewares)
 			p.mutexRW.RUnlock()
 
 			m := mws.Process(PeerMessageProcessFunc(func(args PeerMessageProcessArgs) {
 				payload := args.Payload
-				if onWriteCallback != nil {
-					payload = onWriteCallback(args.Payload)
+				if handler, ok := p.onWrite.Load().(PeerOnWriteCallback); ok && handler != nil {
+					payload = handler(args.Payload)
 				}
 
 				if payload.Channel == PeerMessageChannelWebrtc {
@@ -248,7 +239,6 @@ func (p *PeerSocket) writer() {
 					}
 				}
 			}))
-
 			m.Process(PeerMessageProcessArgs{Peer: p, Payload: frame})
 
 		case <-p.stopChan:
@@ -303,13 +293,12 @@ func (p *PeerSocket) CreateDataChannel(w awebrtc.WebRTCTransportConfig) (*DataCh
 			dc.OnClose(func() { m.RemoveDataChannel(dc.Label()) })
 			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
 				peer.mutexRW.RLock()
-				onReceiveCallback := peer.onReceive
 				mws := newDCChain(peer.receiveMiddlewares)
 				peer.mutexRW.RUnlock()
 
 				m := mws.Process(PeerMessageProcessFunc(func(args PeerMessageProcessArgs) {
-					if onReceiveCallback != nil {
-						if err := onReceiveCallback(args.Peer, args.Payload); err != nil {
+					if handler, ok := p.onReceive.Load().(PeerOnReceiveCallback); ok && handler != nil {
+						if err := handler(args.Peer, args.Payload); err != nil {
 							kitlog.Error(Logger()).Log("error", "onReceiveCallback failed", "reason", err.Error())
 						}
 					}

@@ -50,6 +50,7 @@ message Robot{
     message Start {
         message Request {
             repeated uint64 Values = 1;
+            bool Async = 2;
         }
 
         message Reply{

@@ -1,9 +1,13 @@
 package robot
 
 import (
+	"crypto/rc4"
+	"errors"
 	"fmt"
+	"math/big"
 	"time"
 
+	"github.com/doublemo/baa/cores/crypto/dh"
 	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	coressd "github.com/doublemo/baa/cores/sd"
@@ -13,6 +17,7 @@ import (
 	"github.com/doublemo/baa/internal/proto/pb"
 	ir "github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/internal/sd"
+	midPeer "github.com/doublemo/baa/kits/robot/middlewares/peer"
 	"github.com/doublemo/baa/kits/robot/router"
 	"github.com/doublemo/baa/kits/robot/session"
 	grpcproto "github.com/golang/protobuf/proto"
@@ -21,11 +26,11 @@ import (
 )
 
 var (
-	r         = ir.New()
-	nrRouter  = ir.NewMux()
-	muxRouter = ir.NewMux()
-	netRouter = router.New()
-	dcRouter  = router.New()
+	r            = ir.New()
+	nrRouter     = ir.NewMux()
+	muxRouter    = ir.NewMux()
+	socketRouter = router.New()
+	dcRouter     = router.New()
 )
 
 // RouterConfig 路由配置
@@ -43,6 +48,7 @@ func InitRouter(config RouterConfig) {
 
 	// 注册处理请求
 	r.HandleFunc(command.RobotCreate, func(req *corespb.Request) (*corespb.Response, error) { return createRobot(req, config.Robot) })
+	r.HandleFunc(command.RobotStart, func(req *corespb.Request) (*corespb.Response, error) { return startRobots(req, config.Robot) })
 
 	// 内部调用
 	auth := ir.NewCall(config.ServiceAuth)
@@ -58,13 +64,19 @@ func InitRouter(config RouterConfig) {
 	// 订阅处理
 	// nrRouter.Register(kit.USRT.Int32(), router.New()).HandleFunc(command.USRTDeleteUserStatus, deleteUserStatus)
 
+	// socket 请求
+	socketRouter.HandleFunc(kit.Agent, command.AgentHandshake, func(peer session.Peer, w coresproto.Response) error { return handshake(peer, w, config.Robot) })
+	socketRouter.HandleFunc(kit.Agent, command.AgentDatachannel, func(peer session.Peer, w coresproto.Response) error { return datachannel(peer, w) })
+	socketRouter.HandleFunc(kit.Agent, command.AgentHeartbeater, heartbeater)
+	socketRouter.HandleFunc(kit.Auth, command.AuthLogin, func(peer session.Peer, w coresproto.Response) error { return login(peer, w, config.Robot) })
+
 	time.AfterFunc(time.Second*10, testSend)
 }
 
 func testSend() {
 	fmt.Println("test start ........")
 	req := &corespb.Request{
-		Command: command.RobotCreate.Int32(),
+		Command: command.RobotStart.Int32(),
 		Header:  map[string]string{"UserId": "XDzgT9EkkQc", "AccountID": "D5ChBlQ1da4"}, // "Content-Type": "json"
 	}
 
@@ -77,106 +89,62 @@ func testSend() {
 	// 	},
 	// }
 
-	frame0 := &pb.Robot_Create_Request{
-		Payload: &pb.Robot_Create_Request_Register{
-			Register: &pb.Robot_Create_Register{
-				Schema:   "password",
-				Name:     "robot03",
-				Secret:   "Aa123456",
-				Nickname: "Robot03",
-				Headimg:  "xxx",
-				Age:      28,
-				Sex:      2,
-				Idcard:   "12555555",
-				Phone:    "13896968989",
-			},
-		},
+	// frame0 := &pb.Robot_Create_Request{
+	// 	Payload: &pb.Robot_Create_Request_Register{
+	// 		Register: &pb.Robot_Create_Register{
+	// 			Schema:   "password",
+	// 			Name:     "robot05",
+	// 			Secret:   "Aa123456",
+	// 			Nickname: "Robot05",
+	// 			Headimg:  "xxx",
+	// 			Age:      28,
+	// 			Sex:      2,
+	// 			Idcard:   "12555555",
+	// 			Phone:    "13896968989",
+	// 		},
+	// 	},
+	// }
+
+	frame2 := &pb.Robot_Start_Request{
+		Values: []uint64{1, 2, 3},
+		Async:  true,
 	}
 
-	// frame2 := &pb.User_Contacts_Request{
-	// 	Payload: &pb.User_Contacts_Request_Add{
-	// 		Add: &pb.User_Contacts_Add{
-	// 			FriendId: "XDzgT9EkkQc", // 344702845066416128 344702845066416130
-	// 			Remark:   "小主人",
-	// 			Message:  "小主加我为好友吧",
-	// 			UserId:   "gcAKnnyepiE", // 344705556818169856 344705556818169858
-	// 		},
-	// 	},
-	// }
-
-	// frame2 := &pb.User_Contacts_Request{
-	// 	Payload: &pb.User_Contacts_Request_Accept{
-	// 		Accept: &pb.User_Contacts_Accept{
-	// 			FriendId: "gcAKnnyepiE",
-	// 			Remark:   "XX",
-	// 			UserId:   "XDzgT9EkkQc",
-	// 		},
-	// 	},
-	// }
-
-	// frame2 := &pb.User_Contacts_Request{
-	// 	Payload: &pb.User_Contacts_Request_Refuse{
-	// 		Refuse: &pb.User_Contacts_Refuse{
-	// 			FriendId: "gcAKnnyepiE",
-	// 			Message:  "我不认识你，你是谁呀 OR 1=1--dddd'dddd OR 1=1",
-	// 			UserId:   "XDzgT9EkkQc",
-	// 		},
-	// 	},
-	// }
-
-	// frame2 := &pb.User_Contacts_FriendRequestList{
-	// 	UserId:  "XDzgT9EkkQc",
-	// 	Page:    1,
-	// 	Size:    10,
-	// 	Version: 0,
-	// }
-
-	req.Payload, _ = grpcproto.Marshal(frame0)
+	req.Payload, _ = grpcproto.Marshal(frame2)
 	// jsonpbM := &jsonpb.Marshaler{}
 	// json, _ := jsonpbM.MarshalToString(frame2)
 	// req.Payload = []byte(json)
 	fmt.Println(r.Handler(req))
 
-	//fmt.Println(id.Encrypt(344709394144956418, []byte("7581BDD8E8DA3839")))
-	// snserv := newSnidRouter(conf.RPCClient{
-	// 	Name:               "snid",
-	// 	Weight:             10,
-	// 	Group:              "prod",
-	// 	Salt:               "certs/x509/ca_cert.pem",
-	// 	Key:                "x.test.example.com",
-	// 	ServiceSecurityKey: "baa",
-	// 	Pool: conf.RPCPool{
-	// 		Init:        1,
-	// 		Capacity:    10,
-	// 		IdleTimeout: 1,
-	// 		MaxLife:     1,
-	// 	},
-	// })
-	// muxRouter.Register(snid.ServiceName, router.New()).
-	// 	Handle(snproto.SnowflakeCommand, snserv).
-	// 	Handle(snproto.AutoincrementCommand, snserv)
+	// for i := 0; i < 100; i++ {
+	// 	go func(idx int) {
+	// 		frame := &pb.Robot_Create_Request{
+	// 			Payload: &pb.Robot_Create_Request_Register{
+	// 				Register: &pb.Robot_Create_Register{
+	// 					Schema:   "password",
+	// 					Name:     "robot10" + strconv.FormatInt(int64(idx), 10),
+	// 					Secret:   "Aa123456",
+	// 					Nickname: "Robot10" + strconv.FormatInt(int64(idx), 10),
+	// 					Headimg:  "xxx",
+	// 					Age:      28,
+	// 					Sex:      2,
+	// 					Idcard:   "12555555",
+	// 					Phone:    "13896968989",
+	// 				},
+	// 			},
+	// 		}
 
-	for i := 0; i < 1; i++ {
-		go func(idx int) {
-			//r.Handler(req)
-			// for x := 0; x < 10; x++ {
-			// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-			// 	id, err := cache.GetSnowflakeID(ctx)
-			// 	cancel()
-			// 	if err != nil {
-			// 		fmt.Println(err)
-			// 	}
+	// 		req := &corespb.Request{
+	// 			Command: command.RobotCreate.Int32(),
+	// 			Header:  map[string]string{}, // "Content-Type": "json"
+	// 		}
 
-			// 	if id < 1 {
-			// 		panic("id zero")
-			// 	}
+	// 		req.Payload, _ = grpcproto.Marshal(frame)
+	// 		fmt.Println(r.Handler(req))
+	// 	}(i)
 
-			// 	fmt.Println("id-->", id)
-			// }
-		}(i)
-
-		time.Sleep(time.Millisecond * 1)
-	}
+	// 	time.Sleep(time.Millisecond * 1)
+	// }
 }
 
 func onMessage(peer session.Peer, msg session.PeerMessagePayload) error {
@@ -217,7 +185,11 @@ func handleBinaryMessage(peer session.Peer, frame []byte) error {
 		return err
 	}
 
-	return netRouter.Handler(peer, w)
+	if w.Code == 65544 || w.Code == 65552 || w.Code == 65560 || w.Code == 69536 {
+		return errors.New(string(w.Body()))
+	}
+
+	return socketRouter.Handler(peer, w)
 }
 
 func handleFromDataChannelBinaryMessage(peer session.Peer, frame []byte) error {
@@ -225,5 +197,110 @@ func handleFromDataChannelBinaryMessage(peer session.Peer, frame []byte) error {
 	if err := w.Unmarshal(frame); err != nil {
 		return err
 	}
+
 	return dcRouter.Handler(peer, w)
+}
+
+func doRequestHandshake(peer session.Peer) error {
+	x1, e1 := dh.DHExchange()
+	x2, e2 := dh.DHExchange()
+	peer.SetParams("x1", x1)
+	peer.SetParams("x2", x2)
+	peer.SetParams("e1", e1)
+	peer.SetParams("e2", e2)
+
+	frame := &pb.Agent_Handshake{E1: e1.Int64(), E2: e2.Int64()}
+	bytes, err := grpcproto.Marshal(frame)
+	if err != nil {
+		return err
+	}
+
+	req := &coresproto.RequestBytes{
+		Ver:     1,
+		Cmd:     kit.Agent,
+		SubCmd:  command.AgentHandshake,
+		Content: bytes,
+		SeqID:   2,
+	}
+
+	r, err := req.Marshal()
+	if err != nil {
+		return err
+	}
+
+	return peer.Send(session.PeerMessagePayload{Data: r})
+}
+
+// handshake rc4加密握手
+func handshake(peer session.Peer, w coresproto.Response, c RobotConfig) error {
+	var frame pb.Agent_Handshake
+	{
+		if err := grpcproto.Unmarshal(w.Body(), &frame); err != nil {
+			return err
+		}
+	}
+
+	v, ok := peer.Params("x1")
+	if !ok {
+		return errors.New("handle handshake failed")
+	}
+
+	x1 := v.(*big.Int)
+
+	v, ok = peer.Params("x2")
+	if !ok {
+		return errors.New("handle handshake failed")
+	}
+	x2 := v.(*big.Int)
+	k1 := dh.DHKey(x1, big.NewInt(frame.GetE1()))
+	k2 := dh.DHKey(x2, big.NewInt(frame.GetE2()))
+	encoder, err := rc4.NewCipher([]byte(fmt.Sprintf("%v%v", "DH", k1)))
+	if err != nil {
+		return err
+	}
+
+	decoder, err := rc4.NewCipher([]byte(fmt.Sprintf("%v%v", "DH", k2)))
+	if err != nil {
+		return err
+	}
+
+	peer.Use(midPeer.NewRC4(encoder, decoder))
+	return doRequestLogin(peer, c)
+}
+
+func doRequestHeartbeater(peer session.Peer) error {
+	frame := &pb.Agent_Heartbeater{
+		R: 1,
+	}
+
+	bytes, err := grpcproto.Marshal(frame)
+	if err != nil {
+		return err
+	}
+
+	req := &coresproto.RequestBytes{
+		Ver:     1,
+		Cmd:     kit.Agent,
+		SubCmd:  command.AgentHeartbeater,
+		Content: bytes,
+		SeqID:   1,
+	}
+
+	r, err := req.Marshal()
+	if err != nil {
+		return err
+	}
+
+	return peer.Send(session.PeerMessagePayload{Data: r})
+}
+
+func heartbeater(peer session.Peer, w coresproto.Response) error {
+	var frame pb.Agent_Heartbeater
+	{
+		if err := grpcproto.Unmarshal(w.Body(), &frame); err != nil {
+			return nil
+		}
+	}
+	fmt.Println("heartbeater ->", frame.R)
+	return nil
 }

@@ -19,6 +19,7 @@ type (
 		Sex        int8
 		Idcard     string `gorm:"size:50"`
 		Phone      string `gorm:"size:20"`
+		Agent      string `gorm:"size:50"`
 		CreatedAt  int64  `gorm:"autoCreateTime"`
 	}
 
@@ -87,7 +88,7 @@ func FindRobotsInID(id ...uint64) ([]*Robots, error) {
 
 	robots := make([]*Robots, 0)
 	tx := database.Where("id IN ?", id)
-	tx.Select("id", "account_id", "union_id", "user_id", "name", "index_no", "nickname", "heading", "sex", "created_at")
+	tx.Select("id", "account_id", "union_id", "user_id", "schema_name", "name", "secret", "index_no", "nickname", "headimg", "sex", "created_at")
 	tx.Find(&robots)
 	return robots, tx.Error
 }

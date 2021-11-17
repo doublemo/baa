@@ -44,6 +44,7 @@ func (ss *SessionStore) GetSession(id string) (session Session, ok bool) {
 		ss.mutex.Lock()
 		ss.data[id] = session
 		ss.mutex.Unlock()
+		ok = true
 	}
 	return
 }

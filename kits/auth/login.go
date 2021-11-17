@@ -101,13 +101,13 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	}
 
 	if peerID == "" {
-		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, "PeerId is not allowed to be empty"), nil
 	}
 
 	// ^[\u4e00-\u9fa5]
 	reg := regexp.MustCompile(`^[a-z0-9A-Z\p{Han}]+([\.|_|@][a-z0-9A-Z\p{Han}]+)*$`)
 	if !reg.MatchString(form.Account.Username) {
-		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect), nil
+		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, "Incorrect account name"), nil
 	}
 
 	if !isValidPassword(form.Account.Password, c.PasswordMinLen, c.PasswordMaxLen) {

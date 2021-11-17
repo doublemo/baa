@@ -116,8 +116,7 @@ func CreateAccount(accounts *Accounts) error {
 		if r.RowsAffected != 1 {
 			return errors.New("CreateFailed")
 		}
-
-		idx := makeTablenameFromString(strings.ToLower(accounts.SchemaName+accounts.Name), defaultAccountsSchemaNameIdxMaxRecord, defaultAccountsSchemaNameIdxMaxTable)
+		idx := makeTablenameFromUint64(accounts.ID, defaultAccountsMaxRecord, defaultAccountsMaxTable)
 		r = tx.Scopes(UseAccountsSchemeNameIdxTableFromString(accounts.SchemaName, accounts.Name)).Create(&AccountsSchemaNameIdx{ID: accounts.ID, SchemaName: accounts.SchemaName, Name: accounts.Name, Table: idx})
 		if r.Error != nil || r.RowsAffected != 1 {
 			return errors.New("CreateFailed")

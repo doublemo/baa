@@ -8,7 +8,7 @@ import (
 
 // ResponseBytes 数据流解析
 type ResponseBytes struct {
-	Code    int16
+	Code    int32
 	Ver     int8
 	Cmd     Command
 	SubCmd  Command
@@ -17,7 +17,7 @@ type ResponseBytes struct {
 }
 
 // StatusCode 版本
-func (resp *ResponseBytes) StatusCode() int16 {
+func (resp *ResponseBytes) StatusCode() int32 {
 	return resp.Code
 }
 
@@ -57,7 +57,7 @@ func (resp *ResponseBytes) Marshal() ([]byte, error) {
 	}
 
 	var b BytesBuffer
-	b.WriteInt16(resp.Code)
+	b.WriteInt32(resp.Code)
 	b.WriteInt8(resp.Ver)
 	b.WriteUint32(resp.SID)
 	b.WriteInt16(resp.Cmd.Int16())
@@ -79,7 +79,7 @@ func (resp *ResponseBytes) IsValid() bool {
 // Unmarshal 解析rquest 数据
 func (resp *ResponseBytes) Unmarshal(frame []byte) error {
 	rd := NewBytesBuffer(frame)
-	code, err := rd.ReadInt16()
+	code, err := rd.ReadInt32()
 	if err != nil {
 		return err
 	}

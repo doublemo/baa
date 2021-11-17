@@ -51,7 +51,7 @@ type (
 		ServiceSecurityKey string `alias:"sskey"`
 
 		// pool 池
-		Pool RPCPool
+		Pool RPCPool `alias:"pool"`
 	}
 
 	// RPCPool 池设置

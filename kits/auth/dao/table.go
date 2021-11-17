@@ -30,6 +30,7 @@ func useTable(v interface{}, table Table, maxRecord, maxTable uint32) func(tx *g
 				tableCacher.Set(tablename, true, 0)
 			}
 		}
+
 		return tx.Table(tablename)
 	}
 }

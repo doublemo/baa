@@ -1,6 +1,7 @@
 package session
 
 import (
+	"errors"
 	"sync"
 )
 
@@ -17,12 +18,16 @@ type (
 		Peer(string) (Peer, bool)
 		Peers() []Peer
 		Count() int
+		Shutdown()
+		GetCtlChannel() chan struct{}
 	}
 
 	// SessionLocal 实现初始session
 	SessionLocal struct {
 		id    string
 		peers map[string]Peer
+		die   chan struct{}
+		once  sync.Once
 		mutex sync.RWMutex
 	}
 )
@@ -73,11 +78,25 @@ func (s *SessionLocal) Count() int {
 	return len(s.peers)
 }
 
+func (s *SessionLocal) Shutdown() {
+	s.once.Do(func() {
+		close(s.die)
+		s.mutex.Lock()
+		s.peers = make(map[string]Peer)
+		s.mutex.Unlock()
+	})
+}
+
+func (s *SessionLocal) GetCtlChannel() chan struct{} {
+	return s.die
+}
+
 // NewSessionLocal 创建本session
 func NewSessionLocal(id string) *SessionLocal {
 	return &SessionLocal{
 		id:    id,
 		peers: make(map[string]Peer),
+		die:   make(chan struct{}),
 	}
 }
 
@@ -141,4 +160,24 @@ func RemovePeer(peer Peer, sessionId ...string) {
 	}
 
 	session.RemovePeer(peer)
+}
+
+// Shutdown 关闭session
+func Shutdown(sessionId ...string) {
+	session, ok := getSession(sessionId...)
+	if !ok {
+		return
+	}
+
+	session.Shutdown()
+}
+
+// GetShutdownChannel 获取关闭session的
+func GetCtlChannel(sessionId ...string) (chan struct{}, error) {
+	session, ok := getSession(sessionId...)
+	if !ok {
+		return nil, errors.New("Can't find session")
+	}
+
+	return session.GetCtlChannel(), nil
 }
