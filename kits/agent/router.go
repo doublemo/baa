@@ -56,7 +56,6 @@ func InitRouter(config RouterConfig) {
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceSnid.Name, config.ServiceSnid.Group, sd.Endpointer()))
 
 	// 注册处理socket/websocket来的请求
-	fmt.Println("config.ServiceAuth", config.ServiceAuth)
 	sRouter.HandleFunc(kit.Agent, agentRouter)
 	sRouter.Handle(kit.SFU, router.NewStream(config.ServiceSFU, Logger(), sfuHookOnReceive))
 	sRouter.Handle(kit.Auth, router.NewCall(config.ServiceAuth, Logger(), authenticationHookAfter, authenticationHookDestroy))

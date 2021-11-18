@@ -106,8 +106,12 @@ func testSend() {
 	// }
 
 	frame2 := &pb.Robot_Start_Request{
-		Values: []uint64{1, 2, 3},
-		Async:  true,
+		Values: []*pb.Robot_Start_Robot{
+			&pb.Robot_Start_Robot{ID: 1, TaskGroup: 0},
+			&pb.Robot_Start_Robot{ID: 2, TaskGroup: 0},
+			&pb.Robot_Start_Robot{ID: 3, TaskGroup: 0},
+		},
+		Async: true,
 	}
 
 	req.Payload, _ = grpcproto.Marshal(frame2)
@@ -269,6 +273,7 @@ func handshake(peer session.Peer, w coresproto.Response, c RobotConfig) error {
 }
 
 func doRequestHeartbeater(peer session.Peer) error {
+	fmt.Println("send->doRequestHeartbeater", peer.ID())
 	frame := &pb.Agent_Heartbeater{
 		R: 1,
 	}

@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/binary"
 	"errors"
+	"net"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -181,6 +182,12 @@ func (p *PeerWebsocket) receiver() {
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure, websocket.CloseProtocolError) {
 				kitlog.Error(Logger()).Log("error", err)
+			} else if m, ok := err.(*net.OpError); ok && m.Timeout() {
+				if handler, ok := p.onTimeout.Load().(func(Peer) error); ok && handler != nil {
+					if err := handler(p); err == nil {
+						continue
+					}
+				}
 			}
 			return
 		}

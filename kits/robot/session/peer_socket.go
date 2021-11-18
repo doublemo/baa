@@ -158,9 +158,11 @@ func (p *PeerSocket) receiver() {
 		p.conn.SetReadDeadline(time.Now().Add(p.readDeadline))
 		n, err := io.ReadFull(p.conn, header)
 		if err != nil {
-			if handler, ok := p.onTimeout.Load().(func(Peer) error); ok && handler != nil {
-				if err := handler(p); err == nil {
-					continue
+			if m, ok := err.(*net.OpError); ok && m.Timeout() {
+				if handler, ok := p.onTimeout.Load().(func(Peer) error); ok && handler != nil {
+					if err := handler(p); err == nil {
+						continue
+					}
 				}
 			}
 			return

@@ -1,11 +1,14 @@
 package robot
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"math/rand"
 	"net"
+	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"time"
@@ -24,6 +27,7 @@ import (
 	"github.com/doublemo/baa/kits/robot/errcode"
 	"github.com/doublemo/baa/kits/robot/session"
 	grpcproto "github.com/golang/protobuf/proto"
+	"github.com/gorilla/websocket"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -59,6 +63,9 @@ type RobotConfig struct {
 	// WriteDeadline 写入超时
 	WriteDeadline int `alias:"writedeadline"`
 
+	// NetProtocol 机器人连接网络协议 scoket websocket
+	NetProtocol string `alias:"netProtocol" default:"socket"`
+
 	Datachannel webrtc.Configuration `alias:"-"`
 }
 
@@ -80,7 +87,14 @@ func startRobots(req *corespb.Request, c RobotConfig) (*corespb.Response, error)
 		return errcode.Bad(w, errcode.ErrRobotsTooMany), nil
 	}
 
-	robots, err := dao.FindRobotsInID(frame.Values...)
+	robotsIDValues := make([]uint64, valuesLen)
+	robotsMap := make(map[uint64]*pb.Robot_Start_Robot)
+	for k, v := range frame.Values {
+		robotsIDValues[k] = v.ID
+		robotsMap[v.ID] = v
+	}
+
+	robots, err := dao.FindRobotsInID(robotsIDValues...)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
@@ -97,16 +111,21 @@ func startRobots(req *corespb.Request, c RobotConfig) (*corespb.Response, error)
 	for _, robot := range robots {
 		successed = append(successed, robot.ID)
 		successedmap[robot.ID] = true
+		task, ok := robotsMap[robot.ID]
+		if !ok {
+			continue
+		}
+
 		if frame.Async {
-			worker.Submit(func(rob *dao.Robots, config RobotConfig) func() {
+			worker.Submit(func(rob *dao.Robots, t *pb.Robot_Start_Robot, config RobotConfig) func() {
 				return func() {
-					if err := runRobot(rob, c, exitchan); err != nil {
+					if err := runRobot(rob, t, c, exitchan); err != nil {
 						log.Error(Logger()).Log("action", "runRobot", "error", err)
 					}
 				}
-			}(robot, c))
+			}(robot, task, c))
 		} else {
-			if err := runRobot(robot, c, exitchan); err != nil {
+			if err := runRobot(robot, task, c, exitchan); err != nil {
 				failed = append(failed, robot.ID)
 				failedmap[robot.ID] = true
 			}
@@ -117,10 +136,10 @@ func startRobots(req *corespb.Request, c RobotConfig) (*corespb.Response, error)
 		}
 	}
 
-	for _, id := range frame.Values {
-		if !successedmap[id] && !failedmap[id] {
-			failed = append(failed, id)
-			failedmap[id] = true
+	for _, v := range frame.Values {
+		if !successedmap[v.ID] && !failedmap[v.ID] {
+			failed = append(failed, v.ID)
+			failedmap[v.ID] = true
 		}
 	}
 
@@ -428,11 +447,15 @@ func decryptPassword(password string, key []byte) (string, error) {
 	return string(w), nil
 }
 
-func runRobot(robot *dao.Robots, c RobotConfig, exitChan chan struct{}) error {
-	peer, ok := session.GetPeer(strconv.FormatUint(robot.ID, 10))
-	if ok {
-		peer.Close()
-		session.RemovePeer(peer)
+func runRobot(robot *dao.Robots, task *pb.Robot_Start_Robot, c RobotConfig, exitChan chan struct{}) error {
+	if m, ok := session.GetPeer(strconv.FormatUint(robot.ID, 10)); ok {
+		session.RemovePeer(m)
+		m.Close()
+	}
+
+	netProtocol := "socket"
+	if c.NetProtocol == "websocket" || c.NetProtocol == "websockets" {
+		netProtocol = c.NetProtocol
 	}
 
 	var agent string
@@ -440,11 +463,11 @@ func runRobot(robot *dao.Robots, c RobotConfig, exitChan chan struct{}) error {
 	if re.MatchString(robot.Agent) {
 		agent = robot.Agent
 	} else if robot.Agent != "" {
-		if m, err := selectAgent(robot.Agent); err == nil {
+		if m, err := selectAgent(robot.Agent, netProtocol); err == nil {
 			agent = m
 		}
 	} else {
-		if m, err := randomAgent(); err == nil {
+		if m, err := randomAgent(netProtocol); err == nil {
 			agent = m
 		}
 	}
@@ -453,12 +476,35 @@ func runRobot(robot *dao.Robots, c RobotConfig, exitChan chan struct{}) error {
 		return errors.New("No gateway server can be used")
 	}
 
-	conn, err := net.DialTimeout("tcp", agent, 30*time.Second)
-	if err != nil {
-		return err
+	var peer session.Peer
+	if netProtocol == "websocket" || netProtocol == "websockets" {
+		scheme := "ws"
+		if netProtocol == "websockets" {
+			scheme = "wss"
+		}
+
+		wsaddr := url.URL{Scheme: scheme, Host: agent, Path: "/websocket"}
+		dialer := &websocket.Dialer{
+			Proxy:            http.ProxyFromEnvironment,
+			HandshakeTimeout: 45 * time.Second,
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		conn, _, err := dialer.DialContext(ctx, wsaddr.String(), nil)
+		if err != nil {
+			cancel()
+			return err
+		}
+		cancel()
+		peer = session.NewPeerWebsocket(strconv.FormatUint(robot.ID, 10), conn, time.Duration(c.ReadDeadline)*time.Second, time.Duration(c.WriteDeadline)*time.Second, 1048576, exitChan)
+	} else {
+		conn, err := net.DialTimeout("tcp", agent, 30*time.Second)
+		if err != nil {
+			return err
+		}
+		peer = session.NewPeerSocket(strconv.FormatUint(robot.ID, 10), conn, time.Duration(c.ReadDeadline)*time.Second, time.Duration(c.WriteDeadline)*time.Second, exitChan)
 	}
 
-	peer = session.NewPeerSocket(strconv.FormatUint(robot.ID, 10), conn, time.Duration(c.ReadDeadline)*time.Second, time.Duration(c.WriteDeadline)*time.Second, exitChan)
 	peer.OnReceive(onMessage)
 	peer.OnClose(func(p session.Peer) {
 		session.RemovePeer(p)
@@ -470,13 +516,14 @@ func runRobot(robot *dao.Robots, c RobotConfig, exitChan chan struct{}) error {
 
 	// 设置Peer数据
 	peer.SetParams("Robots", robot)
+	peer.SetParams("Task", task)
 
 	log.Debug(Logger()).Log("Robot", peer.ID(), "action", "started")
 	// 开始握手
 	return doRequestHandshake(peer)
 }
 
-func randomAgent() (string, error) {
+func randomAgent(netProtocol string) (string, error) {
 	eds, err := sd.Endpoints()
 	if err != nil {
 		return "", err
@@ -485,7 +532,7 @@ func randomAgent() (string, error) {
 	agents := make([]string, 0)
 	for _, ed := range eds {
 		if ed.Name() == kit.AgentServiceName {
-			agents = append(agents, ed.Get("ip")+ed.Get("socket"))
+			agents = append(agents, ed.Get("ip")+ed.Get(netProtocol))
 		}
 	}
 
@@ -495,7 +542,7 @@ func randomAgent() (string, error) {
 	return agents[rand.Intn(len(agents))], nil
 }
 
-func selectAgent(group string) (string, error) {
+func selectAgent(group, netProtocol string) (string, error) {
 	eds, err := sd.Endpoints()
 	if err != nil {
 		return "", err
@@ -504,7 +551,7 @@ func selectAgent(group string) (string, error) {
 	agents := make([]string, 0)
 	for _, ed := range eds {
 		if ed.Name() == kit.AgentServiceName && ed.Get("group") == group {
-			agents = append(agents, ed.Get("ip")+ed.Get("socket"))
+			agents = append(agents, ed.Get("ip")+ed.Get(netProtocol))
 		}
 	}
 

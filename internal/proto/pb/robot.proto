@@ -48,8 +48,13 @@ message Robot{
     }
 
     message Start {
+        message Robot {
+            uint64 ID = 1;
+            int32  TaskGroup = 2;
+        }
+
         message Request {
-            repeated uint64 Values = 1;
+            repeated Robot Values = 1;
             bool Async = 2;
         }
 

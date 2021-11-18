@@ -1,6 +1,8 @@
 package agent
 
 import (
+	"fmt"
+
 	log "github.com/doublemo/baa/cores/log/level"
 	"github.com/doublemo/baa/cores/os"
 	"github.com/doublemo/baa/cores/pool/worker"
@@ -69,7 +71,7 @@ func onFromNatsMessage(msg *natsgo.Msg) {
 		log.Error(Logger()).Log("action", "onFromNatsMessage", "error", err, "frame", msg.Data)
 		return
 	}
-
+	fmt.Println("req", req)
 	resp, err := nrRouter.Handler(req.Cmd.Int32(), &corespb.Request{Header: make(map[string]string), Command: req.SubCmd.Int32(), Payload: req.Content})
 	if err != nil {
 		log.Error(Logger()).Log("action", "Handler", "error", err)

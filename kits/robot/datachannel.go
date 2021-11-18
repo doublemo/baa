@@ -3,7 +3,6 @@ package robot
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	log "github.com/doublemo/baa/cores/log/level"
 	coresproto "github.com/doublemo/baa/cores/proto"
@@ -31,7 +30,25 @@ func openDataChannel(peer session.Peer, c RobotConfig) error {
 
 	datachannel.OnOpen(func() {
 		// ok readyed
-		fmt.Println("Peer", peer.ID(), " [准备就绪] ")
+		log.Debug(Logger()).Log("action", "Readyed", "Robot", peer.ID())
+		task, ok := peer.Params("Task")
+		if !ok {
+			log.Warn(Logger()).Log("action", "task", "error", "No task can be executed, the machine stops automatically", "Robot", peer.ID())
+			peer.Close()
+			return
+		}
+
+		tk, ok := task.(*pb.Robot_Start_Robot)
+		if !ok {
+			log.Warn(Logger()).Log("action", "task.(*pb.Robot_Start_Robot)", "error", "No task can be executed, the machine stops automatically", "Robot", peer.ID())
+			peer.Close()
+			return
+		}
+
+		if err := execTask(peer, tk, c); err != nil {
+			log.Error(Logger()).Log("action", "execTask", "error", err)
+			peer.Close()
+		}
 	})
 
 	return doRequestDataChannelOffer(peer, false)
