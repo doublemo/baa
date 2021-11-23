@@ -6,6 +6,7 @@ import (
 	"errors"
 	"math"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/doublemo/baa/cores/crypto/id"
@@ -38,6 +39,10 @@ func send(req *corespb.Request, c ChatConfig) (*corespb.Response, error) {
 		}
 	}
 
+	if req.Header == nil {
+		return nil, errors.New("Header is nil")
+	}
+
 	// 如果两条以上的消息，需要排序
 	if len(frame.Messages.Values) > 1 {
 		sort.Slice(frame.Messages.Values, func(i, j int) bool {
@@ -50,13 +55,20 @@ func send(req *corespb.Request, c ChatConfig) (*corespb.Response, error) {
 		Header:  req.Header,
 	}
 
+	var userid uint64
+	if uid, ok := req.Header["UserID"]; ok {
+		if m, err := strconv.ParseUint(uid, 10, 64); err == nil {
+			userid = m
+		}
+	}
+
 	ret := &pb.IM_Msg_AckListReceived{
 		Successed: make([]*pb.IM_Msg_AckReceived, 0),
 		Failed:    make([]*pb.IM_Msg_AckFailed, 0),
 	}
 
 	for _, message := range frame.Messages.Values {
-		received, failed := sendto(message, c)
+		received, failed := sendto(userid, message, c)
 		if received != nil {
 			ret.Successed = append(ret.Successed, received)
 		}
@@ -71,7 +83,7 @@ func send(req *corespb.Request, c ChatConfig) (*corespb.Response, error) {
 	return w, nil
 }
 
-func sendto(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb.IM_Msg_AckFailed) {
+func sendto(userid uint64, frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb.IM_Msg_AckFailed) {
 	// 消息安全检查
 	if !validationMsg(frame) {
 		return nil, &pb.IM_Msg_AckFailed{
@@ -104,9 +116,18 @@ func sendto(frame *pb.IM_Msg_Content, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb
 		}
 	}
 
+	if msg.From != userid {
+		return nil, &pb.IM_Msg_AckFailed{
+			SeqID:      frame.SeqID,
+			ErrCode:    errcode.ErrInvalidUserIdToken.Code(),
+			ErrMessage: errcode.ErrInvalidUserIdToken.Error(),
+		}
+	}
+
 	if frame.Group == pb.IM_Msg_ToG {
 		return sendtoG(msg, c)
 	}
+
 	return sendtoC(msg, c)
 }
 
@@ -418,7 +439,7 @@ func makeBroadcastMessages(idsecret []byte, msg ...dao.Messages) (map[string][]*
 			if called[addr] {
 				continue
 			}
-			data[addr] = append(data[addr], &pb.Agent_BroadcastMessage{Receiver: []string{frame.To}, Command: kit.IM.Int32(), SubCommand: command.IMPush.Int32(), Payload: bytes})
+			data[addr] = append(data[addr], &pb.Agent_BroadcastMessage{Receiver: []uint64{m.To}, Command: kit.IM.Int32(), SubCommand: command.IMPush.Int32(), Payload: bytes})
 		}
 	}
 
@@ -445,8 +466,6 @@ func makeGroupBroadcastMessages(msg dao.Messages, idsecret []byte, users ...uint
 			continue
 		}
 
-		uid, _ := id.Encrypt(userid, idsecret)
-
 		called := make(map[string]bool)
 		for _, addr := range addrs {
 			if called[addr] {
@@ -455,9 +474,9 @@ func makeGroupBroadcastMessages(msg dao.Messages, idsecret []byte, users ...uint
 
 			called[addr] = true
 			if _, ok := data[addr]; ok {
-				data[addr].Receiver = append(data[addr].Receiver, uid)
+				data[addr].Receiver = append(data[addr].Receiver, userid)
 			} else {
-				data[addr] = &pb.Agent_BroadcastMessage{Receiver: []string{uid}, Command: kit.IM.Int32(), SubCommand: command.IMPush.Int32(), Payload: bytes}
+				data[addr] = &pb.Agent_BroadcastMessage{Receiver: []uint64{userid}, Command: kit.IM.Int32(), SubCommand: command.IMPush.Int32(), Payload: bytes}
 			}
 		}
 	}

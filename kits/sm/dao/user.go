@@ -69,6 +69,16 @@ func GetUsers(ctx context.Context, userid uint64) ([]*Users, error) {
 	return values, nil
 }
 
+func GetCachedUsers(ctx context.Context, userid uint64) ([]*Users, error) {
+	data, ok := cacher.Get(makeUsersCacheID(userid))
+	if ok {
+		if m, ok := data.([]*Users); ok && m != nil {
+			return m, nil
+		}
+	}
+	return GetUsers(ctx, userid)
+}
+
 // GetMultiUsers 获取多用户
 func GetMultiUsers(ctx context.Context, users ...uint64) (map[uint64][]*Users, error) {
 	if rdb == nil {
@@ -135,6 +145,43 @@ func GetMultiUsers(ctx context.Context, users ...uint64) (map[uint64][]*Users, e
 	return values, nil
 }
 
+// GetCachedMultiUsers  从缓存中获取
+func GetCachedMultiUsers(ctx context.Context, users ...uint64) (map[uint64][]*Users, error) {
+	noCached := make([]uint64, 0)
+	data := make(map[uint64][]*Users)
+	for _, id := range users {
+		c, ok := cacher.Get(makeUsersCacheID(id))
+		if !ok {
+			noCached = append(noCached, id)
+			continue
+		}
+
+		user, ok := c.([]*Users)
+		if !ok || user == nil {
+			noCached = append(noCached, id)
+			continue
+		}
+
+		data[id] = user
+	}
+
+	if len(noCached) < 1 {
+		return data, nil
+	}
+
+	usersdata, err := GetMultiUsers(ctx, noCached...)
+	if err != nil {
+		return nil, err
+	}
+
+	for id, values := range usersdata {
+		data[id] = values
+		cacher.Set(makeUsersCacheID(id), values, 0)
+	}
+
+	return data, nil
+}
+
 // Online 用户上线
 func Online(ctx context.Context, users *Users) error {
 	if rdb == nil {
@@ -178,6 +225,8 @@ loop:
 		n++
 		goto loop
 	}
+
+	cacher.Delete(makeUsersCacheID(users.ID))
 	return err
 }
 
@@ -196,6 +245,8 @@ func Offline(ctx context.Context, userid uint64, platform string) error {
 		pipe.Del(ctx, namerUsers)
 		return nil
 	})
+
+	cacher.Delete(makeUsersCacheID(userid))
 	return err
 }
 
@@ -207,6 +258,7 @@ func UpdateUsersServer(ctx context.Context, userid uint64, server, addr string) 
 
 	idx := strconv.FormatUint(userid, 10)
 	namer := RDBNamer(defaultAssignServerKey, idx)
+	cacher.Delete(makeUsersCacheID(userid))
 	return rdb.HSet(ctx, namer, server, addr).Err()
 }
 
@@ -226,6 +278,11 @@ func GetUserServers(ctx context.Context, userid uint64) (map[string]string, erro
 	}
 
 	return ret.Val(), nil
+}
+
+// ClearUsersCachedByUserID 清除玩家状态信息缓存
+func ClearUsersCachedByUserID(id uint64) {
+	cacher.Delete(makeUsersCacheID(id))
 }
 
 func bindDataToUsers(data map[string]string) *Users {
@@ -258,4 +315,8 @@ func bindDataToUsers(data map[string]string) *Users {
 		users.IDServer = m
 	}
 	return users
+}
+
+func makeUsersCacheID(id uint64) string {
+	return "cached_users_" + strconv.FormatUint(id, 10)
 }

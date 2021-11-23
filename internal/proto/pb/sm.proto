@@ -61,4 +61,24 @@ message SM {
             repeated Status Values = 2;
         } 
    }
+
+
+   message Broadcast {
+       message Message {
+           int32 Command = 1;
+           int32 SubCommand = 2;
+           bytes Payload = 3;
+           repeated uint64  Receiver = 4; 
+       }
+
+       message Messages {
+           repeated Message Values = 1;
+           bool Sync = 2;
+       }
+
+       message Ack {
+           repeated uint64 Successed = 1;
+           repeated uint64 Failed = 2;
+       }
+   }
 }

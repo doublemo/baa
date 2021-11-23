@@ -13,6 +13,8 @@ import (
 	"github.com/doublemo/baa/cores/os"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/metrics"
+	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/user"
 	"github.com/doublemo/baa/kits/user/cache"
@@ -51,6 +53,9 @@ type Config struct {
 
 	// Nats
 	Nats conf.Nats `alias:"nats"`
+
+	// Metrics grpc metrics
+	Metrics metrics.Config `alias:"metrics"`
 }
 
 type User struct {
@@ -86,6 +91,10 @@ func (s *User) Start() error {
 	Logger(o.Runmode)
 	user.SetLogger(logger)
 
+	if o.Runmode == "dev" {
+		o.Metrics.TurnOn = true
+	}
+
 	// 服务发现
 	endpoint := coressd.NewEndpoint(o.MachineID, user.ServiceName, o.RPC.Addr)
 	endpoint.Set("group", o.RPC.Group)
@@ -115,8 +124,9 @@ func (s *User) Start() error {
 
 	// 注册运行服务
 	s.actors.Add(s.mustProcessActor(user.NewNatsProcessActor(o.Nats)), true)
-	s.actors.Add(s.mustProcessActor(user.NewRPCServerActor(o.RPC)), true)
+	s.actors.Add(s.mustProcessActor(rpc.NewRPCServerActor(o.RPC, user.NewServer(), logger)), true)
 	s.actors.Add(s.mustProcessActor(user.NewServiceDiscoveryProcessActor()), true)
+	s.actors.Add(s.mustProcessActor(metrics.NewMetricsProcessActor(o.Metrics, logger)), true)
 	return s.actors.Run()
 }
 

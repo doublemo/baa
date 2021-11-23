@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/doublemo/baa/internal/conf"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -31,8 +32,8 @@ func NewServer(c conf.RPC) (*grpc.Server, error) {
 		}
 
 		opts = append(opts,
-			grpc.StreamInterceptor(ensureStreamValidToken(c)),
-			grpc.UnaryInterceptor(ensureValidToken(c)),
+			grpc.ChainStreamInterceptor(ensureStreamValidToken(c), grpc_prometheus.StreamServerInterceptor),
+			grpc.ChainUnaryInterceptor(ensureValidToken(c), grpc_prometheus.UnaryServerInterceptor),
 			grpc.Creds(credentials.NewServerTLSFromCert(&cert)),
 		)
 	}

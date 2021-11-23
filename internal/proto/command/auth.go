@@ -20,4 +20,7 @@ const (
 
 	// AuthAccountInfo 账户信息
 	AuthAccountInfo
+
+	// AuthorizedToken 验证token
+	AuthorizedToken
 )

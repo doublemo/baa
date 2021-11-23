@@ -31,7 +31,7 @@ message Agent {
     }
 
     message BroadcastMessage {
-        repeated string  Receiver = 1;
+        repeated uint64  Receiver = 1;
         int32   Command  = 2;
         bytes  Payload    = 3;
         int32  SubCommand = 4;

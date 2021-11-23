@@ -1,9 +1,6 @@
 package auth
 
 import (
-	"fmt"
-	"time"
-
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
@@ -22,7 +19,7 @@ var (
 // RouterConfig 路由配置
 type RouterConfig struct {
 	ServiceSNID conf.RPCClient `alias:"snid"`
-	ServiceUSRT conf.RPCClient `alias:"usrt"`
+	ServiceSM   conf.RPCClient `alias:"sm"`
 
 	//LR  登录注册配置信息
 	LR LRConfig `alias:"lr"`
@@ -32,7 +29,7 @@ type RouterConfig struct {
 func InitRouter(config RouterConfig) {
 	// Register grpc load balance
 	resolver.Register(coressd.NewResolverBuilder(config.ServiceSNID.Name, config.ServiceSNID.Group, sd.Endpointer()))
-	resolver.Register(coressd.NewResolverBuilder(config.ServiceUSRT.Name, config.ServiceUSRT.Group, sd.Endpointer()))
+	resolver.Register(coressd.NewResolverBuilder(config.ServiceSM.Name, config.ServiceSM.Group, sd.Endpointer()))
 
 	// 注册处理请求
 	r.HandleFunc(command.AuthRegister, func(r *corespb.Request) (*corespb.Response, error) {
@@ -45,12 +42,12 @@ func InitRouter(config RouterConfig) {
 
 	r.HandleFunc(command.AuthOffline, func(r *corespb.Request) (*corespb.Response, error) { return offline(r, config.LR) })
 	r.HandleFunc(command.AuthAccountInfo, func(r *corespb.Request) (*corespb.Response, error) { return accountInfo(r, config.LR) })
+	r.HandleFunc(command.AuthorizedToken, func(r *corespb.Request) (*corespb.Response, error) { return authorizedToken(r, config.LR) })
 
 	// 注册内部使用路由
 	muxRouter.Register(kit.SNID.Int32(), router.New())
 	muxRouter.Handle(kit.SNID.Int32(), command.SNIDSnowflake, newSnidRouter(config.ServiceSNID))
 
-	time.AfterFunc(time.Second*10, func() {
-		fmt.Println(getSNID(1))
-	})
+	sm := router.NewCall(config.ServiceSM)
+	muxRouter.Register(kit.SM.Int32(), router.New()).Handle(command.SMUserStatus, sm)
 }

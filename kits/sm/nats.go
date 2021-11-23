@@ -2,7 +2,6 @@ package sm
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	log "github.com/doublemo/baa/cores/log/level"
@@ -139,7 +138,6 @@ func onFromNatsInternalMessage(msg *natsgo.Msg) {
 		return
 	}
 
-	fmt.Println("okkkk-----")
 	_, err := nInternalRouter.Handler(&corespb.Request{Header: make(map[string]string), Command: req.SubCmd.Int32(), Payload: req.Content})
 	if err != nil {
 		log.Error(Logger()).Log("action", "onFromNatsInternalMessage", "error", err)
@@ -147,7 +145,7 @@ func onFromNatsInternalMessage(msg *natsgo.Msg) {
 	}
 }
 
-func broadcast(data []byte) error {
+func broadcastEvent(data []byte) error {
 	nc := nats.Conn()
 	if nc == nil {
 		return errors.New("nats is nil")
@@ -160,7 +158,7 @@ func broadcast(data []byte) error {
 	return nc.FlushTimeout(time.Second)
 }
 
-func internalBroadcast(cmd coresproto.Command, evt *pb.SM_Event) error {
+func internalBroadcastEvent(cmd coresproto.Command, evt *pb.SM_Event) error {
 	req := coresproto.RequestBytes{
 		Cmd:    kit.SM,
 		SubCmd: cmd,

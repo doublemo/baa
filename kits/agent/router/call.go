@@ -39,16 +39,18 @@ const (
 type (
 	// Call 处理路由Call方法
 	Call struct {
-		c              conf.RPCClient
-		pool           *grpcpool.Pool
-		onDestroy      atomic.Value
-		onBeforeCall   atomic.Value
-		onAfterCall    atomic.Value
-		commandSecret  []byte
-		maxQureyLength int
-		maxBytesReader int64
-		mutex          sync.RWMutex
-		logger         coreslog.Logger
+		c               conf.RPCClient
+		pool            *grpcpool.Pool
+		onDestroy       atomic.Value
+		onBeforeCall    atomic.Value
+		onAfterCall     atomic.Value
+		commandSecret   []byte
+		maxQureyLength  int
+		maxBytesReader  int64
+		allowCommands   map[int32]bool
+		noAuthorization map[int32]bool
+		mutex           sync.RWMutex
+		logger          coreslog.Logger
 	}
 
 	CallOptions func(c *Call)
@@ -56,6 +58,10 @@ type (
 
 // Serve 服务处理
 func (r *Call) Serve(peer session.Peer, req coresproto.Request) (coresproto.Response, error) {
+	if !r.allowCommands[req.SubCommand().Int32()] {
+		return nil, ErrNotSupportCommand
+	}
+
 	request := &corespb.Request{
 		Header:  map[string]string{"PeerId": peer.ID(), "seqno": strconv.FormatUint(uint64(req.SID()), 10), "Content-Type": "stream"},
 		Command: req.SubCommand().Int32(),
@@ -94,6 +100,11 @@ func (r *Call) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	command, err := id.Decrypt(cmd, []byte(r.commandSecret))
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if !r.allowCommands[int32(command)] {
+		http.Error(rw, ErrNotSupportCommand.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -225,7 +236,6 @@ func (r *Call) OnBeforeCall(f func(session.Peer, coresproto.Request, *corespb.Re
 	if f == nil {
 		return
 	}
-
 	r.onBeforeCall.Store(f)
 }
 
@@ -332,11 +342,13 @@ func (r *Call) buildCoresPBMethodPost(rw http.ResponseWriter, req *http.Request)
 // NewCall 创建Call路由
 func NewCall(config conf.RPCClient, logger coreslog.Logger, opts ...CallOptions) *Call {
 	c := &Call{
-		c:              config,
-		commandSecret:  make([]byte, 0),
-		maxQureyLength: defaultMaxQueryLength,
-		maxBytesReader: defaultMaxBytesReader,
-		logger:         logger,
+		c:               config,
+		commandSecret:   make([]byte, 0),
+		maxQureyLength:  defaultMaxQueryLength,
+		maxBytesReader:  defaultMaxBytesReader,
+		logger:          logger,
+		allowCommands:   make(map[int32]bool),
+		noAuthorization: make(map[int32]bool),
 	}
 
 	for _, o := range opts {
@@ -363,5 +375,23 @@ func MaxQureyLengthCallOptions(num int) CallOptions {
 func MaxBytesReaderCallOptions(num int64) CallOptions {
 	return func(r *Call) {
 		r.maxBytesReader = num
+	}
+}
+
+// AllowCommandsCallOptions 设置允许通过的有效命令
+func AllowCommandsCallOptions(commands ...int32) CallOptions {
+	return func(r *Call) {
+		for _, c := range commands {
+			r.allowCommands[c] = true
+		}
+	}
+}
+
+// NoAuthorizationCommandsCallOptions 设置不能检查授权的命令
+func NoAuthorizationCommandsCallOptions(commands ...int32) CallOptions {
+	return func(r *Call) {
+		for _, c := range commands {
+			r.noAuthorization[c] = true
+		}
 	}
 }

@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"strconv"
+
 	"github.com/doublemo/baa/cores/crypto/id"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/proto/pb"
@@ -22,8 +24,18 @@ func accountInfo(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
 		Header:  req.Header,
 	}
 
-	accountId, err := id.Decrypt(frame.AccountId, []byte(c.IDSecret))
-	if err != nil {
+	var accountId uint64
+	switch data := frame.ID.(type) {
+	case *pb.Authentication_Account_Request_StringID:
+		if m, err := id.Decrypt(data.StringID, []byte(c.IDSecret)); err == nil {
+			accountId = m
+		}
+
+	case *pb.Authentication_Account_Request_Uint64ID:
+		accountId = data.Uint64ID
+	}
+
+	if accountId < 1 {
 		return errcode.Bad(w, errcode.ErrAccountIDInvalid), nil
 	}
 
@@ -46,6 +58,9 @@ func accountInfo(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
 	resp.UserID, _ = id.Encrypt(info.UserID, []byte(c.IDSecret))
 	respBytes, _ := grpcproto.Marshal(resp)
 	w.Payload = &corespb.Response_Content{Content: respBytes}
+	w.Header["AccountID"] = strconv.FormatUint(info.ID, 10)
+	w.Header["UnionID"] = strconv.FormatUint(info.UnionID, 10)
+	w.Header["UserID"] = strconv.FormatUint(info.UserID, 10)
 	return w, nil
 }
 
@@ -66,7 +81,7 @@ func offline(r *corespb.Request, c LRConfig) (*corespb.Response, error) {
 		}
 	}
 
-	uid, err0 := id.Decrypt(accountID, []byte(c.IDSecret))
+	uid, err0 := strconv.ParseUint(accountID, 10, 64)
 	if err0 != nil {
 		return nil, err0
 	}

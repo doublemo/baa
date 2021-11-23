@@ -11,4 +11,7 @@ const (
 
 	// SMUserStatus 获取用户状态
 	SMUserStatus
+
+	// SMBroadcastMessagesToAgent 广播消息到网关
+	SMBroadcastMessagesToAgent
 )

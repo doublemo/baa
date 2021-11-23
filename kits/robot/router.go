@@ -108,8 +108,8 @@ func testSend() {
 	frame2 := &pb.Robot_Start_Request{
 		Values: []*pb.Robot_Start_Robot{
 			&pb.Robot_Start_Robot{ID: 1, TaskGroup: 0},
-			&pb.Robot_Start_Robot{ID: 2, TaskGroup: 0},
-			&pb.Robot_Start_Robot{ID: 3, TaskGroup: 0},
+			// &pb.Robot_Start_Robot{ID: 2, TaskGroup: 0},
+			// &pb.Robot_Start_Robot{ID: 3, TaskGroup: 0},
 		},
 		Async: true,
 	}
@@ -190,7 +190,7 @@ func handleBinaryMessage(peer session.Peer, frame []byte) error {
 	}
 
 	if w.Code == 65544 || w.Code == 65552 || w.Code == 65560 || w.Code == 69536 {
-		return errors.New(string(w.Body()))
+		return fmt.Errorf("Code: %d, error:%s, command:%d, subcommand:%d", w.Code, string(w.Body()), w.Cmd, w.SubCmd)
 	}
 
 	return socketRouter.Handler(peer, w)
@@ -273,7 +273,6 @@ func handshake(peer session.Peer, w coresproto.Response, c RobotConfig) error {
 }
 
 func doRequestHeartbeater(peer session.Peer) error {
-	fmt.Println("send->doRequestHeartbeater", peer.ID())
 	frame := &pb.Agent_Heartbeater{
 		R: 1,
 	}

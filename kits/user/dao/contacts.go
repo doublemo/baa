@@ -307,7 +307,7 @@ func FindContactsRequestByUserID(userid uint64, page, size int32, version int64,
 		tx.Select(cols)
 	}
 
-	tx.Where("user_id = ? AND version > ? ", userid, version).Offset(int(offset)).Limit(int(size)).Find(&data)
+	tx.Where("user_id = ? AND version > ? ", userid, version).Order("id DESC").Offset(int(offset)).Limit(int(size)).Find(&data)
 	if tx.Error != nil {
 		return nil, 0, gorm.ErrInvalidDB
 	}

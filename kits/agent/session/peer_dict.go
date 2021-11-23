@@ -9,14 +9,14 @@ var defaultDict = NewDict()
 
 // DictLocal 用于Peer与Peer之的关系映射与查询
 type DictLocal struct {
-	dict       map[string]atomic.Value
+	dict       map[interface{}]atomic.Value
 	dictLen    int
 	dictAllLen int
 	sync.RWMutex
 }
 
 // Add 增加
-func (d *DictLocal) Add(id string, peer Peer) {
+func (d *DictLocal) Add(id interface{}, peer Peer) {
 	d.Lock()
 	defer d.Unlock()
 
@@ -60,7 +60,7 @@ func (d *DictLocal) Add(id string, peer Peer) {
 }
 
 // Delete  删除
-func (d *DictLocal) Delete(id string, peer Peer) {
+func (d *DictLocal) Delete(id interface{}, peer Peer) {
 	d.Lock()
 	defer d.Unlock()
 
@@ -93,7 +93,7 @@ func (d *DictLocal) Delete(id string, peer Peer) {
 	d.dictLen = len(d.dict)
 }
 
-func (d *DictLocal) Get(id string) ([]string, bool) {
+func (d *DictLocal) Get(id interface{}) ([]string, bool) {
 	d.RLock()
 	m, ok := d.dict[id]
 	d.RUnlock()
@@ -112,18 +112,18 @@ func (d *DictLocal) Get(id string) ([]string, bool) {
 
 func NewDict() *DictLocal {
 	return &DictLocal{
-		dict: make(map[string]atomic.Value),
+		dict: make(map[interface{}]atomic.Value),
 	}
 }
 
-func AddDict(id string, peer Peer) {
+func AddDict(id interface{}, peer Peer) {
 	defaultDict.Add(id, peer)
 }
 
-func RemoveDict(id string, peer Peer) {
+func RemoveDict(id interface{}, peer Peer) {
 	defaultDict.Delete(id, peer)
 }
 
-func GetDict(id string) ([]string, bool) {
+func GetDict(id interface{}) ([]string, bool) {
 	return defaultDict.Get(id)
 }

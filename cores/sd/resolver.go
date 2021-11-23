@@ -99,9 +99,9 @@ func (r *dnsResolver) resolve() {
 		if len(addr) < 1 {
 			continue
 		}
-
 		addrs = append(addrs, resolver.Address{Addr: addr})
 	}
+
 	r.cc.UpdateState(resolver.State{Addresses: addrs})
 }
 

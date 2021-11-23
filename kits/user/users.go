@@ -3,6 +3,7 @@ package user
 import (
 	"errors"
 	"regexp"
+	"strconv"
 
 	"github.com/doublemo/baa/cores/crypto/id"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
@@ -38,20 +39,12 @@ func register(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 	}
 
 	var (
-		accountId string
-		userId    string
+		accountId uint64
+		userId    uint64
 	)
 
 	if req.Header == nil {
 		req.Header = make(map[string]string)
-	}
-
-	if m, ok := req.Header["AccountID"]; ok {
-		accountId = m
-	}
-
-	if m, ok := req.Header["UserID"]; ok {
-		userId = m
 	}
 
 	w := &corespb.Response{
@@ -59,8 +52,21 @@ func register(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 		Header:  req.Header,
 	}
 
-	if accountId != frame.AccountId {
-		return errcode.Bad(w, errcode.ErrInvalidAccountID), nil
+	if m, ok := req.Header["AccountID"]; ok {
+		aid, err := strconv.ParseUint(m, 10, 64)
+		if err != nil {
+			return errcode.Bad(w, errcode.ErrInvalidAccountID, err.Error()), nil
+		}
+
+		accountId = aid
+	}
+
+	if m, ok := req.Header["UserID"]; ok {
+		uid, err := strconv.ParseUint(m, 10, 64)
+		if err != nil {
+			return errcode.Bad(w, errcode.ErrInvalidAccountID, err.Error()), nil
+		}
+		userId = uid
 	}
 
 	reg := regexp.MustCompile("^(1[3-9])\\d{9}$")
@@ -68,7 +74,7 @@ func register(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 		return errcode.Bad(w, errcode.ErrPhoneNumberInvalid), nil
 	}
 
-	_, userUint64Id, err := getAccountInfo(accountId, userId, []byte(c.IDSecret))
+	_, userUint64Id, err := getAccountInfo(accountId, userId)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInvalidAccountID, err.Error()), nil
 	}
@@ -77,7 +83,6 @@ func register(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 		return errcode.Bad(w, errcode.ErrNickNameLettersInvalid), nil
 	}
 
-	userId, _ = id.Encrypt(userUint64Id, []byte(c.IDSecret))
 	indexNo, _ := id.Encrypt(userUint64Id, []byte(c.IdxSecret))
 	user := dao.Users{
 		ID:       userUint64Id,
@@ -214,26 +219,13 @@ func findUserInfos(req *corespb.Request, userid []uint64, c UserConfig) (*coresp
 	return w, nil
 }
 
-func getAccountInfo(accountId, userId string, secret []byte) (uint64, uint64, error) {
-	auid, err := id.Decrypt(accountId, secret)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	var uuid uint64
-	if userId != "" {
-		uuid, err = id.Decrypt(userId, secret)
-		if err != nil {
-			return 0, 0, err
-		}
-	}
-
-	if auid < 1 {
+func getAccountInfo(accountId, userId uint64) (uint64, uint64, error) {
+	if accountId < 1 {
 		return 0, 0, errors.New("Invalid Account ID")
 	}
 
-	if uuid > 0 {
-		return auid, uuid, nil
+	if userId > 0 {
+		return accountId, userId, nil
 	}
 
 	req := &corespb.Request{
@@ -241,34 +233,24 @@ func getAccountInfo(accountId, userId string, secret []byte) (uint64, uint64, er
 		Header:  make(map[string]string),
 	}
 
-	req.Payload, _ = grpcproto.Marshal(&pb.Authentication_Account_Request{AccountId: accountId})
+	req.Payload, _ = grpcproto.Marshal(&pb.Authentication_Account_Request{ID: &pb.Authentication_Account_Request_Uint64ID{Uint64ID: accountId}})
 	resp, err := muxRouter.Handler(kit.Auth.Int32(), req)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	switch payload := resp.Payload.(type) {
-	case *corespb.Response_Content:
-		var frame pb.Authentication_Account_Info
-		{
-			if err := grpcproto.Unmarshal(payload.Content, &frame); err != nil {
-				return 0, 0, err
-			}
-		}
-
-		m, err := id.Decrypt(frame.UserID, secret)
-		if err != nil {
-			return 0, 0, err
-		}
-		uuid = m
-
-	case *corespb.Response_Error:
-		return 0, 0, errors.New(payload.Error.String())
-	}
-
-	if uuid < 1 {
+	if resp.Header == nil {
 		return 0, 0, errors.New("Invalid Account ID")
 	}
 
-	return auid, uuid, nil
+	uid, ok := resp.Header["UserID"]
+	if !ok {
+		return 0, 0, errors.New("Invalid Account ID")
+	}
+
+	uuid, err := strconv.ParseUint(uid, 10, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+	return accountId, uuid, nil
 }

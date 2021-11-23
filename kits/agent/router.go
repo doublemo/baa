@@ -4,6 +4,7 @@ import (
 	"crypto/rc4"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/doublemo/baa/cores/crypto/dh"
@@ -36,31 +37,86 @@ var (
 
 	// nRouter nats Subscribe
 	nrRouter = irouter.NewMux()
+
+	// muxRouter 内部调用处理
+	muxRouter = irouter.NewMux()
+
+	kitConfigs = make(map[coresproto.Command]Router)
 )
 
 type (
 	// RouterConfig 路由配置
 	RouterConfig struct {
-		ServiceSFU   conf.RPCClient     `alias:"sfu"`
-		ServiceAuth  conf.RPCClient     `alias:"auth"`
-		ServiceSnid  conf.RPCClient     `alias:"snid"`
+		Routes       []Router           `alias:"routes"`
 		HttpConfigV1 HttpRouterV1Config `alias:"httpv1"`
+	}
+
+	Router struct {
+		KitID         int32          `alias:"kitid"`
+		Authorization bool           `alias:"authorization"`
+		Config        conf.RPCClient `alias:"config"`
+		NetProtocol   string         `alias:"net"`
+		ContentType   string         `alias:"contentType"`
+		Commands      []int32        `alias:"commands"`
 	}
 )
 
 // InitRouter init
 func InitRouter(config RouterConfig) {
 	// Register grpc load balance
-	resolver.Register(coressd.NewResolverBuilder(config.ServiceSFU.Name, config.ServiceSFU.Group, sd.Endpointer()))
-	resolver.Register(coressd.NewResolverBuilder(config.ServiceAuth.Name, config.ServiceAuth.Group, sd.Endpointer()))
-	resolver.Register(coressd.NewResolverBuilder(config.ServiceSnid.Name, config.ServiceSnid.Group, sd.Endpointer()))
-
 	// 注册处理socket/websocket来的请求
-	sRouter.HandleFunc(kit.Agent, agentRouter)
-	sRouter.Handle(kit.SFU, router.NewStream(config.ServiceSFU, Logger(), sfuHookOnReceive))
-	sRouter.Handle(kit.Auth, router.NewCall(config.ServiceAuth, Logger(), authenticationHookAfter, authenticationHookDestroy))
-
 	// 注册处理datachannel来的请求
+	for _, route := range config.Routes {
+		kitConfigs[coresproto.Command(route.KitID)] = route
+		if route.KitID == kit.Agent.Int32() {
+			continue
+		}
+
+		if m := resolver.Get(route.Config.Name); m == nil {
+			resolver.Register(coressd.NewResolverBuilder(route.Config.Name, route.Config.Group, sd.Endpointer()))
+		}
+
+		if len(route.Commands) < 1 {
+			continue
+		}
+
+		net := strings.ToLower(route.NetProtocol)
+		opts := []router.CallOptions{router.AllowCommandsCallOptions(route.Commands...)}
+		streamOpts := []router.StreamOptions{router.AllowCommandsStreamOptions(route.Commands...)}
+		if route.Authorization {
+			opts = append(opts, authenticateCall)
+			streamOpts = append(streamOpts, authenticateStream)
+		}
+
+		if route.Config.Name == kit.AuthServiceName {
+			opts = append(opts, authenticationHookAfter, authenticationHookDestroy)
+		}
+
+		switch net {
+		case "socket", "websocket", "tcp":
+			if route.ContentType == "stream" {
+				streamOpts = append(streamOpts, makeOnStreamReceive(coresproto.Command(route.KitID), false))
+				sRouter.Handle(coresproto.Command(route.KitID), router.NewStream(route.Config, Logger(), streamOpts...))
+				continue
+			}
+
+			sRouter.Handle(coresproto.Command(route.KitID), router.NewCall(route.Config, Logger(), opts...))
+		case "udp", "datachannel":
+			if route.ContentType == "stream" {
+				streamOpts = append(streamOpts, makeOnStreamReceive(coresproto.Command(route.KitID), true))
+				dRouter.Handle(coresproto.Command(route.KitID), router.NewStream(route.Config, Logger(), streamOpts...))
+				continue
+			}
+			dRouter.Handle(coresproto.Command(route.KitID), router.NewCall(route.Config, Logger(), opts...))
+		}
+	}
+
+	sRouter.HandleFunc(kit.Agent, agentRouter)
+
+	// 内部请求处理
+	if m, ok := kitConfigs[kit.Auth]; ok {
+		muxRouter.Register(kit.Auth.Int32(), irouter.New()).Handle(command.AuthorizedToken, irouter.NewCall(m.Config))
+	}
 
 	// 注册处理nats订阅的请求
 	nrRouter.Register(kit.Agent.Int32(), irouter.New()).
@@ -301,3 +357,28 @@ func heartbeater(peer session.Peer, req coresproto.Request) (coresproto.Response
 	}
 	return resp, err
 }
+
+func makeOnStreamReceive(kitid coresproto.Command, datachannel bool) func(*router.Stream) {
+	datachannelName := ""
+	if datachannel {
+		datachannelName = session.PeerMessageChannelWebrtc
+	}
+
+	return func(s *router.Stream) {
+		s.OnReceive(func(peer session.Peer, resp *corespb.Response) {
+			w := proto.NewResponseBytes(kitid, resp)
+			bytes, _ := w.Marshal()
+			if err := peer.Send(session.PeerMessagePayload{Data: bytes, Channel: datachannelName}); err != nil {
+				log.Error(Logger()).Log("error", err)
+			}
+		})
+	}
+}
+
+// s.OnReceive(func(peer session.Peer, r *corespb.Response) {
+// 	w := proto.NewResponseBytes(kit.SFU, r)
+// 	bytes, _ := w.Marshal()
+// 	if err := peer.Send(session.PeerMessagePayload{Data: bytes}); err != nil {
+// 		log.Error(Logger()).Log("error", err)
+// 	}
+// })

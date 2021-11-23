@@ -12,6 +12,7 @@ import (
 	"github.com/doublemo/baa/cores/os"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/metrics"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/agent"
 	"github.com/doublemo/baa/kits/agent/webrtc"
@@ -53,6 +54,9 @@ type Config struct {
 
 	// Nats
 	Nats conf.Nats `alias:"nats"`
+
+	// Metrics grpc metrics
+	Metrics metrics.Config `alias:"metrics"`
 }
 
 type Agent struct {
@@ -87,6 +91,10 @@ func (s *Agent) Start() error {
 	// 设置日志
 	Logger(o.Runmode)
 	agent.SetLogger(logger)
+
+	if o.Runmode == "dev" {
+		o.Metrics.TurnOn = true
+	}
 
 	// 服务发现
 	endpoint := coressd.NewEndpoint(o.MachineID, agent.ServiceName, o.RPC.Addr)
@@ -124,6 +132,7 @@ func (s *Agent) Start() error {
 	s.actors.Add(s.mustProcessActor(agent.NewHttpProcessActor(o.Http, o.Router)), true)
 	s.actors.Add(s.mustProcessActor(agent.NewRPCServerActor(o.RPC)), true)
 	s.actors.Add(s.mustProcessActor(agent.NewServiceDiscoveryProcessActor()), true)
+	s.actors.Add(s.mustProcessActor(metrics.NewMetricsProcessActor(o.Metrics, logger)), true)
 	return s.actors.Run()
 }
 

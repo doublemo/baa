@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"time"
 	"unicode"
 
@@ -172,7 +173,72 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	}
 
 	b, _ := grpcproto.Marshal(resp)
+	w.Header = make(map[string]string)
+	w.Header["AccountID"] = strconv.FormatUint(account.ID, 10)
+	w.Header["UnionID"] = strconv.FormatUint(account.UnionID, 10)
+	w.Header["UserID"] = strconv.FormatUint(account.UserID, 10)
 	w.Payload = &corespb.Response_Content{Content: b}
+	return w, nil
+}
+
+func authorizedToken(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
+	var frame pb.Authentication_Form_Authorized_Token
+	{
+		if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+			return nil, err
+		}
+	}
+
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  make(map[string]string),
+	}
+
+	token, err := helper.ParseToken(frame.Token, []byte(c.TokenSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrTokenIncorrect), nil
+	}
+
+	if !helper.IsValidToken(token) {
+		return errcode.Bad(w, errcode.ErrTokenIncorrect, "token has expired"), nil
+	}
+
+	status, err := getUsersStatus(false, token.UserID)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	if len(status) < 1 {
+		return errcode.Bad(w, errcode.ErrTokenIncorrect), nil
+	}
+
+	st := status[0]
+	if st.UserId != token.UserID {
+		return errcode.Bad(w, errcode.ErrTokenIncorrect), nil
+	}
+
+	ok := false
+	for _, v := range st.Values {
+		if v.Token == frame.Token {
+			ok = true
+			break
+		}
+	}
+
+	if !ok {
+		return errcode.Bad(w, errcode.ErrTokenIncorrect), nil
+	}
+
+	bytes, err := grpcproto.Marshal(&pb.Authentication_Form_Authorized_Info{
+		ID:     token.ID,
+		UserID: token.UserID,
+	})
+
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	w.Payload = &corespb.Response_Content{Content: bytes}
 	return w, nil
 }
 
@@ -581,7 +647,7 @@ func makeAuthenticationFormAccountInfo(account *dao.Accounts, c LRConfig, passTo
 
 	token := ""
 	if !passToken {
-		token, err = helper.GenerateToken(account.ID, account.UnionID, time.Duration(c.TokenExpireAt)*time.Second, []byte(c.TokenSecret))
+		token, err = helper.GenerateToken(account.ID, account.UserID, time.Duration(c.TokenExpireAt)*time.Second, []byte(c.TokenSecret))
 		if err != nil {
 			return nil, err
 		}

@@ -11,6 +11,9 @@ import (
 var (
 	// ErrNotFoundRouter 路由不存在
 	ErrNotFoundRouter = errors.New("ErrNotFoundRouter")
+
+	// ErrNotSupportCommand 不支持的命令
+	ErrNotSupportCommand = errors.New("ErrNotSupportCommand")
 )
 
 type (

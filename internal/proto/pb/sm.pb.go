@@ -208,6 +208,44 @@ func (*SM_User) Descriptor() ([]byte, []int) {
 	return file_internal_proto_pb_sm_proto_rawDescGZIP(), []int{0, 1}
 }
 
+type SM_Broadcast struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *SM_Broadcast) Reset() {
+	*x = SM_Broadcast{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SM_Broadcast) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SM_Broadcast) ProtoMessage() {}
+
+func (x *SM_Broadcast) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SM_Broadcast.ProtoReflect.Descriptor instead.
+func (*SM_Broadcast) Descriptor() ([]byte, []int) {
+	return file_internal_proto_pb_sm_proto_rawDescGZIP(), []int{0, 2}
+}
+
 type SM_User_Info struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -225,7 +263,7 @@ type SM_User_Info struct {
 func (x *SM_User_Info) Reset() {
 	*x = SM_User_Info{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_sm_proto_msgTypes[3]
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -238,7 +276,7 @@ func (x *SM_User_Info) String() string {
 func (*SM_User_Info) ProtoMessage() {}
 
 func (x *SM_User_Info) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_sm_proto_msgTypes[3]
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -315,7 +353,7 @@ type SM_User_Status struct {
 func (x *SM_User_Status) Reset() {
 	*x = SM_User_Status{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_sm_proto_msgTypes[4]
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -328,7 +366,7 @@ func (x *SM_User_Status) String() string {
 func (*SM_User_Status) ProtoMessage() {}
 
 func (x *SM_User_Status) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_sm_proto_msgTypes[4]
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -367,7 +405,7 @@ type SM_User_Action struct {
 func (x *SM_User_Action) Reset() {
 	*x = SM_User_Action{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_sm_proto_msgTypes[5]
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -380,7 +418,7 @@ func (x *SM_User_Action) String() string {
 func (*SM_User_Action) ProtoMessage() {}
 
 func (x *SM_User_Action) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_sm_proto_msgTypes[5]
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -407,7 +445,7 @@ type SM_User_Request struct {
 func (x *SM_User_Request) Reset() {
 	*x = SM_User_Request{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_sm_proto_msgTypes[6]
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -420,7 +458,7 @@ func (x *SM_User_Request) String() string {
 func (*SM_User_Request) ProtoMessage() {}
 
 func (x *SM_User_Request) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_sm_proto_msgTypes[6]
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -454,7 +492,7 @@ type SM_User_Reply struct {
 func (x *SM_User_Reply) Reset() {
 	*x = SM_User_Reply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_sm_proto_msgTypes[7]
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -467,7 +505,7 @@ func (x *SM_User_Reply) String() string {
 func (*SM_User_Reply) ProtoMessage() {}
 
 func (x *SM_User_Reply) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_sm_proto_msgTypes[7]
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -501,7 +539,7 @@ type SM_User_Action_Update struct {
 func (x *SM_User_Action_Update) Reset() {
 	*x = SM_User_Action_Update{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_sm_proto_msgTypes[8]
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -514,7 +552,7 @@ func (x *SM_User_Action_Update) String() string {
 func (*SM_User_Action_Update) ProtoMessage() {}
 
 func (x *SM_User_Action_Update) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_sm_proto_msgTypes[8]
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -551,7 +589,7 @@ type SM_User_Action_Online struct {
 func (x *SM_User_Action_Online) Reset() {
 	*x = SM_User_Action_Online{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_sm_proto_msgTypes[9]
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -564,7 +602,7 @@ func (x *SM_User_Action_Online) String() string {
 func (*SM_User_Action_Online) ProtoMessage() {}
 
 func (x *SM_User_Action_Online) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_sm_proto_msgTypes[9]
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -620,7 +658,7 @@ type SM_User_Action_Offline struct {
 func (x *SM_User_Action_Offline) Reset() {
 	*x = SM_User_Action_Offline{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_sm_proto_msgTypes[10]
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -633,7 +671,7 @@ func (x *SM_User_Action_Offline) String() string {
 func (*SM_User_Action_Offline) ProtoMessage() {}
 
 func (x *SM_User_Action_Offline) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_sm_proto_msgTypes[10]
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -674,7 +712,7 @@ type SM_User_Action_CleanCache struct {
 func (x *SM_User_Action_CleanCache) Reset() {
 	*x = SM_User_Action_CleanCache{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_sm_proto_msgTypes[11]
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -687,7 +725,7 @@ func (x *SM_User_Action_CleanCache) String() string {
 func (*SM_User_Action_CleanCache) ProtoMessage() {}
 
 func (x *SM_User_Action_CleanCache) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_sm_proto_msgTypes[11]
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -710,12 +748,193 @@ func (x *SM_User_Action_CleanCache) GetUserId() uint64 {
 	return 0
 }
 
+type SM_Broadcast_Message struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Command    int32    `protobuf:"varint,1,opt,name=Command,proto3" json:"Command,omitempty"`
+	SubCommand int32    `protobuf:"varint,2,opt,name=SubCommand,proto3" json:"SubCommand,omitempty"`
+	Payload    []byte   `protobuf:"bytes,3,opt,name=Payload,proto3" json:"Payload,omitempty"`
+	Receiver   []uint64 `protobuf:"varint,4,rep,packed,name=Receiver,proto3" json:"Receiver,omitempty"`
+}
+
+func (x *SM_Broadcast_Message) Reset() {
+	*x = SM_Broadcast_Message{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SM_Broadcast_Message) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SM_Broadcast_Message) ProtoMessage() {}
+
+func (x *SM_Broadcast_Message) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SM_Broadcast_Message.ProtoReflect.Descriptor instead.
+func (*SM_Broadcast_Message) Descriptor() ([]byte, []int) {
+	return file_internal_proto_pb_sm_proto_rawDescGZIP(), []int{0, 2, 0}
+}
+
+func (x *SM_Broadcast_Message) GetCommand() int32 {
+	if x != nil {
+		return x.Command
+	}
+	return 0
+}
+
+func (x *SM_Broadcast_Message) GetSubCommand() int32 {
+	if x != nil {
+		return x.SubCommand
+	}
+	return 0
+}
+
+func (x *SM_Broadcast_Message) GetPayload() []byte {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *SM_Broadcast_Message) GetReceiver() []uint64 {
+	if x != nil {
+		return x.Receiver
+	}
+	return nil
+}
+
+type SM_Broadcast_Messages struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Values []*SM_Broadcast_Message `protobuf:"bytes,1,rep,name=Values,proto3" json:"Values,omitempty"`
+	Sync   bool                    `protobuf:"varint,2,opt,name=Sync,proto3" json:"Sync,omitempty"`
+}
+
+func (x *SM_Broadcast_Messages) Reset() {
+	*x = SM_Broadcast_Messages{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SM_Broadcast_Messages) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SM_Broadcast_Messages) ProtoMessage() {}
+
+func (x *SM_Broadcast_Messages) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SM_Broadcast_Messages.ProtoReflect.Descriptor instead.
+func (*SM_Broadcast_Messages) Descriptor() ([]byte, []int) {
+	return file_internal_proto_pb_sm_proto_rawDescGZIP(), []int{0, 2, 1}
+}
+
+func (x *SM_Broadcast_Messages) GetValues() []*SM_Broadcast_Message {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
+func (x *SM_Broadcast_Messages) GetSync() bool {
+	if x != nil {
+		return x.Sync
+	}
+	return false
+}
+
+type SM_Broadcast_Ack struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Successed []uint64 `protobuf:"varint,1,rep,packed,name=Successed,proto3" json:"Successed,omitempty"`
+	Failed    []uint64 `protobuf:"varint,2,rep,packed,name=Failed,proto3" json:"Failed,omitempty"`
+}
+
+func (x *SM_Broadcast_Ack) Reset() {
+	*x = SM_Broadcast_Ack{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_pb_sm_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SM_Broadcast_Ack) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SM_Broadcast_Ack) ProtoMessage() {}
+
+func (x *SM_Broadcast_Ack) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_pb_sm_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SM_Broadcast_Ack.ProtoReflect.Descriptor instead.
+func (*SM_Broadcast_Ack) Descriptor() ([]byte, []int) {
+	return file_internal_proto_pb_sm_proto_rawDescGZIP(), []int{0, 2, 2}
+}
+
+func (x *SM_Broadcast_Ack) GetSuccessed() []uint64 {
+	if x != nil {
+		return x.Successed
+	}
+	return nil
+}
+
+func (x *SM_Broadcast_Ack) GetFailed() []uint64 {
+	if x != nil {
+		return x.Failed
+	}
+	return nil
+}
+
 var File_internal_proto_pb_sm_proto protoreflect.FileDescriptor
 
 var file_internal_proto_pb_sm_proto_rawDesc = []byte{
 	0x0a, 0x1a, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x2f, 0x70, 0x62, 0x2f, 0x73, 0x6d, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x02, 0x70, 0x62,
-	0x22, 0xb7, 0x06, 0x0a, 0x02, 0x53, 0x4d, 0x1a, 0x42, 0x0a, 0x05, 0x45, 0x76, 0x65, 0x6e, 0x74,
+	0x22, 0xcf, 0x08, 0x0a, 0x02, 0x53, 0x4d, 0x1a, 0x42, 0x0a, 0x05, 0x45, 0x76, 0x65, 0x6e, 0x74,
 	0x12, 0x25, 0x0a, 0x06, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e,
 	0x32, 0x0d, 0x2e, 0x70, 0x62, 0x2e, 0x53, 0x4d, 0x2e, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52,
 	0x06, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x44, 0x61, 0x74, 0x61, 0x18,
@@ -759,17 +978,35 @@ var file_internal_proto_pb_sm_proto_rawDesc = []byte{
 	0x52, 0x06, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x1a, 0x33, 0x0a, 0x05, 0x52, 0x65, 0x70, 0x6c,
 	0x79, 0x12, 0x2a, 0x0a, 0x06, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28,
 	0x0b, 0x32, 0x12, 0x2e, 0x70, 0x62, 0x2e, 0x53, 0x4d, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x2e, 0x53,
-	0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x22, 0x6b, 0x0a,
-	0x06, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1a, 0x0a, 0x16, 0x41, 0x63, 0x74, 0x69, 0x6f,
-	0x6e, 0x55, 0x73, 0x65, 0x72, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x10, 0x00, 0x12, 0x14, 0x0a, 0x10, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x55, 0x73, 0x65,
-	0x72, 0x4f, 0x6e, 0x6c, 0x69, 0x6e, 0x65, 0x10, 0x01, 0x12, 0x15, 0x0a, 0x11, 0x41, 0x63, 0x74,
-	0x69, 0x6f, 0x6e, 0x55, 0x73, 0x65, 0x72, 0x4f, 0x66, 0x66, 0x6c, 0x69, 0x6e, 0x65, 0x10, 0x02,
-	0x12, 0x18, 0x0a, 0x14, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x55, 0x73, 0x65, 0x72, 0x43, 0x6c,
-	0x65, 0x61, 0x6e, 0x43, 0x61, 0x63, 0x68, 0x65, 0x10, 0x03, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x69,
-	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f, 0x75, 0x62, 0x6c, 0x65, 0x6d,
-	0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x1a, 0x95, 0x02,
+	0x0a, 0x09, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x1a, 0x79, 0x0a, 0x07, 0x4d,
+	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64,
+	0x12, 0x1e, 0x0a, 0x0a, 0x53, 0x75, 0x62, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x0a, 0x53, 0x75, 0x62, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64,
+	0x12, 0x18, 0x0a, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x0c, 0x52, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x52, 0x65,
+	0x63, 0x65, 0x69, 0x76, 0x65, 0x72, 0x18, 0x04, 0x20, 0x03, 0x28, 0x04, 0x52, 0x08, 0x52, 0x65,
+	0x63, 0x65, 0x69, 0x76, 0x65, 0x72, 0x1a, 0x50, 0x0a, 0x08, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67,
+	0x65, 0x73, 0x12, 0x30, 0x0a, 0x06, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x18, 0x2e, 0x70, 0x62, 0x2e, 0x53, 0x4d, 0x2e, 0x42, 0x72, 0x6f, 0x61, 0x64,
+	0x63, 0x61, 0x73, 0x74, 0x2e, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x52, 0x06, 0x56, 0x61,
+	0x6c, 0x75, 0x65, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x53, 0x79, 0x6e, 0x63, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x04, 0x53, 0x79, 0x6e, 0x63, 0x1a, 0x3b, 0x0a, 0x03, 0x41, 0x63, 0x6b, 0x12,
+	0x1c, 0x0a, 0x09, 0x53, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x65, 0x64, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x04, 0x52, 0x09, 0x53, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x65, 0x64, 0x12, 0x16, 0x0a,
+	0x06, 0x46, 0x61, 0x69, 0x6c, 0x65, 0x64, 0x18, 0x02, 0x20, 0x03, 0x28, 0x04, 0x52, 0x06, 0x46,
+	0x61, 0x69, 0x6c, 0x65, 0x64, 0x22, 0x6b, 0x0a, 0x06, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12,
+	0x1a, 0x0a, 0x16, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x55, 0x73, 0x65, 0x72, 0x53, 0x74, 0x61,
+	0x74, 0x75, 0x73, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x10, 0x00, 0x12, 0x14, 0x0a, 0x10, 0x41,
+	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x55, 0x73, 0x65, 0x72, 0x4f, 0x6e, 0x6c, 0x69, 0x6e, 0x65, 0x10,
+	0x01, 0x12, 0x15, 0x0a, 0x11, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x55, 0x73, 0x65, 0x72, 0x4f,
+	0x66, 0x66, 0x6c, 0x69, 0x6e, 0x65, 0x10, 0x02, 0x12, 0x18, 0x0a, 0x14, 0x41, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x55, 0x73, 0x65, 0x72, 0x43, 0x6c, 0x65, 0x61, 0x6e, 0x43, 0x61, 0x63, 0x68, 0x65,
+	0x10, 0x03, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
+	0x2f, 0x64, 0x6f, 0x75, 0x62, 0x6c, 0x65, 0x6d, 0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x69, 0x6e,
+	0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -785,32 +1022,37 @@ func file_internal_proto_pb_sm_proto_rawDescGZIP() []byte {
 }
 
 var file_internal_proto_pb_sm_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_internal_proto_pb_sm_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_internal_proto_pb_sm_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_internal_proto_pb_sm_proto_goTypes = []interface{}{
 	(SM_Action)(0),                    // 0: pb.SM.Action
 	(*SM)(nil),                        // 1: pb.SM
 	(*SM_Event)(nil),                  // 2: pb.SM.Event
 	(*SM_User)(nil),                   // 3: pb.SM.User
-	(*SM_User_Info)(nil),              // 4: pb.SM.User.Info
-	(*SM_User_Status)(nil),            // 5: pb.SM.User.Status
-	(*SM_User_Action)(nil),            // 6: pb.SM.User.Action
-	(*SM_User_Request)(nil),           // 7: pb.SM.User.Request
-	(*SM_User_Reply)(nil),             // 8: pb.SM.User.Reply
-	(*SM_User_Action_Update)(nil),     // 9: pb.SM.User.Action.Update
-	(*SM_User_Action_Online)(nil),     // 10: pb.SM.User.Action.Online
-	(*SM_User_Action_Offline)(nil),    // 11: pb.SM.User.Action.Offline
-	(*SM_User_Action_CleanCache)(nil), // 12: pb.SM.User.Action.CleanCache
+	(*SM_Broadcast)(nil),              // 4: pb.SM.Broadcast
+	(*SM_User_Info)(nil),              // 5: pb.SM.User.Info
+	(*SM_User_Status)(nil),            // 6: pb.SM.User.Status
+	(*SM_User_Action)(nil),            // 7: pb.SM.User.Action
+	(*SM_User_Request)(nil),           // 8: pb.SM.User.Request
+	(*SM_User_Reply)(nil),             // 9: pb.SM.User.Reply
+	(*SM_User_Action_Update)(nil),     // 10: pb.SM.User.Action.Update
+	(*SM_User_Action_Online)(nil),     // 11: pb.SM.User.Action.Online
+	(*SM_User_Action_Offline)(nil),    // 12: pb.SM.User.Action.Offline
+	(*SM_User_Action_CleanCache)(nil), // 13: pb.SM.User.Action.CleanCache
+	(*SM_Broadcast_Message)(nil),      // 14: pb.SM.Broadcast.Message
+	(*SM_Broadcast_Messages)(nil),     // 15: pb.SM.Broadcast.Messages
+	(*SM_Broadcast_Ack)(nil),          // 16: pb.SM.Broadcast.Ack
 }
 var file_internal_proto_pb_sm_proto_depIdxs = []int32{
-	0, // 0: pb.SM.Event.Action:type_name -> pb.SM.Action
-	4, // 1: pb.SM.User.Status.Values:type_name -> pb.SM.User.Info
-	5, // 2: pb.SM.User.Reply.Values:type_name -> pb.SM.User.Status
-	5, // 3: pb.SM.User.Action.Update.Data:type_name -> pb.SM.User.Status
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	0,  // 0: pb.SM.Event.Action:type_name -> pb.SM.Action
+	5,  // 1: pb.SM.User.Status.Values:type_name -> pb.SM.User.Info
+	6,  // 2: pb.SM.User.Reply.Values:type_name -> pb.SM.User.Status
+	6,  // 3: pb.SM.User.Action.Update.Data:type_name -> pb.SM.User.Status
+	14, // 4: pb.SM.Broadcast.Messages.Values:type_name -> pb.SM.Broadcast.Message
+	5,  // [5:5] is the sub-list for method output_type
+	5,  // [5:5] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_internal_proto_pb_sm_proto_init() }
@@ -856,7 +1098,7 @@ func file_internal_proto_pb_sm_proto_init() {
 			}
 		}
 		file_internal_proto_pb_sm_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SM_User_Info); i {
+			switch v := v.(*SM_Broadcast); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -868,7 +1110,7 @@ func file_internal_proto_pb_sm_proto_init() {
 			}
 		}
 		file_internal_proto_pb_sm_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SM_User_Status); i {
+			switch v := v.(*SM_User_Info); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -880,7 +1122,7 @@ func file_internal_proto_pb_sm_proto_init() {
 			}
 		}
 		file_internal_proto_pb_sm_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SM_User_Action); i {
+			switch v := v.(*SM_User_Status); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -892,7 +1134,7 @@ func file_internal_proto_pb_sm_proto_init() {
 			}
 		}
 		file_internal_proto_pb_sm_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SM_User_Request); i {
+			switch v := v.(*SM_User_Action); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -904,7 +1146,7 @@ func file_internal_proto_pb_sm_proto_init() {
 			}
 		}
 		file_internal_proto_pb_sm_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SM_User_Reply); i {
+			switch v := v.(*SM_User_Request); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -916,7 +1158,7 @@ func file_internal_proto_pb_sm_proto_init() {
 			}
 		}
 		file_internal_proto_pb_sm_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SM_User_Action_Update); i {
+			switch v := v.(*SM_User_Reply); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -928,7 +1170,7 @@ func file_internal_proto_pb_sm_proto_init() {
 			}
 		}
 		file_internal_proto_pb_sm_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SM_User_Action_Online); i {
+			switch v := v.(*SM_User_Action_Update); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -940,7 +1182,7 @@ func file_internal_proto_pb_sm_proto_init() {
 			}
 		}
 		file_internal_proto_pb_sm_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SM_User_Action_Offline); i {
+			switch v := v.(*SM_User_Action_Online); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -952,7 +1194,55 @@ func file_internal_proto_pb_sm_proto_init() {
 			}
 		}
 		file_internal_proto_pb_sm_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SM_User_Action_Offline); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_pb_sm_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SM_User_Action_CleanCache); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_pb_sm_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SM_Broadcast_Message); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_pb_sm_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SM_Broadcast_Messages); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_pb_sm_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SM_Broadcast_Ack); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -970,7 +1260,7 @@ func file_internal_proto_pb_sm_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_internal_proto_pb_sm_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   12,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

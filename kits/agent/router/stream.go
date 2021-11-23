@@ -31,6 +31,7 @@ type (
 		onSend          atomic.Value
 		onReceive       atomic.Value
 		onDestroy       atomic.Value
+		allowCommands   map[int32]bool
 	}
 
 	// StreamOptions opts
@@ -214,8 +215,9 @@ func (r *Stream) OnDestroy(f func(session.Peer)) {
 
 func NewStream(config conf.RPCClient, logger coreslog.Logger, opts ...StreamOptions) *Stream {
 	s := &Stream{
-		c:       config,
-		clients: make(map[string]*rpc.BidirectionalStreamingClient),
+		c:             config,
+		clients:       make(map[string]*rpc.BidirectionalStreamingClient),
+		allowCommands: make(map[int32]bool),
 	}
 
 	for _, o := range opts {
@@ -223,4 +225,13 @@ func NewStream(config conf.RPCClient, logger coreslog.Logger, opts ...StreamOpti
 	}
 
 	return s
+}
+
+// AllowCommandsStreamOptions 设置允许通过的有效命令
+func AllowCommandsStreamOptions(commands ...int32) StreamOptions {
+	return func(r *Stream) {
+		for _, c := range commands {
+			r.allowCommands[c] = true
+		}
+	}
 }

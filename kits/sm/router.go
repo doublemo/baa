@@ -28,6 +28,7 @@ func InitRouter() {
 
 	// 注册处理请求
 	r.HandleFunc(command.SMUserStatus, getUsersStatus)
+	r.HandleFunc(command.SMBroadcastMessagesToAgent, broadcastMessagesToAgent)
 	// r.HandleFunc(command.USRTDeleteUserStatus, deleteUserStatus)
 	// r.HandleFunc(command.USRTGetUserStatus, getUserStatus)
 

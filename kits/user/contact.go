@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"strconv"
 	"time"
 	"unicode/utf8"
 
@@ -59,13 +60,11 @@ func addContact(req *corespb.Request, frame *pb.User_Contacts_Request_Add, c Use
 		Header:  req.Header,
 	}
 
-	var userId string
-	if m, ok := req.Header["UserId"]; ok {
-		userId = m
-	}
-
-	if userId != frame.Add.UserId {
-		return errcode.Bad(w, errcode.ErrUserNotfound, frame.Add.UserId), nil
+	var userId uint64
+	if m, ok := req.Header["UserID"]; ok {
+		if m, err := strconv.ParseUint(m, 10, 64); err == nil {
+			userId = m
+		}
 	}
 
 	if utf8.RuneCount([]byte(frame.Add.Message)) > 30 {
@@ -73,8 +72,8 @@ func addContact(req *corespb.Request, frame *pb.User_Contacts_Request_Add, c Use
 	}
 
 	uid, err := id.Decrypt(frame.Add.UserId, []byte(c.IDSecret))
-	if err != nil {
-		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+	if err != nil || uid != userId {
+		return errcode.Bad(w, errcode.ErrUserNotfound), nil
 	}
 
 	friendId, err := id.Decrypt(frame.Add.FriendId, []byte(c.IDSecret))
@@ -152,18 +151,16 @@ func acceptContact(req *corespb.Request, frame *pb.User_Contacts_Request_Accept,
 		Header:  req.Header,
 	}
 
-	var userId string
-	if m, ok := req.Header["UserId"]; ok {
-		userId = m
-	}
-
-	if userId != frame.Accept.UserId {
-		return errcode.Bad(w, errcode.ErrUserNotfound, frame.Accept.UserId), nil
+	var userId uint64
+	if m, ok := req.Header["UserID"]; ok {
+		if m, err := strconv.ParseUint(m, 10, 64); err == nil {
+			userId = m
+		}
 	}
 
 	uid, err := id.Decrypt(frame.Accept.UserId, []byte(c.IDSecret))
-	if err != nil {
-		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+	if err != nil || userId != uid {
+		return errcode.Bad(w, errcode.ErrUserNotfound), nil
 	}
 
 	friendId, err := id.Decrypt(frame.Accept.FriendId, []byte(c.IDSecret))
@@ -224,18 +221,16 @@ func refuseContact(req *corespb.Request, frame *pb.User_Contacts_Request_Refuse,
 		Header:  req.Header,
 	}
 
-	var userId string
-	if m, ok := req.Header["UserId"]; ok {
-		userId = m
-	}
-
-	if userId != frame.Refuse.UserId {
-		return errcode.Bad(w, errcode.ErrUserNotfound, frame.Refuse.UserId), nil
+	var userId uint64
+	if m, ok := req.Header["UserID"]; ok {
+		if m, err := strconv.ParseUint(m, 10, 64); err == nil {
+			userId = m
+		}
 	}
 
 	uid, err := id.Decrypt(frame.Refuse.UserId, []byte(c.IDSecret))
-	if err != nil {
-		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+	if err != nil || uid != userId {
+		return errcode.Bad(w, errcode.ErrUserNotfound), nil
 	}
 
 	friendId, err := id.Decrypt(frame.Refuse.FriendId, []byte(c.IDSecret))
@@ -301,18 +296,16 @@ func cancelContact(req *corespb.Request, frame *pb.User_Contacts_Request_Cancel,
 		Header:  req.Header,
 	}
 
-	var userId string
-	if m, ok := req.Header["UserId"]; ok {
-		userId = m
-	}
-
-	if userId != frame.Cancel.UserId {
-		return errcode.Bad(w, errcode.ErrUserNotfound, frame.Cancel.UserId), nil
+	var userId uint64
+	if m, ok := req.Header["UserID"]; ok {
+		if m, err := strconv.ParseUint(m, 10, 64); err == nil {
+			userId = m
+		}
 	}
 
 	uid, err := id.Decrypt(frame.Cancel.UserId, []byte(c.IDSecret))
-	if err != nil {
-		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+	if err != nil || uid != userId {
+		return errcode.Bad(w, errcode.ErrUserNotfound), nil
 	}
 
 	friendId, err := id.Decrypt(frame.Cancel.FriendId, []byte(c.IDSecret))
@@ -393,18 +386,16 @@ func friendRequestList(req *corespb.Request, c UserConfig) (*corespb.Response, e
 		Header:  req.Header,
 	}
 
-	var userId string
-	if m, ok := req.Header["UserId"]; ok {
-		userId = m
-	}
-
-	if userId != frame.UserId {
-		return errcode.Bad(w, errcode.ErrUserNotfound, frame.UserId), nil
+	var userId uint64
+	if m, ok := req.Header["UserID"]; ok {
+		if m, err := strconv.ParseUint(m, 10, 64); err == nil {
+			userId = m
+		}
 	}
 
 	uid, err := id.Decrypt(frame.UserId, []byte(c.IDSecret))
-	if err != nil {
-		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+	if err != nil || uid != userId {
+		return errcode.Bad(w, errcode.ErrUserNotfound), nil
 	}
 	list, count, err := dao.FindContactsRequestByUserID(uid, frame.Page, frame.Size, frame.Version)
 	if err != nil {
@@ -472,18 +463,16 @@ func contacts(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 		Header:  req.Header,
 	}
 
-	var userId string
-	if m, ok := req.Header["UserId"]; ok {
-		userId = m
-	}
-
-	if userId != frame.UserId {
-		return errcode.Bad(w, errcode.ErrUserNotfound, frame.UserId), nil
+	var userId uint64
+	if m, ok := req.Header["UserID"]; ok {
+		if m, err := strconv.ParseUint(m, 10, 64); err == nil {
+			userId = m
+		}
 	}
 
 	uid, err := id.Decrypt(frame.UserId, []byte(c.IDSecret))
-	if err != nil {
-		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+	if err != nil || userId != uid {
+		return errcode.Bad(w, errcode.ErrUserNotfound), nil
 	}
 
 	list, count, err := dao.FindContactsByUserID(uid, frame.Page, frame.Size, frame.Version)

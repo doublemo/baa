@@ -19,7 +19,10 @@ message Authentication {
       }
 
       message Request {
-         string AccountId = 1;
+          oneof ID {
+             uint64 Uint64ID = 1;
+             string StringID = 2;
+          }
       }
 
       message Reply {
@@ -133,6 +136,18 @@ message Authentication {
 
       message LogoutReply {
          string ID = 1;
+      }
+
+
+      message Authorized {
+         message Token {
+            string Token = 1;
+         }
+
+         message Info {
+            uint64 ID  = 1;
+            uint64 UserID = 2;
+         }
       }
    }
 }

@@ -39,6 +39,12 @@ type RobotConfig struct {
 	// PasswordSecret 密码 加密key 16位
 	PasswordSecret string `alias:"passwordSecret" default:"7531BDD8E5DA38397531BDD8E5DA3839"`
 
+	// CommandSecret 命令解密key
+	CommandSecret string `alias:"commandSecret" default:"7581BDD8E8DA3839"`
+
+	// CSRFSecret csrf key
+	CSRFSecret string `alias:"csrf" default:"7581BDD8E8DA3839"`
+
 	// PasswordMinLen 密码最少字符
 	PasswordMinLen int `alias:"passwordMinLen" default:"8"`
 
@@ -348,7 +354,7 @@ func createRobotByRegister(req *corespb.Request, frame *pb.Robot_Create_Request_
 	}
 
 	infoRequest := &corespb.Request{
-		Header:  map[string]string{"UserID": accountInfo.UserID, "AccountID": accountInfo.ID},
+		Header:  map[string]string{"UserID": strconv.FormatUint(userId, 10), "AccountID": strconv.FormatUint(accountsId, 10)},
 		Command: int32(command.UserRegister),
 	}
 
@@ -458,17 +464,23 @@ func runRobot(robot *dao.Robots, task *pb.Robot_Start_Robot, c RobotConfig, exit
 		netProtocol = c.NetProtocol
 	}
 
-	var agent string
+	var (
+		agent     string
+		httpAgent string
+	)
+
 	re := regexp.MustCompile(`^[\d]{1,3}\.[\d]{1,3}\.[\d]{1,3}\.[\d]{1,3}(:\d{1,5})?$`)
 	if re.MatchString(robot.Agent) {
 		agent = robot.Agent
 	} else if robot.Agent != "" {
-		if m, err := selectAgent(robot.Agent, netProtocol); err == nil {
+		if m, h, err := selectAgent(robot.Agent, netProtocol); err == nil {
 			agent = m
+			httpAgent = h
 		}
 	} else {
-		if m, err := randomAgent(netProtocol); err == nil {
+		if m, h, err := randomAgent(netProtocol); err == nil {
 			agent = m
+			httpAgent = h
 		}
 	}
 
@@ -517,47 +529,82 @@ func runRobot(robot *dao.Robots, task *pb.Robot_Start_Robot, c RobotConfig, exit
 	// 设置Peer数据
 	peer.SetParams("Robots", robot)
 	peer.SetParams("Task", task)
+	peer.SetParams("Agent", agent)
+	peer.SetParams("AgentHttp", httpAgent)
 
 	log.Debug(Logger()).Log("Robot", peer.ID(), "action", "started")
 	// 开始握手
 	return doRequestHandshake(peer)
 }
 
-func randomAgent(netProtocol string) (string, error) {
+func randomAgent(netProtocol string) (string, string, error) {
 	eds, err := sd.Endpoints()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	agents := make([]string, 0)
+	agentshttp := make([]string, 0)
 	for _, ed := range eds {
 		if ed.Name() == kit.AgentServiceName {
-			agents = append(agents, ed.Get("ip")+ed.Get(netProtocol))
+			domain := ed.Get("domain")
+			scheme := "http"
+			if domain == "" {
+				domain = ed.Get("ip")
+			} else {
+				uri, err := url.Parse(domain)
+				if err != nil {
+					return "", "", err
+				}
+				domain = uri.Host
+				scheme = uri.Scheme
+			}
+
+			agents = append(agents, domain+ed.Get(netProtocol))
+			agentshttp = append(agentshttp, scheme+"://"+domain+ed.Get("http"))
 		}
 	}
 
 	if len(agents) < 1 {
-		return "", errors.New("No gateway server can be used")
+		return "", "", errors.New("No gateway server can be used")
 	}
-	return agents[rand.Intn(len(agents))], nil
+
+	idx := rand.Intn(len(agents))
+	return agents[idx], agentshttp[idx], nil
 }
 
-func selectAgent(group, netProtocol string) (string, error) {
+func selectAgent(group, netProtocol string) (string, string, error) {
 	eds, err := sd.Endpoints()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	agents := make([]string, 0)
+	agentshttp := make([]string, 0)
 	for _, ed := range eds {
 		if ed.Name() == kit.AgentServiceName && ed.Get("group") == group {
-			agents = append(agents, ed.Get("ip")+ed.Get(netProtocol))
+			domain := ed.Get("domain")
+			scheme := "http"
+			if domain == "" {
+				domain = ed.Get("ip")
+			} else {
+				uri, err := url.Parse(domain)
+				if err != nil {
+					return "", "", err
+				}
+				domain = uri.Host
+				scheme = uri.Scheme
+			}
+
+			agents = append(agents, domain+ed.Get(netProtocol))
+			agentshttp = append(agentshttp, scheme+"://"+domain+ed.Get("http"))
 		}
 	}
 
 	if len(agents) < 1 {
-		return "", errors.New("No gateway server can be used")
+		return "", "", errors.New("No gateway server can be used")
 	}
 
-	return agents[rand.Intn(len(agents))], nil
+	idx := rand.Intn(len(agents))
+	return agents[idx], agentshttp[idx], nil
 }

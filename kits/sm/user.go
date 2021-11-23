@@ -3,7 +3,6 @@ package sm
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
@@ -35,7 +34,7 @@ func getUsersStatus(req *corespb.Request) (*corespb.Response, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	users, err := dao.GetMultiUsers(ctx, frame.Values...)
+	users, err := dao.GetCachedMultiUsers(ctx, frame.Values...)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
@@ -156,7 +155,7 @@ func offline(evt *pb.SM_Event) error {
 	if err != nil {
 		return err
 	}
-	return internalBroadcast(command.SMEvent, &pb.SM_Event{Action: pb.SM_ActionUserCleanCache, Data: data})
+	return internalBroadcastEvent(command.SMEvent, &pb.SM_Event{Action: pb.SM_ActionUserCleanCache, Data: data})
 }
 
 func updateUserStatus(evt *pb.SM_Event) error {
@@ -177,7 +176,7 @@ func cleanCache(evt *pb.SM_Event) error {
 		}
 	}
 
-	fmt.Println("cache cl", frame.UserId)
+	dao.ClearUsersCachedByUserID(frame.UserId)
 	return nil
 }
 

@@ -33,7 +33,7 @@ type Process struct {
 
 // Add 增加协程服务到盒子
 func (rc *Process) Add(actor *ProcessActor, status bool) int32 {
-	if actor == nil {
+	if actor == nil || actor.Exec == nil {
 		return 0
 	}
 
@@ -56,7 +56,7 @@ func (rc *Process) Run() error {
 	actors := rc.sortProcess(1)
 	waitCounter := 0
 	for _, actor := range actors {
-		if atomic.LoadInt32(&actor.stoped) == 0 {
+		if atomic.LoadInt32(&actor.stoped) == 0 || actor == nil || actor.Exec == nil {
 			continue
 		}
 
@@ -81,7 +81,9 @@ func (rc *Process) Run() error {
 		if m, ok := rc.actors.Load(e.id); ok {
 			actor := m.(*ProcessActor)
 			if atomic.LoadInt32(&actor.stoped) == 0 {
-				actor.Interrupt(e.err)
+				if actor.Interrupt != nil {
+					actor.Interrupt(e.err)
+				}
 				atomic.StoreInt32(&actor.stoped, 1)
 			}
 		}
@@ -106,7 +108,9 @@ func (rc *Process) Stop() {
 			continue
 		}
 
-		actor.Close()
+		if actor != nil {
+			actor.Close()
+		}
 	}
 }
 

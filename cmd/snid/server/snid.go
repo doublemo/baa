@@ -14,7 +14,10 @@ import (
 	"github.com/doublemo/baa/cores/os"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/metrics"
+	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/kits/auth"
 	"github.com/doublemo/baa/kits/snid"
 	"github.com/doublemo/baa/kits/snid/cache"
 	"github.com/doublemo/baa/kits/snid/dao"
@@ -50,6 +53,9 @@ type Config struct {
 
 	// Nats
 	Nats conf.Nats `alias:"nats"`
+
+	// Metrics grpc metrics
+	Metrics metrics.Config `alias:"metrics"`
 }
 
 type SnowflakeID struct {
@@ -84,6 +90,10 @@ func (s *SnowflakeID) Start() error {
 	// 设置日志
 	Logger(o.Runmode)
 	snid.SetLogger(logger)
+
+	if o.Runmode == "dev" {
+		o.Metrics.TurnOn = true
+	}
 
 	// 服务发现
 	endpoint := coressd.NewEndpoint(o.MachineID, snid.ServiceName, o.RPC.Addr)
@@ -122,8 +132,9 @@ func (s *SnowflakeID) Start() error {
 	// 注册运行服务
 	o.Nats.Name = o.MachineID
 	s.actors.Add(s.mustProcessActor(snid.NewNatsProcessActor(o.Nats)), true)
-	s.actors.Add(s.mustProcessActor(snid.NewRPCServerActor(o.RPC)), true)
+	s.actors.Add(s.mustProcessActor(rpc.NewRPCServerActor(o.RPC, auth.NewServer(), logger)), true)
 	s.actors.Add(s.mustProcessActor(snid.NewServiceDiscoveryProcessActor()), true)
+	s.actors.Add(s.mustProcessActor(metrics.NewMetricsProcessActor(o.Metrics, logger)), true)
 	return s.actors.Run()
 }
 

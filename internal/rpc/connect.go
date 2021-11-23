@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/doublemo/baa/internal/conf"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -14,6 +15,8 @@ import (
 // NewConnect 创建连接
 func NewConnect(c conf.RPCClient) (*grpc.ClientConn, error) {
 	opts := []grpc.DialOption{
+		grpc.WithUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor),
+		grpc.WithStreamInterceptor(grpc_prometheus.StreamClientInterceptor),
 		grpc.WithDefaultServiceConfig(makePolicy(c)), // This sets the initial balancing policy.
 	}
 
@@ -37,6 +40,8 @@ func NewConnect(c conf.RPCClient) (*grpc.ClientConn, error) {
 // NewConnectContext 创建连接
 func NewConnectContext(ctx context.Context, c conf.RPCClient) (*grpc.ClientConn, error) {
 	opts := []grpc.DialOption{
+		grpc.WithUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor),
+		grpc.WithStreamInterceptor(grpc_prometheus.StreamClientInterceptor),
 		grpc.WithDefaultServiceConfig(makePolicy(c)), // This sets the initial balancing policy.
 	}
 
@@ -65,12 +70,7 @@ func makePolicy(c conf.RPCClient) string {
 		},
 		"methodConfig": [{
 			"name": [
-				{"service": "sfu"},
-				{"service": "auth"},
-				{"service": "snid"},
-				{"service": "im"},
-				{"service": "usrt"},
-				{"service": "imf"}
+				{"service": "` + c.Name + `"}
 			],
 			"waitForReady": true,
 			"timeout":"1s",

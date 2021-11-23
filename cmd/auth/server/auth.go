@@ -13,6 +13,8 @@ import (
 	"github.com/doublemo/baa/cores/os"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/metrics"
+	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/auth"
 	"github.com/doublemo/baa/kits/auth/dao"
@@ -47,6 +49,9 @@ type Config struct {
 
 	// Redis
 	Redis conf.Redis `alias:"redis"`
+
+	// Metrics grpc metrics
+	Metrics metrics.Config `alias:"metrics"`
 }
 
 type Authentication struct {
@@ -81,6 +86,9 @@ func (s *Authentication) Start() error {
 	// 设置日志
 	Logger(o.Runmode)
 	auth.SetLogger(logger)
+	if o.Runmode == "dev" {
+		o.Metrics.TurnOn = true
+	}
 
 	if err := dao.Open(o.Database, o.Redis); err != nil {
 		return fmt.Errorf("MySQL: %v", err)
@@ -113,8 +121,9 @@ func (s *Authentication) Start() error {
 
 	// 注册运行服务
 	s.actors.Add(s.mustProcessActor(auth.NewNatsProcessActor(o.Nats)), true)
-	s.actors.Add(s.mustProcessActor(auth.NewRPCServerActor(o.RPC)), true)
+	s.actors.Add(s.mustProcessActor(rpc.NewRPCServerActor(o.RPC, auth.NewServer(), logger)), true)
 	s.actors.Add(s.mustProcessActor(auth.NewServiceDiscoveryProcessActor()), true)
+	s.actors.Add(s.mustProcessActor(metrics.NewMetricsProcessActor(o.Metrics, logger)), true)
 	return s.actors.Run()
 }
 

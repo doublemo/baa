@@ -12,6 +12,8 @@ import (
 	"github.com/doublemo/baa/cores/os"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/metrics"
+	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/imf"
 	"github.com/doublemo/baa/kits/imf/segmenter"
@@ -41,6 +43,9 @@ type Config struct {
 
 	// Filter 过滤设置
 	Filter imf.FilterConfig `alias:"filter"`
+
+	// Metrics grpc metrics
+	Metrics metrics.Config `alias:"metrics"`
 }
 
 type IMF struct {
@@ -76,6 +81,10 @@ func (s *IMF) Start() error {
 	Logger(o.Runmode)
 	imf.SetLogger(logger)
 
+	if o.Runmode == "dev" {
+		o.Metrics.TurnOn = true
+	}
+
 	// 服务发现
 	endpoint := coressd.NewEndpoint(o.MachineID, imf.ServiceName, o.RPC.Addr)
 	endpoint.Set("group", o.RPC.Group)
@@ -102,8 +111,9 @@ func (s *IMF) Start() error {
 
 	// 注册运行服务
 	s.actors.Add(s.mustProcessActor(imf.NewNatsProcessActor(o.Nats)), true)
-	s.actors.Add(s.mustProcessActor(imf.NewRPCServerActor(o.RPC)), true)
+	s.actors.Add(s.mustProcessActor(rpc.NewRPCServerActor(o.RPC, imf.NewServer(), logger)), true)
 	s.actors.Add(s.mustProcessActor(imf.NewServiceDiscoveryProcessActor()), true)
+	s.actors.Add(s.mustProcessActor(metrics.NewMetricsProcessActor(o.Metrics, logger)), true)
 	return s.actors.Run()
 }
 

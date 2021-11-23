@@ -1,7 +1,6 @@
 package sm
 
 import (
-	"fmt"
 	"math/rand"
 	"sync"
 
@@ -109,9 +108,6 @@ func (endpoints *Endpoints) reload() {
 	endpoints.mutex.Lock()
 	endpoints.records = data
 	endpoints.mutex.Unlock()
-	fmt.Println(endpoints.Random("auth"))
-	fmt.Println(endpoints.RoundRobin("im"))
-	fmt.Println(endpoints.RoundRobin("user"))
 }
 
 func NewEndpoints(wch chan struct{}, seed int64) *Endpoints {

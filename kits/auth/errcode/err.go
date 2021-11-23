@@ -43,6 +43,9 @@ var (
 	// ErrUsernameOrPasswordIncorrect 账户名或密码错误
 	ErrUsernameOrPasswordIncorrect = types.NewErrCode(kit.MakeErrCode(kit.Auth, 12), "Username or Password is incorrect")
 
+	// ErrTokenIncorrect 错误的Token
+	ErrTokenIncorrect = types.NewErrCode(kit.MakeErrCode(kit.Auth, 13), "Invalid call token in request")
+
 	// ErrInternalServer 服务器内部错误
 	ErrInternalServer = types.NewErrCode(kit.MakeErrCode(kit.Auth, 500), "Internal Server Error")
 )

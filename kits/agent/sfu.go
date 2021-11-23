@@ -18,3 +18,13 @@ func sfuHookOnReceive(s *router.Stream) {
 		}
 	})
 }
+
+func onStreamReceive(s *router.Stream) {
+	s.OnReceive(func(peer session.Peer, r *corespb.Response) {
+		w := proto.NewResponseBytes(kit.SFU, r)
+		bytes, _ := w.Marshal()
+		if err := peer.Send(session.PeerMessagePayload{Data: bytes}); err != nil {
+			log.Error(Logger()).Log("error", err)
+		}
+	})
+}

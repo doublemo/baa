@@ -13,7 +13,10 @@ import (
 	"github.com/doublemo/baa/cores/os"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
+	"github.com/doublemo/baa/internal/metrics"
+	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/internal/worker"
 	"github.com/doublemo/baa/kits/sm"
 	"github.com/doublemo/baa/kits/sm/dao"
 )
@@ -45,6 +48,12 @@ type Config struct {
 
 	// Nats
 	Nats conf.Nats `alias:"nats"`
+
+	// workers 工人设置
+	Worker worker.Config `alias:"worker"`
+
+	// Metrics grpc metrics
+	Metrics metrics.Config `alias:"metrics"`
 }
 
 type StateManagementServer struct {
@@ -80,6 +89,10 @@ func (s *StateManagementServer) Start() error {
 	Logger(o.Runmode)
 	sm.SetLogger(logger)
 
+	if o.Runmode == "dev" {
+		o.Metrics.TurnOn = true
+	}
+
 	// 服务发现
 	endpoint := coressd.NewEndpoint(o.MachineID, sm.ServiceName, o.RPC.Addr)
 	endpoint.Set("group", o.RPC.Group)
@@ -104,10 +117,14 @@ func (s *StateManagementServer) Start() error {
 	sm.InitRouter()
 	o.Nats.Name = o.MachineID
 
+	// 工人
+	worker.Init(o.Worker)
+
 	// 注册运行服务
 	s.actors.Add(s.mustProcessActor(sm.NewNatsProcessActor(o.Nats)), true)
-	s.actors.Add(s.mustProcessActor(sm.NewRPCServerActor(o.RPC)), true)
+	s.actors.Add(s.mustProcessActor(rpc.NewRPCServerActor(o.RPC, sm.NewServer(), logger)), true)
 	s.actors.Add(s.mustProcessActor(sm.NewServiceDiscoveryProcessActor()), true)
+	s.actors.Add(s.mustProcessActor(metrics.NewMetricsProcessActor(o.Metrics, logger)), true)
 	return s.actors.Run()
 }
 
