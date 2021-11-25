@@ -22,7 +22,7 @@ func NewMetricsProcessActor(c Config, logger coreslog.Logger) (*os.ProcessActor,
 	if !c.TurnOn {
 		return &os.ProcessActor{}, nil
 	}
-	fmt.Println(c)
+
 	m := http.NewServeMux()
 	m.Handle("/metrics", promhttp.Handler())
 	srv := &http.Server{Handler: m}

@@ -10,10 +10,12 @@ import (
 
 	"github.com/doublemo/baa/cores/crypto/id"
 	log "github.com/doublemo/baa/cores/log/level"
+	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/helper"
 	"github.com/doublemo/baa/internal/nats"
 	"github.com/doublemo/baa/internal/proto/command"
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/agent"
@@ -679,25 +681,23 @@ func kickedOut(peerID string) {
 		return
 	}
 
+	w := coresproto.RequestBytes{
+		Cmd:    kit.Agent,
+		SubCmd: command.AgentKickedOut,
+		SeqID:  1,
+	}
+
 	frame := pb.Agent_KickedOut{
 		PeerID: []string{peerID},
 	}
 
 	frameBytes, _ := grpcproto.Marshal(&frame)
-	r := corespb.Request{
-		Command: command.AgentKickedOut.Int32(),
-		Payload: frameBytes,
-		Header:  make(map[string]string),
-	}
-
-	r.Header["service"] = ServiceName
-	r.Header["addr"] = sd.Endpoint().Addr()
-	wBytes, _ := grpcproto.Marshal(&r)
+	w.Content = frameBytes
+	wBytes, _ := w.Marshal()
 	for _, endpoint := range endpoints {
 		if endpoint.Name() != agent.ServiceName {
 			continue
 		}
-
 		nc.Publish(endpoint.ID(), wBytes)
 	}
 }

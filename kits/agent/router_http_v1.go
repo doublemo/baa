@@ -3,13 +3,13 @@ package agent
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/doublemo/baa/cores/crypto/token"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/kits/agent/middlewares/interceptor"
 	"github.com/doublemo/baa/kits/agent/router"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc/resolver"
@@ -36,11 +36,12 @@ type (
 	}
 
 	HttpRouter struct {
-		Path          string         `alias:"path"`
-		Authorization bool           `alias:"authorization"`
-		Method        string         `alias:"method"`
-		Config        conf.RPCClient `alias:"config"`
-		Commands      []int32        `alias:"commands"`
+		Path             string         `alias:"path"`
+		Authorization    bool           `alias:"authorization"`
+		Method           string         `alias:"method"`
+		Config           conf.RPCClient `alias:"config"`
+		Commands         []int32        `alias:"commands"`
+		SkipAuthCommands []int32        `alias:"skipAuthCommands"`
 	}
 )
 
@@ -48,11 +49,11 @@ func httpRouterV1(r *mux.Router, c RouterConfig) {
 	v1 := r.PathPrefix("/v1").Subrouter()
 	v1.Use(csrfMethodMiddleware(c.HttpConfigV1))
 
-	v1s := v1.PathPrefix("/x").Subrouter()
-	v1s.Use(authenticationMiddleware)
-
-	var subrouter *mux.Router
 	for _, route := range c.HttpConfigV1.Routes {
+		if len(route.Commands) < 1 {
+			continue
+		}
+
 		if m := resolver.Get(route.Config.Name); m == nil {
 			resolver.Register(coressd.NewResolverBuilder(route.Config.Name, route.Config.Group, sd.Endpointer()))
 		}
@@ -62,44 +63,15 @@ func httpRouterV1(r *mux.Router, c RouterConfig) {
 			path += "/"
 		}
 
-		subrouter = v1
+		rInterceptor := router.WithRequestInterceptor(interceptor.AllowCommands(route.Commands...))
 		if route.Authorization {
-			subrouter = v1s
+			rInterceptor = append(rInterceptor, interceptor.AuthenticateToken(muxRouter, route.SkipAuthCommands...))
 		}
 
-		opts := []router.CallOptions{
-			router.CommandSecretCallOptions(c.HttpConfigV1.CommandSecret),
-			router.AllowCommandsCallOptions(route.Commands...),
-		}
-
-		subrouter.Handle(route.Path+"{command}", router.NewCall(route.Config, Logger(), opts...)).Methods(route.Method)
+		call := router.NewCall(route.Config, Logger(), router.CommandSecretCallOptions(c.HttpConfigV1.CommandSecret))
+		call.UseRequestInterceptor(rInterceptor...)
+		v1.Handle(path+"{command}", call).Methods(route.Method)
 	}
-}
-
-func authenticationMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("X-Session-Token")
-		if token == "" {
-			urlQuery := r.URL.Query()
-			token = urlQuery.Get("token")
-			if token == "" {
-				http.Error(w, "Forbidden", http.StatusForbidden)
-				return
-			}
-		}
-
-		info, err := authenticateToken(token)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusForbidden)
-			return
-		}
-
-		values := r.URL.Query()
-		values.Add("UserID", strconv.FormatUint(info.UserID, 10))
-		values.Add("AccountID", strconv.FormatUint(info.ID, 10))
-		r.URL.RawQuery = values.Encode()
-		next.ServeHTTP(w, r)
-	})
 }
 
 // X-CSRF-Token

@@ -56,7 +56,7 @@ func doCheckFriendRequest(peer session.Peer, page int32, c RobotConfig) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	url := agent.(string) + "/v1/x/user/%s?t=%d"
+	url := agent.(string) + "/v1/user/%s?t=%d"
 	t := time.Now().Unix()
 	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf(url, cmd, t), bytes.NewBuffer([]byte(data)))
 	if err != nil {

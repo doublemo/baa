@@ -23,7 +23,7 @@ type (
 		Serve(session.Peer, coresproto.Request) (coresproto.Response, error)
 
 		// Destroy 销毁和Peer相关的信息
-		Destroy(session.Peer)
+		Destroy(session.Peer) error
 	}
 
 	// HandlerFunc 路由处理函数
@@ -42,8 +42,8 @@ func (f HandlerFunc) Serve(peer session.Peer, req coresproto.Request) (coresprot
 }
 
 // Destroy 销毁和Peer相关的信息
-func (f HandlerFunc) Destroy(peer session.Peer) {
-	// clear
+func (f HandlerFunc) Destroy(peer session.Peer) error {
+	return nil
 }
 
 // Handle 注册接口方式

@@ -39,18 +39,16 @@ const (
 type (
 	// Call 处理路由Call方法
 	Call struct {
-		c               conf.RPCClient
-		pool            *grpcpool.Pool
-		onDestroy       atomic.Value
-		onBeforeCall    atomic.Value
-		onAfterCall     atomic.Value
-		commandSecret   []byte
-		maxQureyLength  int
-		maxBytesReader  int64
-		allowCommands   map[int32]bool
-		noAuthorization map[int32]bool
-		mutex           sync.RWMutex
-		logger          coreslog.Logger
+		c                    conf.RPCClient
+		pool                 *grpcpool.Pool
+		destroyInterceptors  atomic.Value
+		requestInterceptors  atomic.Value
+		responseInterceptors atomic.Value
+		commandSecret        []byte
+		maxQureyLength       int
+		maxBytesReader       int64
+		mutex                sync.RWMutex
+		logger               coreslog.Logger
 	}
 
 	CallOptions func(c *Call)
@@ -58,18 +56,18 @@ type (
 
 // Serve 服务处理
 func (r *Call) Serve(peer session.Peer, req coresproto.Request) (coresproto.Response, error) {
-	if !r.allowCommands[req.SubCommand().Int32()] {
-		return nil, ErrNotSupportCommand
-	}
-
 	request := &corespb.Request{
 		Header:  map[string]string{"PeerId": peer.ID(), "seqno": strconv.FormatUint(uint64(req.SID()), 10), "Content-Type": "stream"},
 		Command: req.SubCommand().Int32(),
 		Payload: req.Body(),
 	}
 
-	if handler, ok := r.onBeforeCall.Load().(func(session.Peer, coresproto.Request, *corespb.Request) error); ok && handler != nil {
-		if err := handler(peer, req, request); err != nil {
+	if handler, ok := r.requestInterceptors.Load().(RequestInterceptors); ok && handler != nil {
+		m := handler.Process(RequestInterceptorFunc(func(args RequestInterceptorArgs) error {
+			return nil
+		}))
+
+		if err := m.Process(RequestInterceptorArgs{peer, request, req}); err != nil {
 			return nil, err
 		}
 	}
@@ -79,8 +77,12 @@ func (r *Call) Serve(peer session.Peer, req coresproto.Request) (coresproto.Resp
 		return proto.NewResponseBytes(req.Command(), errcode.Bad(&corespb.Response{Command: req.SubCommand().Int32()}, errcode.ErrInternalServer, grpc.ErrorDesc(err))), nil
 	}
 
-	if handler, ok := r.onAfterCall.Load().(func(session.Peer, *corespb.Response) error); ok && handler != nil {
-		if err := handler(peer, resp); err != nil {
+	if handler, ok := r.responseInterceptors.Load().(ResponseInterceptors); ok && handler != nil {
+		m := handler.Process(ResponseInterceptorFunc(func(args ResponseInterceptorArgs) error {
+			return nil
+		}))
+
+		if err := m.Process(ResponseInterceptorArgs{peer, resp}); err != nil {
 			return nil, err
 		}
 	}
@@ -103,11 +105,6 @@ func (r *Call) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !r.allowCommands[int32(command)] {
-		http.Error(rw, ErrNotSupportCommand.Error(), http.StatusBadRequest)
-		return
-	}
-
 	request, err := r.buildCoresPBRequest(rw, req)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
@@ -117,8 +114,12 @@ func (r *Call) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	request.Command = int32(command)
 	request.Header["Content-Type"] = "json"
 	request.Header["X-Session-Token"] = req.Header.Get("X-Session-Token")
-	if handler, ok := r.onBeforeCall.Load().(func(session.Peer, coresproto.Request, *corespb.Request) error); ok && handler != nil {
-		if err := handler(nil, nil, request); err != nil {
+	if handler, ok := r.requestInterceptors.Load().(RequestInterceptors); ok && handler != nil {
+		m := handler.Process(RequestInterceptorFunc(func(args RequestInterceptorArgs) error {
+			return nil
+		}))
+
+		if err := m.Process(RequestInterceptorArgs{nil, request, nil}); err != nil {
 			http.Error(rw, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -131,8 +132,12 @@ func (r *Call) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if handler, ok := r.onAfterCall.Load().(func(session.Peer, *corespb.Response) error); ok && handler != nil {
-		if err := handler(nil, resp); err != nil {
+	if handler, ok := r.responseInterceptors.Load().(ResponseInterceptors); ok && handler != nil {
+		m := handler.Process(ResponseInterceptorFunc(func(args ResponseInterceptorArgs) error {
+			return nil
+		}))
+
+		if err := m.Process(ResponseInterceptorArgs{nil, resp}); err != nil {
 			http.Error(rw, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -216,36 +221,93 @@ func (r *Call) createPool() (*grpcpool.Pool, error) {
 }
 
 // Destroy 清理
-func (r *Call) Destroy(peer session.Peer) {
-	if handler, ok := r.onDestroy.Load().(func(session.Peer)); ok && handler != nil {
-		handler(peer)
+func (r *Call) Destroy(peer session.Peer) error {
+	if handler, ok := r.destroyInterceptors.Load().(ResponseInterceptors); ok && handler != nil {
+		m := handler.Process(ResponseInterceptorFunc(func(args ResponseInterceptorArgs) error {
+			return nil
+		}))
+
+		if err := m.Process(ResponseInterceptorArgs{peer, nil}); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-// OnDestroy 存储当路由清理时响应函数
-func (r *Call) OnDestroy(f func(peer session.Peer)) {
-	if f == nil {
+// UseDestroyInterceptor 存储当路由清理时响应函数
+func (r *Call) UseDestroyInterceptor(f ...func(ResponseInterceptor) ResponseInterceptor) {
+	if len(f) < 1 {
 		return
 	}
 
-	r.onDestroy.Store(f)
-}
+	newInterceptors := make(ResponseInterceptors, len(f))
+	for i, p := range f {
+		newInterceptors[i] = p
+	}
 
-// OnBeforeCall Hook
-func (r *Call) OnBeforeCall(f func(session.Peer, coresproto.Request, *corespb.Request) error) {
-	if f == nil {
+	interceptors, ok := r.destroyInterceptors.Load().(ResponseInterceptors)
+	if !ok || interceptors == nil || len(interceptors) < 1 {
+		r.destroyInterceptors.Store(newInterceptors)
 		return
 	}
-	r.onBeforeCall.Store(f)
+
+	interceptorsLen := len(interceptors)
+	newInterceptorsLen := len(newInterceptors)
+	data := make(ResponseInterceptors, interceptorsLen+newInterceptorsLen)
+	copy(data[0:interceptorsLen], interceptors[0:])
+	copy(data[interceptorsLen:], newInterceptors[0:])
+	r.destroyInterceptors.Store(data)
+}
+
+// UseRequestInterceptor Hook
+func (r *Call) UseRequestInterceptor(f ...func(RequestInterceptor) RequestInterceptor) {
+	if len(f) < 1 {
+		return
+	}
+
+	newInterceptors := make(RequestInterceptors, len(f))
+	for i, p := range f {
+		newInterceptors[i] = p
+	}
+
+	interceptors, ok := r.requestInterceptors.Load().(RequestInterceptors)
+	if !ok || interceptors == nil || len(interceptors) < 1 {
+		r.requestInterceptors.Store(newInterceptors)
+		return
+	}
+
+	interceptorsLen := len(interceptors)
+	newInterceptorsLen := len(newInterceptors)
+	data := make(RequestInterceptors, interceptorsLen+newInterceptorsLen)
+	copy(data[0:interceptorsLen], interceptors[0:])
+	copy(data[interceptorsLen:], newInterceptors[0:])
+	r.requestInterceptors.Store(data)
 }
 
 // OnAfterCall Hook
-func (r *Call) OnAfterCall(f func(session.Peer, *corespb.Response) error) {
-	if f == nil {
+func (r *Call) UseResponseInterceptor(f ...func(ResponseInterceptor) ResponseInterceptor) {
+	if len(f) < 1 {
 		return
 	}
 
-	r.onAfterCall.Store(f)
+	newInterceptors := make(ResponseInterceptors, len(f))
+	for i, p := range f {
+		newInterceptors[i] = p
+	}
+
+	interceptors, ok := r.responseInterceptors.Load().(ResponseInterceptors)
+	if !ok || interceptors == nil || len(interceptors) < 1 {
+		r.responseInterceptors.Store(newInterceptors)
+		return
+	}
+
+	interceptorsLen := len(interceptors)
+	newInterceptorsLen := len(newInterceptors)
+	data := make(ResponseInterceptors, interceptorsLen+newInterceptorsLen)
+	copy(data[0:interceptorsLen], interceptors[0:])
+	copy(data[interceptorsLen:], newInterceptors[0:])
+	r.responseInterceptors.Store(data)
 }
 
 func (r *Call) resolveContentType(req *http.Request) string {
@@ -342,13 +404,11 @@ func (r *Call) buildCoresPBMethodPost(rw http.ResponseWriter, req *http.Request)
 // NewCall 创建Call路由
 func NewCall(config conf.RPCClient, logger coreslog.Logger, opts ...CallOptions) *Call {
 	c := &Call{
-		c:               config,
-		commandSecret:   make([]byte, 0),
-		maxQureyLength:  defaultMaxQueryLength,
-		maxBytesReader:  defaultMaxBytesReader,
-		logger:          logger,
-		allowCommands:   make(map[int32]bool),
-		noAuthorization: make(map[int32]bool),
+		c:              config,
+		commandSecret:  make([]byte, 0),
+		maxQureyLength: defaultMaxQueryLength,
+		maxBytesReader: defaultMaxBytesReader,
+		logger:         logger,
 	}
 
 	for _, o := range opts {
@@ -375,23 +435,5 @@ func MaxQureyLengthCallOptions(num int) CallOptions {
 func MaxBytesReaderCallOptions(num int64) CallOptions {
 	return func(r *Call) {
 		r.maxBytesReader = num
-	}
-}
-
-// AllowCommandsCallOptions 设置允许通过的有效命令
-func AllowCommandsCallOptions(commands ...int32) CallOptions {
-	return func(r *Call) {
-		for _, c := range commands {
-			r.allowCommands[c] = true
-		}
-	}
-}
-
-// NoAuthorizationCommandsCallOptions 设置不能检查授权的命令
-func NoAuthorizationCommandsCallOptions(commands ...int32) CallOptions {
-	return func(r *Call) {
-		for _, c := range commands {
-			r.noAuthorization[c] = true
-		}
 	}
 }

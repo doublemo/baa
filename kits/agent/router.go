@@ -19,6 +19,7 @@ import (
 	irouter "github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/agent/errcode"
+	"github.com/doublemo/baa/kits/agent/middlewares/interceptor"
 	midPeer "github.com/doublemo/baa/kits/agent/middlewares/peer"
 	"github.com/doublemo/baa/kits/agent/proto"
 	"github.com/doublemo/baa/kits/agent/router"
@@ -40,8 +41,6 @@ var (
 
 	// muxRouter 内部调用处理
 	muxRouter = irouter.NewMux()
-
-	kitConfigs = make(map[coresproto.Command]Router)
 )
 
 type (
@@ -52,12 +51,13 @@ type (
 	}
 
 	Router struct {
-		KitID         int32          `alias:"kitid"`
-		Authorization bool           `alias:"authorization"`
-		Config        conf.RPCClient `alias:"config"`
-		NetProtocol   string         `alias:"net"`
-		ContentType   string         `alias:"contentType"`
-		Commands      []int32        `alias:"commands"`
+		KitID            int32          `alias:"kitid"`
+		Authorization    bool           `alias:"authorization"`
+		Config           conf.RPCClient `alias:"config"`
+		NetProtocol      string         `alias:"net"`
+		ContentType      string         `alias:"contentType"`
+		Commands         []int32        `alias:"commands"`
+		SkipAuthCommands []int32        `alias:"skipAuthCommands"`
 	}
 )
 
@@ -66,6 +66,7 @@ func InitRouter(config RouterConfig) {
 	// Register grpc load balance
 	// 注册处理socket/websocket来的请求
 	// 注册处理datachannel来的请求
+	kitConfigs := make(map[coresproto.Command]Router)
 	for _, route := range config.Routes {
 		kitConfigs[coresproto.Command(route.KitID)] = route
 		if route.KitID == kit.Agent.Int32() {
@@ -81,47 +82,54 @@ func InitRouter(config RouterConfig) {
 		}
 
 		net := strings.ToLower(route.NetProtocol)
-		opts := []router.CallOptions{router.AllowCommandsCallOptions(route.Commands...)}
-		streamOpts := []router.StreamOptions{router.AllowCommandsStreamOptions(route.Commands...)}
-		if route.Authorization {
-			opts = append(opts, authenticateCall)
-			streamOpts = append(streamOpts, authenticateStream)
-		}
+		interceptors := router.WithRequestInterceptor(interceptor.AllowCommands(route.Commands...))
 
-		if route.Config.Name == kit.AuthServiceName {
-			opts = append(opts, authenticationHookAfter, authenticationHookDestroy)
+		if route.Authorization {
+			interceptors = append(interceptors, interceptor.Authenticate(route.SkipAuthCommands...))
 		}
 
 		switch net {
 		case "socket", "websocket", "tcp":
 			if route.ContentType == "stream" {
-				streamOpts = append(streamOpts, makeOnStreamReceive(coresproto.Command(route.KitID), false))
-				sRouter.Handle(coresproto.Command(route.KitID), router.NewStream(route.Config, Logger(), streamOpts...))
+				streamCall := router.NewStream(route.Config, Logger())
+				streamCall.UseRequestInterceptor(interceptors...)
+				streamCall.UseResponseInterceptor(interceptor.OnStreamReceive(coresproto.Command(route.KitID), false))
+				sRouter.Handle(coresproto.Command(route.KitID), streamCall)
 				continue
 			}
 
-			sRouter.Handle(coresproto.Command(route.KitID), router.NewCall(route.Config, Logger(), opts...))
+			call := router.NewCall(route.Config, Logger())
+			if route.Config.Name == kit.AuthServiceName {
+				call.UseDestroyInterceptor(interceptor.OnOfflineRouterDestroy(muxRouter))
+				call.UseResponseInterceptor(interceptor.OnLogin)
+			}
+			call.UseRequestInterceptor(interceptors...)
+			sRouter.Handle(coresproto.Command(route.KitID), call)
+
 		case "udp", "datachannel":
 			if route.ContentType == "stream" {
-				streamOpts = append(streamOpts, makeOnStreamReceive(coresproto.Command(route.KitID), true))
-				dRouter.Handle(coresproto.Command(route.KitID), router.NewStream(route.Config, Logger(), streamOpts...))
+				streamCall := router.NewStream(route.Config, Logger())
+				streamCall.UseRequestInterceptor(interceptors...)
+				streamCall.UseResponseInterceptor(interceptor.OnStreamReceive(coresproto.Command(route.KitID), true))
+				sRouter.Handle(coresproto.Command(route.KitID), streamCall)
 				continue
 			}
-			dRouter.Handle(coresproto.Command(route.KitID), router.NewCall(route.Config, Logger(), opts...))
+
+			call := router.NewCall(route.Config, Logger())
+			call.UseRequestInterceptor(interceptors...)
+			dRouter.Handle(coresproto.Command(route.KitID), call)
 		}
 	}
-
 	sRouter.HandleFunc(kit.Agent, agentRouter)
 
 	// 内部请求处理
 	if m, ok := kitConfigs[kit.Auth]; ok {
-		muxRouter.Register(kit.Auth.Int32(), irouter.New()).Handle(command.AuthorizedToken, irouter.NewCall(m.Config))
+		authRouter := irouter.NewCall(m.Config)
+		muxRouter.Register(kit.Auth.Int32(), irouter.New()).Handle(command.AuthorizedToken, authRouter).Handle(command.AuthOffline, authRouter)
 	}
 
 	// 注册处理nats订阅的请求
-	nrRouter.Register(kit.Agent.Int32(), irouter.New()).
-		HandleFunc(command.AgentKickedOut, kickedOut).
-		HandleFunc(command.AgentBroadcast, broadcast)
+	nrRouter.Register(kit.Agent.Int32(), irouter.New()).HandleFunc(command.AgentKickedOut, kickedOut).HandleFunc(command.AgentBroadcast, broadcast)
 }
 
 func onMessage(peer session.Peer, msg session.PeerMessagePayload) error {
@@ -357,28 +365,3 @@ func heartbeater(peer session.Peer, req coresproto.Request) (coresproto.Response
 	}
 	return resp, err
 }
-
-func makeOnStreamReceive(kitid coresproto.Command, datachannel bool) func(*router.Stream) {
-	datachannelName := ""
-	if datachannel {
-		datachannelName = session.PeerMessageChannelWebrtc
-	}
-
-	return func(s *router.Stream) {
-		s.OnReceive(func(peer session.Peer, resp *corespb.Response) {
-			w := proto.NewResponseBytes(kitid, resp)
-			bytes, _ := w.Marshal()
-			if err := peer.Send(session.PeerMessagePayload{Data: bytes, Channel: datachannelName}); err != nil {
-				log.Error(Logger()).Log("error", err)
-			}
-		})
-	}
-}
-
-// s.OnReceive(func(peer session.Peer, r *corespb.Response) {
-// 	w := proto.NewResponseBytes(kit.SFU, r)
-// 	bytes, _ := w.Marshal()
-// 	if err := peer.Send(session.PeerMessagePayload{Data: bytes}); err != nil {
-// 		log.Error(Logger()).Log("error", err)
-// 	}
-// })

@@ -21,17 +21,16 @@ import (
 type (
 	// Stream grpc stream
 	Stream struct {
-		c               conf.RPCClient
-		pool            *grpcpool.Pool
-		clients         map[string]*rpc.BidirectionalStreamingClient
-		logger          coreslog.Logger
-		mutex           sync.RWMutex
-		onBeforeConnect atomic.Value
-		onClose         atomic.Value
-		onSend          atomic.Value
-		onReceive       atomic.Value
-		onDestroy       atomic.Value
-		allowCommands   map[int32]bool
+		c                    conf.RPCClient
+		pool                 *grpcpool.Pool
+		clients              map[string]*rpc.BidirectionalStreamingClient
+		logger               coreslog.Logger
+		mutex                sync.RWMutex
+		onBeforeConnect      atomic.Value
+		onClose              atomic.Value
+		destroyInterceptors  atomic.Value
+		requestInterceptors  atomic.Value
+		responseInterceptors atomic.Value
 	}
 
 	// StreamOptions opts
@@ -50,8 +49,12 @@ func (r *Stream) Serve(peer session.Peer, req coresproto.Request) (coresproto.Re
 		Payload: req.Body(),
 	}
 
-	if handler, ok := r.onSend.Load().(func(session.Peer, coresproto.Request, *corespb.Request) error); ok && handler != nil {
-		if err := handler(peer, req, request); err != nil {
+	if handler, ok := r.requestInterceptors.Load().(RequestInterceptors); ok && handler != nil {
+		m := handler.Process(RequestInterceptorFunc(func(args RequestInterceptorArgs) error {
+			return nil
+		}))
+
+		if err := m.Process(RequestInterceptorArgs{peer, request, req}); err != nil {
 			return nil, err
 		}
 	}
@@ -60,12 +63,12 @@ func (r *Stream) Serve(peer session.Peer, req coresproto.Request) (coresproto.Re
 }
 
 // Destroy 清理
-func (r *Stream) Destroy(peer session.Peer) {
+func (r *Stream) Destroy(peer session.Peer) error {
 	r.mutex.RLock()
 	client, ok := r.clients[peer.ID()]
 	r.mutex.RUnlock()
 	if !ok {
-		return
+		return nil
 	}
 
 	client.Close()
@@ -73,9 +76,17 @@ func (r *Stream) Destroy(peer session.Peer) {
 	delete(r.clients, peer.ID())
 	r.mutex.Unlock()
 
-	if handler, ok := r.onDestroy.Load().(func(session.Peer)); ok && handler != nil {
-		handler(peer)
+	if handler, ok := r.destroyInterceptors.Load().(ResponseInterceptors); ok && handler != nil {
+		m := handler.Process(ResponseInterceptorFunc(func(args ResponseInterceptorArgs) error {
+			return nil
+		}))
+
+		if err := m.Process(ResponseInterceptorArgs{peer, nil}); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func (r *Stream) getClient(peer session.Peer) (*rpc.BidirectionalStreamingClient, error) {
@@ -110,9 +121,13 @@ func (r *Stream) getClient(peer session.Peer) (*rpc.BidirectionalStreamingClient
 	client = rpc.NewBidirectionalStreamingClient(conn.ClientConn, r.logger)
 	client.OnReceive = func(p session.Peer, s *Stream) func(*corespb.Response) {
 		return func(resp *corespb.Response) {
-			if handler, ok := s.onReceive.Load().(func(session.Peer, *corespb.Response)); ok && handler != nil {
-				handler(p, resp)
+			if handler, ok := r.responseInterceptors.Load().(ResponseInterceptors); ok && handler != nil {
+				m := handler.Process(ResponseInterceptorFunc(func(args ResponseInterceptorArgs) error {
+					return nil
+				}))
+				m.Process(ResponseInterceptorArgs{peer, resp})
 			}
+
 		}
 	}(peer, r)
 
@@ -187,37 +202,85 @@ func (r *Stream) OnClose(f func(md metadata.MD) metadata.MD) {
 	r.onClose.Store(f)
 }
 
-// OnSend Hook
-func (r *Stream) OnSend(f func(session.Peer, coresproto.Request, *corespb.Request) error) {
-	if f == nil {
+// UseDestroyInterceptor 存储当路由清理时响应函数
+func (r *Stream) UseDestroyInterceptor(f ...func(ResponseInterceptor) ResponseInterceptor) {
+	if len(f) < 1 {
 		return
 	}
 
-	r.onSend.Store(f)
+	newInterceptors := make(ResponseInterceptors, len(f))
+	for i, p := range f {
+		newInterceptors[i] = p
+	}
+
+	interceptors, ok := r.destroyInterceptors.Load().(ResponseInterceptors)
+	if !ok || interceptors == nil || len(interceptors) < 1 {
+		r.destroyInterceptors.Store(newInterceptors)
+		return
+	}
+
+	interceptorsLen := len(interceptors)
+	newInterceptorsLen := len(newInterceptors)
+	data := make(ResponseInterceptors, interceptorsLen+newInterceptorsLen)
+	copy(data[0:interceptorsLen], interceptors[0:])
+	copy(data[interceptorsLen:], newInterceptors[0:])
+	r.destroyInterceptors.Store(data)
 }
 
-// OnReceive Hook
-func (r *Stream) OnReceive(f func(session.Peer, *corespb.Response)) {
-	if f == nil {
+// UseRequestInterceptor Hook
+func (r *Stream) UseRequestInterceptor(f ...func(RequestInterceptor) RequestInterceptor) {
+	if len(f) < 1 {
 		return
 	}
-	r.onReceive.Store(f)
+
+	newInterceptors := make(RequestInterceptors, len(f))
+	for i, p := range f {
+		newInterceptors[i] = p
+	}
+
+	interceptors, ok := r.requestInterceptors.Load().(RequestInterceptors)
+	if !ok || interceptors == nil || len(interceptors) < 1 {
+		r.requestInterceptors.Store(newInterceptors)
+		return
+	}
+
+	interceptorsLen := len(interceptors)
+	newInterceptorsLen := len(newInterceptors)
+	data := make(RequestInterceptors, interceptorsLen+newInterceptorsLen)
+	copy(data[0:interceptorsLen], interceptors[0:])
+	copy(data[interceptorsLen:], newInterceptors[0:])
+	r.requestInterceptors.Store(data)
 }
 
-// OnDestroy Hook
-func (r *Stream) OnDestroy(f func(session.Peer)) {
-	if f == nil {
+// OnAfterCall Hook
+func (r *Stream) UseResponseInterceptor(f ...func(ResponseInterceptor) ResponseInterceptor) {
+	if len(f) < 1 {
 		return
 	}
 
-	r.onDestroy.Store(f)
+	newInterceptors := make(ResponseInterceptors, len(f))
+	for i, p := range f {
+		newInterceptors[i] = p
+	}
+
+	interceptors, ok := r.responseInterceptors.Load().(ResponseInterceptors)
+	if !ok || interceptors == nil || len(interceptors) < 1 {
+		r.responseInterceptors.Store(newInterceptors)
+		return
+	}
+
+	interceptorsLen := len(interceptors)
+	newInterceptorsLen := len(newInterceptors)
+	data := make(ResponseInterceptors, interceptorsLen+newInterceptorsLen)
+	copy(data[0:interceptorsLen], interceptors[0:])
+	copy(data[interceptorsLen:], newInterceptors[0:])
+	r.responseInterceptors.Store(data)
 }
 
 func NewStream(config conf.RPCClient, logger coreslog.Logger, opts ...StreamOptions) *Stream {
 	s := &Stream{
-		c:             config,
-		clients:       make(map[string]*rpc.BidirectionalStreamingClient),
-		allowCommands: make(map[int32]bool),
+		c:       config,
+		clients: make(map[string]*rpc.BidirectionalStreamingClient),
 	}
 
 	for _, o := range opts {
@@ -225,13 +288,4 @@ func NewStream(config conf.RPCClient, logger coreslog.Logger, opts ...StreamOpti
 	}
 
 	return s
-}
-
-// AllowCommandsStreamOptions 设置允许通过的有效命令
-func AllowCommandsStreamOptions(commands ...int32) StreamOptions {
-	return func(r *Stream) {
-		for _, c := range commands {
-			r.allowCommands[c] = true
-		}
-	}
 }
