@@ -33,7 +33,7 @@ func NewHttpProcessActor(httpConfig conf.Http, routerConfig RouterConfig) (*os.P
 	}
 
 	// 路由
-	httpRouterV1(r, routerConfig)
+	httpRouterV1(r, routerConfig.HttpConfigV1)
 
 	s := &http.Server{
 		Addr:           httpConfig.Addr,

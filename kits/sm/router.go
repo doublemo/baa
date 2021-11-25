@@ -2,7 +2,6 @@ package sm
 
 import (
 	"fmt"
-	"time"
 
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/proto/command"
@@ -35,7 +34,7 @@ func InitRouter() {
 	// 订阅处理
 	nrRouter.Register(kit.SM.Int32(), router.New()).HandleFunc(command.SMEvent, eventHandler)
 	nInternalRouter.HandleFunc(command.SMEvent, internalEventHandler)
-	time.AfterFunc(time.Second*10, testSend)
+	//time.AfterFunc(time.Second*10, testSend)
 }
 
 func testSend() {

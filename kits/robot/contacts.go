@@ -11,7 +11,9 @@ import (
 
 	"github.com/doublemo/baa/cores/crypto/id"
 	"github.com/doublemo/baa/cores/crypto/token"
+	log "github.com/doublemo/baa/cores/log/level"
 	coresproto "github.com/doublemo/baa/cores/proto"
+	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/proto/command"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/kits/robot/session"
@@ -80,8 +82,114 @@ func doCheckFriendRequest(peer session.Peer, page int32, c RobotConfig) error {
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(body), req.URL.String())
-	return err
+	if err != nil {
+		return err
+	}
+
+	var errmessage corespb.Error
+	{
+		if err := jsonpb.UnmarshalString(string(body), &errmessage); err == nil {
+			return errors.New(errmessage.Message)
+		}
+	}
+
+	var frameW pb.User_Contacts_FriendRequestListReply
+	{
+		if err := jsonpb.UnmarshalString(string(body), &frameW); err != nil {
+			return err
+		}
+	}
+
+	for _, v := range frameW.Values {
+		// 过滤掉自己发送的请求
+		if v.FromID == userid {
+			continue
+		}
+
+		if v.Status == 0 {
+			// 接受
+			log.Info(Logger()).Log("action", "doacceptFriendRequest", "peer", peer.ID(), "friend", v.FriendId)
+			if err := doacceptFriendRequest(peer, v.FriendId, c); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func doacceptFriendRequest(peer session.Peer, friendid string, c RobotConfig) error {
+	userid, ok := peer.Params("UserID")
+	if !ok {
+		return errors.New("invalid UserID")
+	}
+
+	agent, ok := peer.Params("AgentHttp")
+	if !ok {
+		return errors.New("invalid agent addr")
+	}
+
+	tk, ok := peer.Params("Token")
+	if !ok {
+		return errors.New("invalid token")
+	}
+
+	cmd, _ := id.Encrypt(uint64(command.UserContacts), []byte(c.CommandSecret))
+	frame := &pb.User_Contacts_Request{
+		Payload: &pb.User_Contacts_Request_Accept{
+			Accept: &pb.User_Contacts_Accept{
+				FriendId: friendid,
+				Remark:   "",
+				UserId:   userid.(string),
+			},
+		},
+	}
+
+	pm := jsonpb.Marshaler{}
+	data, err := pm.MarshalToString(frame)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	url := agent.(string) + "/v1/user/%s?t=%d"
+	t := time.Now().Unix()
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf(url, cmd, t), bytes.NewBuffer([]byte(data)))
+	if err != nil {
+		return err
+	}
+
+	tks := token.NewTKS()
+	tks.Push("command=" + cmd)
+	tks.Push(fmt.Sprintf("t=%d", t))
+
+	defer req.Body.Close()
+	req.Header.Set("X-CSRF-Token", tks.Marshal(c.CSRFSecret))
+	req.Header.Set("X-Session-Token", tk.(string))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	var errmessage corespb.Error
+	{
+		if err := jsonpb.UnmarshalString(string(body), &errmessage); err == nil {
+			return errors.New(errmessage.Message)
+		}
+	}
+
+	fmt.Println(string(body))
+	return nil
 }
 
 func friendRequest(peer session.Peer, w coresproto.Response) error {

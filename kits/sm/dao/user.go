@@ -197,9 +197,9 @@ func Online(ctx context.Context, users *Users) error {
 			return ret.Err()
 		}
 
-		if ret.Val() {
-			return ErrRecordIsFound
-		}
+		// if ret.Val() {
+		// 	return ErrRecordIsFound
+		// }
 
 		_, err := tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 			pipe.SAdd(ctx, namerOnline, users.Platform)

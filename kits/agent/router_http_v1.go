@@ -45,11 +45,11 @@ type (
 	}
 )
 
-func httpRouterV1(r *mux.Router, c RouterConfig) {
+func httpRouterV1(r *mux.Router, c HttpRouterV1Config) {
 	v1 := r.PathPrefix("/v1").Subrouter()
-	v1.Use(csrfMethodMiddleware(c.HttpConfigV1))
+	v1.Use(csrfMethodMiddleware(c))
 
-	for _, route := range c.HttpConfigV1.Routes {
+	for _, route := range c.Routes {
 		if len(route.Commands) < 1 {
 			continue
 		}
@@ -68,7 +68,7 @@ func httpRouterV1(r *mux.Router, c RouterConfig) {
 			rInterceptor = append(rInterceptor, interceptor.AuthenticateToken(muxRouter, route.SkipAuthCommands...))
 		}
 
-		call := router.NewCall(route.Config, Logger(), router.CommandSecretCallOptions(c.HttpConfigV1.CommandSecret))
+		call := router.NewCall(route.Config, Logger(), router.CommandSecretCallOptions(c.CommandSecret))
 		call.UseRequestInterceptor(rInterceptor...)
 		v1.Handle(path+"{command}", call).Methods(route.Method)
 	}

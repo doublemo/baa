@@ -120,7 +120,8 @@ func (r *Call) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}))
 
 		if err := m.Process(RequestInterceptorArgs{nil, request, nil}); err != nil {
-			http.Error(rw, err.Error(), http.StatusBadRequest)
+			errData, _ := json.Marshal(&corespb.Error{Code: errcode.ErrInternalServer.Code(), Message: err.Error()})
+			http.Error(rw, string(errData), http.StatusBadRequest)
 			return
 		}
 	}
@@ -128,7 +129,8 @@ func (r *Call) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	resp, err := r.Call(request)
 	if err != nil {
 		log.Error(r.logger).Log("action", "call", "error", err)
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		errData, _ := json.Marshal(&corespb.Error{Code: errcode.ErrInternalServer.Code(), Message: err.Error()})
+		http.Error(rw, string(errData), http.StatusBadRequest)
 		return
 	}
 
@@ -138,7 +140,8 @@ func (r *Call) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}))
 
 		if err := m.Process(ResponseInterceptorArgs{nil, resp}); err != nil {
-			http.Error(rw, err.Error(), http.StatusBadRequest)
+			errData, _ := json.Marshal(&corespb.Error{Code: errcode.ErrInternalServer.Code(), Message: err.Error()})
+			http.Error(rw, string(errData), http.StatusBadRequest)
 			return
 		}
 	}
