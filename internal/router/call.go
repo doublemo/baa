@@ -109,7 +109,6 @@ func (r *Call) selectFn(addr string) func(ctx context.Context) (*grpc.ClientConn
 		} else {
 			opts = append(opts, grpc.WithInsecure())
 		}
-
 		conn, err := grpc.DialContext(ctx, addr, opts...)
 		if err != nil {
 			return nil, err

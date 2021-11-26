@@ -32,7 +32,9 @@ func openDataChannel(peer session.Peer, c RobotConfig) error {
 	datachannel.OnOpen(func() {
 		// ok readyed
 		log.Debug(Logger()).Log("action", "Readyed", "Robot", peer.ID())
-		fmt.Println(doCheckFriendRequest(peer, 1, c))
+		//fmt.Println(doCheckFriendRequest(peer, 1, c))
+		fmt.Println(sendTestChat(peer))
+
 		// task, ok := peer.Params("Task")
 		// if !ok {
 		// 	log.Warn(Logger()).Log("action", "task", "error", "No task can be executed, the machine stops automatically", "Robot", peer.ID())

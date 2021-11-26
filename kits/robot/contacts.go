@@ -1,19 +1,11 @@
 package robot
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"fmt"
-	"io/ioutil"
-	"net/http"
 	"time"
 
-	"github.com/doublemo/baa/cores/crypto/id"
-	"github.com/doublemo/baa/cores/crypto/token"
 	log "github.com/doublemo/baa/cores/log/level"
-	coresproto "github.com/doublemo/baa/cores/proto"
-	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/proto/command"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/kits/robot/session"
@@ -32,6 +24,7 @@ func doCheckFriendRequest(peer session.Peer, page int32, c RobotConfig) error {
 		return errors.New("invalid UserID")
 	}
 
+	uid := userid.(string)
 	agent, ok := peer.Params("AgentHttp")
 	if !ok {
 		return errors.New("invalid agent addr")
@@ -42,7 +35,6 @@ func doCheckFriendRequest(peer session.Peer, page int32, c RobotConfig) error {
 		return errors.New("invalid token")
 	}
 
-	cmd, _ := id.Encrypt(uint64(command.UserContactsRequest), []byte(c.CommandSecret))
 	frame := &pb.User_Contacts_FriendRequestList{
 		UserId:  userid.(string),
 		Page:    page,
@@ -58,58 +50,30 @@ func doCheckFriendRequest(peer session.Peer, page int32, c RobotConfig) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	url := agent.(string) + "/v1/user/%s?t=%d"
-	t := time.Now().Unix()
-	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf(url, cmd, t), bytes.NewBuffer([]byte(data)))
-	if err != nil {
-		return err
-	}
 
-	tks := token.NewTKS()
-	tks.Push("command=" + cmd)
-	tks.Push(fmt.Sprintf("t=%d", t))
-
-	defer req.Body.Close()
-	req.Header.Set("X-CSRF-Token", tks.Marshal(c.CSRFSecret))
-	req.Header.Set("X-Session-Token", tk.(string))
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	var errmessage corespb.Error
-	{
-		if err := jsonpb.UnmarshalString(string(body), &errmessage); err == nil {
-			return errors.New(errmessage.Message)
-		}
+	body, errcode := RequestPostWithContext(ctx, command.UserContactsRequest, agent.(string)+"/v1/user", []byte(data), []byte(c.CommandSecret), tk.(string), c.CSRFSecret)
+	if errcode != nil {
+		return errcode.ToError()
 	}
 
 	var frameW pb.User_Contacts_FriendRequestListReply
 	{
 		if err := jsonpb.UnmarshalString(string(body), &frameW); err != nil {
+			log.Error(Logger()).Log("action", "doAddFriendRequest", "error", err.Error(), "body", string(body))
 			return err
 		}
 	}
 
 	for _, v := range frameW.Values {
 		// 过滤掉自己发送的请求
-		if v.FromID == userid {
+		if v.FromID == uid {
 			continue
 		}
 
 		if v.Status == 0 {
 			// 接受
 			log.Info(Logger()).Log("action", "doacceptFriendRequest", "peer", peer.ID(), "friend", v.FriendId)
-			if err := doacceptFriendRequest(peer, v.FriendId, c); err != nil {
+			if err := doAcceptFriendRequest(peer, v.FriendId, c); err != nil {
 				return err
 			}
 		}
@@ -118,7 +82,7 @@ func doCheckFriendRequest(peer session.Peer, page int32, c RobotConfig) error {
 	return nil
 }
 
-func doacceptFriendRequest(peer session.Peer, friendid string, c RobotConfig) error {
+func doAcceptFriendRequest(peer session.Peer, friendid string, c RobotConfig) error {
 	userid, ok := peer.Params("UserID")
 	if !ok {
 		return errors.New("invalid UserID")
@@ -134,7 +98,6 @@ func doacceptFriendRequest(peer session.Peer, friendid string, c RobotConfig) er
 		return errors.New("invalid token")
 	}
 
-	cmd, _ := id.Encrypt(uint64(command.UserContacts), []byte(c.CommandSecret))
 	frame := &pb.User_Contacts_Request{
 		Payload: &pb.User_Contacts_Request_Accept{
 			Accept: &pb.User_Contacts_Accept{
@@ -153,48 +116,178 @@ func doacceptFriendRequest(peer session.Peer, friendid string, c RobotConfig) er
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	url := agent.(string) + "/v1/user/%s?t=%d"
-	t := time.Now().Unix()
-	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf(url, cmd, t), bytes.NewBuffer([]byte(data)))
-	if err != nil {
-		return err
+
+	body, errcode := RequestPostWithContext(ctx, command.UserContacts, agent.(string)+"/v1/user", []byte(data), []byte(c.CommandSecret), tk.(string), c.CSRFSecret)
+	if errcode != nil {
+		return errcode.ToError()
 	}
 
-	tks := token.NewTKS()
-	tks.Push("command=" + cmd)
-	tks.Push(fmt.Sprintf("t=%d", t))
-
-	defer req.Body.Close()
-	req.Header.Set("X-CSRF-Token", tks.Marshal(c.CSRFSecret))
-	req.Header.Set("X-Session-Token", tk.(string))
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	var errmessage corespb.Error
+	var frameW pb.User_Contacts_Reply
 	{
-		if err := jsonpb.UnmarshalString(string(body), &errmessage); err == nil {
-			return errors.New(errmessage.Message)
+		if err := jsonpb.UnmarshalString(string(body), &frameW); err != nil {
+			log.Error(Logger()).Log("action", "doAddFriendRequest", "error", err.Error(), "body", string(body))
+			return err
 		}
 	}
 
-	fmt.Println(string(body))
-	return nil
+	if frameW.OK {
+		return nil
+	}
+
+	return errors.New("accept friend failed")
 }
 
-func friendRequest(peer session.Peer, w coresproto.Response) error {
-	if w.StatusCode() != 0 {
-		return errors.New(string(w.Body()))
+func doAddFriendRequest(peer session.Peer, friendid string, c RobotConfig) error {
+	userid, ok := peer.Params("UserID")
+	if !ok {
+		return errors.New("invalid UserID")
 	}
-	return nil
+
+	uid := userid.(string)
+	agent, ok := peer.Params("AgentHttp")
+	if !ok {
+		return errors.New("invalid agent addr")
+	}
+
+	tk, ok := peer.Params("Token")
+	if !ok {
+		return errors.New("invalid token")
+	}
+
+	frame := &pb.User_Contacts_Request{
+		Payload: &pb.User_Contacts_Request_Add{
+			Add: &pb.User_Contacts_Add{
+				FriendId: friendid,
+				Remark:   "",
+				Message:  "你好，我是小莉。想问点事儿",
+				UserId:   uid,
+			},
+		},
+	}
+
+	pm := jsonpb.Marshaler{}
+	data, err := pm.MarshalToString(frame)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	body, errcode := RequestPostWithContext(ctx, command.UserContacts, agent.(string)+"/v1/user", []byte(data), []byte(c.CommandSecret), tk.(string), c.CSRFSecret)
+	if errcode != nil {
+		return errcode.ToError()
+	}
+
+	var frameW pb.User_Contacts_Reply
+	{
+		if err := jsonpb.UnmarshalString(string(body), &frameW); err != nil {
+			log.Error(Logger()).Log("action", "doAddFriendRequest", "error", err.Error(), "body", string(body))
+			return err
+		}
+	}
+
+	if frameW.OK {
+		return nil
+	}
+
+	return errors.New("add friend failed")
+}
+
+func doFindFriendRequest(peer session.Peer, friend string, c RobotConfig) (*pb.User_Info, error) {
+	agent, ok := peer.Params("AgentHttp")
+	if !ok {
+		return nil, errors.New("invalid agent addr")
+	}
+
+	tk, ok := peer.Params("Token")
+	if !ok {
+		return nil, errors.New("invalid token")
+	}
+
+	frame := &pb.User_Contacts_Request{
+		Payload: &pb.User_Contacts_Request_SearchFriend{
+			SearchFriend: friend,
+		},
+	}
+
+	pm := jsonpb.Marshaler{}
+	data, err := pm.MarshalToString(frame)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	body, errcode := RequestPostWithContext(ctx, command.UserContacts, agent.(string)+"/v1/user", []byte(data), []byte(c.CommandSecret), tk.(string), c.CSRFSecret)
+	if errcode != nil {
+		return nil, errcode.ToError()
+	}
+
+	var frameW pb.User_Info
+	{
+		if err := jsonpb.UnmarshalString(string(body), &frameW); err != nil {
+			log.Error(Logger()).Log("action", "doAddFriendRequest", "error", err.Error(), "body", string(body))
+			return nil, err
+		}
+	}
+
+	return &frameW, nil
+}
+
+func doFindRefuseRequest(peer session.Peer, friendid string, c RobotConfig) error {
+	userid, ok := peer.Params("UserID")
+	if !ok {
+		return errors.New("invalid UserID")
+	}
+
+	uid := userid.(string)
+
+	agent, ok := peer.Params("AgentHttp")
+	if !ok {
+		return errors.New("invalid agent addr")
+	}
+
+	tk, ok := peer.Params("Token")
+	if !ok {
+		return errors.New("invalid token")
+	}
+
+	frame := &pb.User_Contacts_Request{
+		Payload: &pb.User_Contacts_Request_Refuse{
+			Refuse: &pb.User_Contacts_Refuse{
+				FriendId: friendid,
+				UserId:   uid,
+			},
+		},
+	}
+
+	pm := jsonpb.Marshaler{}
+	data, err := pm.MarshalToString(frame)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	body, errcode := RequestPostWithContext(ctx, command.UserContacts, agent.(string)+"/v1/user", []byte(data), []byte(c.CommandSecret), tk.(string), c.CSRFSecret)
+	if errcode != nil {
+		return errcode.ToError()
+	}
+
+	var frameW pb.User_Contacts_Reply
+	{
+		if err := jsonpb.UnmarshalString(string(body), &frameW); err != nil {
+			log.Error(Logger()).Log("action", "doAddFriendRequest", "error", err.Error(), "body", string(body))
+			return err
+		}
+	}
+
+	if frameW.OK {
+		return nil
+	}
+
+	return errors.New("refuse friend failed")
 }

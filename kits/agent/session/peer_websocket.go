@@ -327,7 +327,6 @@ func (p *PeerWebsocket) CreateDataChannel(w awebrtc.WebRTCTransportConfig) (*Dat
 				peer.mutexRW.RLock()
 				mws := newDCChain(peer.receiveMiddlewares)
 				peer.mutexRW.RUnlock()
-
 				m := mws.Process(PeerMessageProcessFunc(func(args PeerMessageProcessArgs) {
 					if handler, ok := p.onReceive.Load().(PeerOnReceiveCallback); ok && handler != nil {
 						if err := handler(args.Peer, args.Payload); err != nil {

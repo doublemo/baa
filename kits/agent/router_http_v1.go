@@ -1,14 +1,16 @@
 package agent
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 	"strings"
 
 	"github.com/doublemo/baa/cores/crypto/token"
+	corespb "github.com/doublemo/baa/cores/proto/pb"
 	coressd "github.com/doublemo/baa/cores/sd"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/kits/agent/errcode"
 	"github.com/doublemo/baa/kits/agent/middlewares/interceptor"
 	"github.com/doublemo/baa/kits/agent/router"
 	"github.com/gorilla/mux"
@@ -92,11 +94,13 @@ func csrfMethodMiddleware(c HttpRouterV1Config) mux.MiddlewareFunc {
 				token = urlQuery.Get("X-CSRF-Token")
 				tks.Push("X-CSRF-Token=" + token)
 			}
-			fmt.Println("X-CSRF-Token", tks.Marshal(c.CSRFSecret), tks, token)
+
 			if token != tks.Marshal(c.CSRFSecret) {
-				http.Error(w, "Forbidden", http.StatusForbidden)
+				errData, _ := json.Marshal(&corespb.Error{Code: errcode.ErrInternalServer.Code(), Message: "Forbidden"})
+				http.Error(w, string(errData), http.StatusForbidden)
 				return
 			}
+
 			next.ServeHTTP(w, req)
 		})
 	}

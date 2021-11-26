@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"sort"
 	"strconv"
@@ -152,6 +153,7 @@ func sendtoC(msg *dao.Messages, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb.IM_Ms
 
 	ttid, ok1 := timelines[msg.To]
 	ftid, ok2 := timelines[msg.From]
+	fmt.Println(ttid, ftid, ok1, ok2)
 	if !ok1 || !ok2 {
 		return nil, &pb.IM_Msg_AckFailed{
 			SeqID:      msg.SeqId,

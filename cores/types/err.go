@@ -2,7 +2,9 @@
 
 package types
 
-import "errors"
+import (
+	"fmt"
+)
 
 // ErrCode 错误码
 type ErrCode struct {
@@ -30,7 +32,7 @@ func (e ErrCode) Bytes() []byte {
 
 // ToError 转换为error类型
 func (e ErrCode) ToError() error {
-	return errors.New(e.Error())
+	return fmt.Errorf("<%d> %s", e.code, e.Error())
 }
 
 // NewErrCode 创建错误码

@@ -111,12 +111,12 @@ func addContact(req *corespb.Request, frame *pb.User_Contacts_Request_Add, c Use
 		}
 	}
 
-	user, err := dao.FindUsersByID(uid, "id", "nickname", "heading", "sex")
+	user, err := dao.FindUsersByID(uid, "id", "nickname", "headimg", "sex")
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
 	}
 
-	friend, err := dao.FindUsersByID(friendId, "id", "nickname", "heading", "sex")
+	friend, err := dao.FindUsersByID(friendId, "id", "nickname", "headimg", "sex")
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
 	}
@@ -132,6 +132,7 @@ func addContact(req *corespb.Request, frame *pb.User_Contacts_Request_Add, c Use
 		Messages:  "A:" + frame.Add.Message,
 		Status:    0,
 		FromID:    uid,
+		Version:   time.Now().Unix(),
 	}
 
 	if err := dao.CreateContactsRequest(&request); err != nil {
@@ -412,9 +413,11 @@ func friendRequestList(req *corespb.Request, c UserConfig) (*corespb.Response, e
 	for k, v := range list {
 		enuid, _ := id.Encrypt(v.UserID, []byte(c.IDSecret))
 		enfid, _ := id.Encrypt(v.FriendID, []byte(c.IDSecret))
+		effrom, _ := id.Encrypt(v.FromID, []byte(c.IDSecret))
 		resp.Values[k] = &pb.User_Contacts_FriendRequestInfo{
 			UserId:    enuid,
 			FriendId:  enfid,
+			FromID:    effrom,
 			FNickname: v.FNickname,
 			FHeadimg:  v.FHeadimg,
 			FSex:      int32(v.FSex),

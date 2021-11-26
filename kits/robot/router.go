@@ -70,6 +70,11 @@ func InitRouter(config RouterConfig) {
 	socketRouter.HandleFunc(kit.Agent, command.AgentHeartbeater, heartbeater)
 	socketRouter.HandleFunc(kit.Auth, command.AuthLogin, func(peer session.Peer, w coresproto.Response) error { return login(peer, w, config.Robot) })
 
+	dcRouter.HandleFunc(kit.IM, command.IMSend, func(peer session.Peer, w coresproto.Response) error {
+		return handleIMNotify(peer, w, config.Robot)
+	})
+	dcRouter.HandleFunc(kit.IM, command.IMPush, func(peer session.Peer, w coresproto.Response) error { return handleIMNotify(peer, w, config.Robot) })
+
 	time.AfterFunc(time.Second*10, testSend)
 }
 

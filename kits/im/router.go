@@ -66,7 +66,7 @@ func InitRouter(config RouterConfig) {
 		Handle(command.UserGroupMembers, user).
 		Handle(command.UserGroupMembersValidID, user)
 
-	time.AfterFunc(time.Second*10, testSend)
+	//time.AfterFunc(time.Second*10, testSend)
 }
 
 func testSend() {

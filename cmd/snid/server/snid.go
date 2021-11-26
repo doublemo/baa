@@ -17,7 +17,6 @@ import (
 	"github.com/doublemo/baa/internal/metrics"
 	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/internal/sd"
-	"github.com/doublemo/baa/kits/auth"
 	"github.com/doublemo/baa/kits/snid"
 	"github.com/doublemo/baa/kits/snid/cache"
 	"github.com/doublemo/baa/kits/snid/dao"
@@ -132,7 +131,7 @@ func (s *SnowflakeID) Start() error {
 	// 注册运行服务
 	o.Nats.Name = o.MachineID
 	s.actors.Add(s.mustProcessActor(snid.NewNatsProcessActor(o.Nats)), true)
-	s.actors.Add(s.mustProcessActor(rpc.NewRPCServerActor(o.RPC, auth.NewServer(), logger)), true)
+	s.actors.Add(s.mustProcessActor(rpc.NewRPCServerActor(o.RPC, snid.NewServer(), logger)), true)
 	s.actors.Add(s.mustProcessActor(snid.NewServiceDiscoveryProcessActor()), true)
 	s.actors.Add(s.mustProcessActor(metrics.NewMetricsProcessActor(o.Metrics, logger)), true)
 	return s.actors.Run()
