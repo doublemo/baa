@@ -11,6 +11,7 @@ import (
 	"github.com/doublemo/baa/internal/proto/pb"
 	irouter "github.com/doublemo/baa/internal/router"
 	"github.com/doublemo/baa/kits/agent/router"
+	"github.com/doublemo/baa/kits/agent/session"
 	grpcproto "github.com/golang/protobuf/proto"
 )
 
@@ -109,13 +110,16 @@ func OnLogin(next router.ResponseInterceptor) router.ResponseInterceptor {
 		accountID, ok1 := w.Header["AccountID"]
 		unionID, ok2 := w.Header["UnionID"]
 		userID, ok3 := w.Header["UserID"]
-		if !ok1 || !ok2 || !ok3 {
+		im, ok4 := w.Header["IMSeerver"]
+		if !ok1 || !ok2 || !ok3 || !ok4 {
 			return errors.New("Invalid login return data, causing the gateway to fail to complete the login action")
 		}
 
 		peer.SetParams("AccountID", accountID)
 		peer.SetParams("AccountUnionID", unionID)
 		peer.SetParams("UserID", userID)
+		peer.SetParams("IMServer", im)
+		session.AddDict(userID, peer)
 		return next.Process(args)
 	})
 }

@@ -14,4 +14,10 @@ const (
 
 	// SMBroadcastMessagesToAgent 广播消息到网关
 	SMBroadcastMessagesToAgent
+
+	// SMUserServers 获取用户分配的服务器
+	SMUserServers
+
+	// SMAssginServers 分配指定服务器
+	SMAssginServers
 )

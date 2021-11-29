@@ -1,9 +1,5 @@
 package dao
 
-import (
-	"time"
-)
-
 const defaultChatMessageKey = "inbox"
 
 // Messages聊天信息
@@ -19,5 +15,5 @@ type Messages struct {
 	ContentType string
 	Topic       uint64
 	Status      int32
-	CreatedAt   time.Time
+	CreatedAt   int64
 }

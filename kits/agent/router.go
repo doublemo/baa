@@ -4,6 +4,7 @@ import (
 	"crypto/rc4"
 	"fmt"
 	"math/big"
+	"strconv"
 	"strings"
 	"time"
 
@@ -102,7 +103,10 @@ func InitRouter(config RouterConfig) {
 			if route.Config.Name == kit.AuthServiceName {
 				call.UseDestroyInterceptor(interceptor.OnOfflineRouterDestroy(muxRouter))
 				call.UseResponseInterceptor(interceptor.OnLogin)
+			} else if route.Config.Name == kit.IMFServiceName {
+				interceptors = append(interceptors, interceptor.OnSelectIMServer)
 			}
+
 			call.UseRequestInterceptor(interceptors...)
 			sRouter.Handle(coresproto.Command(route.KitID), call)
 
@@ -113,6 +117,10 @@ func InitRouter(config RouterConfig) {
 				streamCall.UseResponseInterceptor(interceptor.OnStreamReceive(coresproto.Command(route.KitID), true))
 				sRouter.Handle(coresproto.Command(route.KitID), streamCall)
 				continue
+			}
+
+			if route.Config.Name == kit.IMServiceName {
+				interceptors = append(interceptors, interceptor.OnSelectIMServer)
 			}
 
 			call := router.NewCall(route.Config, Logger())
@@ -319,7 +327,7 @@ func broadcast(req *corespb.Request) (*corespb.Response, error) {
 		}
 		msg, _ := proto.NewResponseBytes(coresproto.Command(value.Command), w).Marshal()
 		for _, recv := range value.Receiver {
-			peers, ok := session.GetDict(recv)
+			peers, ok := session.GetDict(strconv.FormatUint(recv, 10))
 			if !ok {
 				continue
 			}

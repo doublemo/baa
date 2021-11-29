@@ -140,13 +140,22 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	}
 
 	// 防止相同账户重复登录
-	if peerID != account.PeerID && account.PeerID != "" {
-		kickedOut(account.PeerID)
+	status, err := getUsersStatus(true, account.UserID)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
 
-	// 更新
-	if _, err := dao.UpdatesAccountByID(account.ID, "peer_id", peerID); err != nil {
-		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, err.Error()), nil
+	for _, data := range status {
+		if data.UserId != account.UserID {
+			continue
+		}
+
+		for _, value := range data.Values {
+			if value.Platform == "pc" {
+				kickedOut(account.PeerID)
+				break
+			}
+		}
 	}
 
 	account.PeerID = peerID
@@ -159,7 +168,7 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	online, _ := grpcproto.Marshal(&pb.SM_User_Action_Online{
 		UserId:   account.UserID,
 		Platform: "pc",
-		Agent:    "",
+		Agent:    req.Header["Agent"],
 		Token:    accountInfo.Token,
 	})
 
@@ -179,6 +188,7 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	w.Header["AccountID"] = strconv.FormatUint(account.ID, 10)
 	w.Header["UnionID"] = strconv.FormatUint(account.UnionID, 10)
 	w.Header["UserID"] = strconv.FormatUint(account.UserID, 10)
+	w.Header["IMServer"] = ""
 	w.Payload = &corespb.Response_Content{Content: b}
 	return w, nil
 }

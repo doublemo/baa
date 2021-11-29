@@ -3,7 +3,6 @@ package dao
 import (
 	"context"
 	"strconv"
-	"time"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -27,7 +26,7 @@ func WriteInboxC(ctx context.Context, msg *Messages) error {
 	message["Content"] = msg.Content
 	message["Group"] = msg.Group
 	message["ContentType"] = msg.ContentType
-	message["CreatedAt"] = time.Now().Unix()
+	message["CreatedAt"] = msg.CreatedAt
 	message["TSeqId"] = msg.TSeqId
 	message["FSeqId"] = msg.FSeqId
 	message["Status"] = msg.Status
@@ -75,7 +74,7 @@ func WriteInboxG(ctx context.Context, msg *Messages) error {
 	message["Content"] = msg.Content
 	message["Group"] = msg.Group
 	message["ContentType"] = msg.ContentType
-	message["CreatedAt"] = time.Now().Unix()
+	message["CreatedAt"] = msg.CreatedAt
 	message["TSeqId"] = msg.TSeqId
 	message["FSeqId"] = msg.FSeqId
 	message["Status"] = msg.Status

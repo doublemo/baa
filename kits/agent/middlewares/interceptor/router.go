@@ -53,3 +53,21 @@ func OnOfflineRouterDestroy(mux *irouter.Mux) func(router.ResponseInterceptor) r
 		})
 	}
 }
+
+// OnSelectIMServer 选择聊天服务器
+func OnSelectIMServer(next router.RequestInterceptor) router.RequestInterceptor {
+	return router.RequestInterceptorFunc(func(args router.RequestInterceptorArgs) error {
+		if args.Peer == nil || args.Request == nil {
+			return next.Process(args)
+		}
+
+		peer := args.Peer
+		im, ok := peer.Params("IMServer")
+		if !ok {
+			return next.Process(args)
+		}
+
+		args.Request.Header["Host"] = im.(string)
+		return next.Process(args)
+	})
+}

@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/doublemo/baa/cores/crypto/id"
@@ -153,7 +153,6 @@ func sendtoC(msg *dao.Messages, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb.IM_Ms
 
 	ttid, ok1 := timelines[msg.To]
 	ftid, ok2 := timelines[msg.From]
-	fmt.Println(ttid, ftid, ok1, ok2)
 	if !ok1 || !ok2 {
 		return nil, &pb.IM_Msg_AckFailed{
 			SeqID:      msg.SeqId,
@@ -313,12 +312,13 @@ func makeMessage(frame *pb.IM_Msg_Content, secret []byte) (*dao.Messages, error)
 	}
 
 	msg := &dao.Messages{
-		ID:    frame.Id,
-		SeqId: frame.SeqID,
-		To:    tid,
-		From:  fid,
-		Group: int32(frame.Group),
-		Topic: frame.Topic,
+		ID:        frame.Id,
+		SeqId:     frame.SeqID,
+		To:        tid,
+		From:      fid,
+		Group:     int32(frame.Group),
+		Topic:     frame.Topic,
+		CreatedAt: time.Now().Unix(),
 	}
 
 	var content []byte
@@ -354,19 +354,21 @@ func makeMessage(frame *pb.IM_Msg_Content, secret []byte) (*dao.Messages, error)
 }
 
 func gatherUsersAgent(users ...uint64) (map[uint64][]string, error) {
-	status, err := getCacheUsersStatus(false, users...)
+	serversAddrs, err := getUserServers(false, users...)
 	if err != nil {
 		return nil, err
 	}
 
 	servers := make(map[uint64]map[string]bool)
 	for _, id := range users {
-		if server, ok := findServersID(id, kit.AgentServiceName, status); ok {
-			for _, s := range server {
-				if _, ok := servers[id]; !ok {
-					servers[id] = make(map[string]bool)
+		if addrs, ok := serversAddrs[id]; ok {
+			for k, addr := range addrs {
+				if strings.HasPrefix(k, kit.AgentServiceName+"/") {
+					if _, ok := servers[id]; !ok {
+						servers[id] = make(map[string]bool)
+					}
+					servers[id][addr] = true
 				}
-				servers[id][s] = true
 			}
 		}
 	}
@@ -491,7 +493,7 @@ func makeMessageToPB(m dao.Messages, secret []byte) (*pb.IM_Msg_Content, error) 
 		SeqID:  m.SeqId,
 		Group:  pb.IM_Msg_Group(m.Group),
 		Topic:  m.Topic,
-		SendAt: m.CreatedAt.Unix(),
+		SendAt: m.CreatedAt,
 	}
 	frameMsg.To, _ = id.Encrypt(m.To, secret)
 	frameMsg.From, _ = id.Encrypt(m.From, secret)

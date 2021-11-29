@@ -47,25 +47,29 @@ func namerUserTimeline(id uint64) string {
 }
 
 func getTimelines(nocache bool, values ...uint64) (map[uint64]uint64, error) {
-	status, err := getCacheUsersStatus(nocache, values...)
+	servers, err := getUserServers(nocache, values...)
 	if err != nil {
 		return nil, err
 	}
 
-	servers := make(map[uint64]string)
-	for _, id := range values {
-		if server, ok := findServersAddr(id, kit.SNIDServiceName, status); ok {
-			servers[id] = server[0]
-		}
-	}
-
 	// 分组获取
 	serversMap := make(map[string][]uint64)
-	for id, addr := range servers {
-		if _, ok := serversMap[addr]; !ok {
-			serversMap[addr] = make([]uint64, 0)
+	for id, addrs := range servers {
+		addr, ok := addrs[kit.SNIDServiceName]
+		if !ok {
+			continue
 		}
-		serversMap[addr] = append(serversMap[addr], id)
+
+		enpoint, err := findServerEndpoint(addr)
+		if err != nil {
+			return nil, err
+		}
+
+		enpointAddr := enpoint.Addr()
+		if _, ok := serversMap[enpointAddr]; !ok {
+			serversMap[enpointAddr] = make([]uint64, 0)
+		}
+		serversMap[enpointAddr] = append(serversMap[enpointAddr], id)
 	}
 
 	retValues := make(map[uint64]uint64)

@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
+	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -24,6 +26,7 @@ type (
 		OnlineAt    int64  // 上线时间
 		IMServer    string // 聊天服务器
 		IDServer    string // ID 分发服务器
+		PeerID      string
 	}
 )
 
@@ -191,6 +194,7 @@ func Online(ctx context.Context, users *Users) error {
 	idx := strconv.FormatUint(users.ID, 10)
 	namerUsers := RDBNamer(defaultUsersStatusKey, idx, users.Platform)
 	namerOnline := RDBNamer(defaultUserOnlineKey, idx)
+	namerServer := RDBNamer(defaultAssignServerKey, idx)
 	txf := func(tx *redis.Tx) error {
 		ret := tx.SIsMember(ctx, namerOnline, users.Platform)
 		if ret.Err() != nil {
@@ -211,6 +215,13 @@ func Online(ctx context.Context, users *Users) error {
 				"OnlineAt":    users.OnlineAt,
 				"IMServer":    users.IMServer,
 				"IDServer":    users.IDServer,
+				"PeerID":      users.PeerID,
+			})
+
+			pipe.HMSet(ctx, namerServer, map[string]interface{}{
+				kit.IMServiceName:                           users.IMServer,
+				kit.SNIDServiceName:                         users.IDServer,
+				kit.AgentServiceName + "/" + users.Platform: users.AgentServer,
 			})
 
 			return nil
@@ -223,6 +234,7 @@ loop:
 	err := rdb.Watch(ctx, txf, namerOnline, namerUsers)
 	if err == redis.TxFailedErr && n < 10 {
 		n++
+		time.Sleep(time.Millisecond)
 		goto loop
 	}
 
@@ -231,7 +243,7 @@ loop:
 }
 
 // Offline 用户下线
-func Offline(ctx context.Context, userid uint64, platform string) error {
+func Offline(ctx context.Context, userid uint64, platform, peerid string) error {
 	if rdb == nil {
 		return errors.New("rdb is nil")
 	}
@@ -239,12 +251,34 @@ func Offline(ctx context.Context, userid uint64, platform string) error {
 	idx := strconv.FormatUint(userid, 10)
 	namerUsers := RDBNamer(defaultUsersStatusKey, idx, platform)
 	namerOnline := RDBNamer(defaultUserOnlineKey, idx)
+	namerServer := RDBNamer(defaultAssignServerKey, idx)
 
-	_, err := rdb.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
-		pipe.SRem(ctx, namerOnline, platform)
-		pipe.Del(ctx, namerUsers)
-		return nil
-	})
+	txf := func(tx *redis.Tx) error {
+		ret := tx.HGet(ctx, namerUsers, "PeerID")
+		err := ret.Err()
+		if err == nil {
+			if ret.Val() != peerid {
+				return nil
+			}
+		}
+
+		_, err = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+			pipe.SRem(ctx, namerOnline, platform)
+			pipe.Del(ctx, namerUsers)
+			pipe.HDel(ctx, namerServer, kit.AgentServiceName+"/"+platform)
+			return nil
+		})
+		return err
+	}
+
+	n := 0
+loop:
+	err := rdb.Watch(ctx, txf, namerOnline, namerUsers)
+	if err == redis.TxFailedErr && n < 10 {
+		n++
+		time.Sleep(time.Millisecond)
+		goto loop
+	}
 
 	cacher.Delete(makeUsersCacheID(userid))
 	return err
@@ -278,6 +312,35 @@ func GetUserServers(ctx context.Context, userid uint64) (map[string]string, erro
 	}
 
 	return ret.Val(), nil
+}
+
+// GetMultiUserServers 获取多用户服务器地址
+func GetMultiUserServers(ctx context.Context, values ...uint64) (map[uint64]map[string]string, error) {
+	if rdb == nil {
+		return nil, errors.New("rdb is nil")
+	}
+
+	retx := make(map[uint64]*redis.StringStringMapCmd)
+	_, err := rdb.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+		for _, id := range values {
+			retx[id] = pipe.HGetAll(ctx, RDBNamer(defaultAssignServerKey, strconv.FormatUint(id, 10)))
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	data := make(map[uint64]map[string]string)
+	for id, v := range retx {
+		if v.Err() != nil {
+			continue
+		}
+
+		data[id] = v.Val()
+	}
+	return data, nil
 }
 
 // ClearUsersCachedByUserID 清除玩家状态信息缓存
@@ -314,6 +377,11 @@ func bindDataToUsers(data map[string]string) *Users {
 	if m, ok := data["IDServer"]; ok {
 		users.IDServer = m
 	}
+
+	if m, ok := data["PeerID"]; ok {
+		users.PeerID = m
+	}
+
 	return users
 }
 

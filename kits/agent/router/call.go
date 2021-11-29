@@ -21,11 +21,15 @@ import (
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/internal/conf"
 	"github.com/doublemo/baa/internal/rpc"
+	"github.com/doublemo/baa/internal/sd"
 	"github.com/doublemo/baa/kits/agent/errcode"
 	"github.com/doublemo/baa/kits/agent/proto"
 	"github.com/doublemo/baa/kits/agent/session"
 	"github.com/gorilla/mux"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/oauth"
 )
 
 const (
@@ -40,7 +44,7 @@ type (
 	// Call 处理路由Call方法
 	Call struct {
 		c                    conf.RPCClient
-		pool                 *grpcpool.Pool
+		pool                 map[string]*grpcpool.Pool
 		destroyInterceptors  atomic.Value
 		requestInterceptors  atomic.Value
 		responseInterceptors atomic.Value
@@ -57,7 +61,12 @@ type (
 // Serve 服务处理
 func (r *Call) Serve(peer session.Peer, req coresproto.Request) (coresproto.Response, error) {
 	request := &corespb.Request{
-		Header:  map[string]string{"PeerId": peer.ID(), "seqno": strconv.FormatUint(uint64(req.SID()), 10), "Content-Type": "stream"},
+		Header: map[string]string{
+			"PeerId":       peer.ID(),
+			"seqno":        strconv.FormatUint(uint64(req.SID()), 10),
+			"Content-Type": "stream",
+			"Agent":        sd.Endpoint().ID(),
+		},
 		Command: req.SubCommand().Int32(),
 		Payload: req.Body(),
 	}
@@ -114,6 +123,7 @@ func (r *Call) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	request.Command = int32(command)
 	request.Header["Content-Type"] = "json"
 	request.Header["X-Session-Token"] = req.Header.Get("X-Session-Token")
+	request.Header["Agent"] = sd.Endpoint().ID()
 	if handler, ok := r.requestInterceptors.Load().(RequestInterceptors); ok && handler != nil {
 		m := handler.Process(RequestInterceptorFunc(func(args RequestInterceptorArgs) error {
 			return nil
@@ -160,67 +170,87 @@ func (r *Call) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 // Call 调用
 func (r *Call) Call(req *corespb.Request) (*corespb.Response, error) {
-	p, err := r.createPool()
+	addr := "default"
+	if m, ok := req.Header["Host"]; ok && m != "" {
+		addr = m
+	}
+
+	p, err := r.createPool(addr)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	conn, err := p.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	client := corespb.NewServiceClient(conn.ClientConn)
-	ctx2, cancel2 := context.WithTimeout(context.Background(), 5*time.Second)
 	defer func() {
 		conn.Close()
-		cancel2()
 	}()
 
-	return client.Call(ctx2, req)
+	client := corespb.NewServiceClient(conn.ClientConn)
+	return client.Call(ctx, req)
 }
 
-func (r *Call) createPool() (*grpcpool.Pool, error) {
-	r.mutex.RLock()
-	if r.pool != nil {
-		r.mutex.RUnlock()
-		return r.pool, nil
+func (r *Call) createPool(addr string) (*grpcpool.Pool, error) {
+	r.mutex.Lock()
+	pl, ok := r.pool[addr]
+	r.mutex.Unlock()
+	if !ok && pl != nil {
+		return pl, nil
 	}
-	r.mutex.RUnlock()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	fn := func(ctx context.Context) (*grpc.ClientConn, error) {
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		default:
-		}
-
-		conn, err := rpc.NewConnect(r.c)
-		if err != nil {
-			return nil, err
-		}
-
-		return conn, nil
-	}
-
+	fn := r.selectFn(addr)
 	p, err := grpcpool.NewWithContext(ctx, fn, r.c.Pool.Init, r.c.Pool.Capacity, time.Duration(r.c.Pool.IdleTimeout)*time.Minute, time.Duration(r.c.Pool.MaxLife)*time.Minute)
 	if err != nil {
 		return nil, err
 	}
 
 	r.mutex.Lock()
-	if r.pool == nil {
-		r.pool = p
-	} else {
-		p = r.pool
-	}
+	r.pool[addr] = p
 	r.mutex.Unlock()
 	return p, nil
+}
+
+func (r *Call) selectFn(addr string) func(ctx context.Context) (*grpc.ClientConn, error) {
+	if addr == "default" || addr == "" {
+		return func(ctx context.Context) (*grpc.ClientConn, error) {
+			conn, err := rpc.NewConnectContext(ctx, r.c)
+			if err != nil {
+				return nil, err
+			}
+
+			return conn, nil
+		}
+	}
+
+	return func(ctx context.Context) (*grpc.ClientConn, error) {
+		opts := []grpc.DialOption{grpc.WithBlock()}
+		if len(r.c.Key) > 0 && len(r.c.Salt) > 0 {
+			creds, err := credentials.NewClientTLSFromFile(r.c.Salt, r.c.Key)
+			if err != nil {
+				return nil, err
+			}
+
+			opts = append(opts, grpc.WithTransportCredentials(creds))
+			opts = append(opts, grpc.WithPerRPCCredentials(oauth.NewOauthAccess(
+				&oauth2.Token{AccessToken: r.c.ServiceSecurityKey},
+			)))
+		} else {
+			opts = append(opts, grpc.WithInsecure())
+		}
+		conn, err := grpc.DialContext(ctx, addr, opts...)
+		if err != nil {
+			return nil, err
+		}
+		return conn, nil
+	}
 }
 
 // Destroy 清理
@@ -412,6 +442,7 @@ func NewCall(config conf.RPCClient, logger coreslog.Logger, opts ...CallOptions)
 		maxQureyLength: defaultMaxQueryLength,
 		maxBytesReader: defaultMaxBytesReader,
 		logger:         logger,
+		pool:           make(map[string]*grpcpool.Pool),
 	}
 
 	for _, o := range opts {

@@ -24,6 +24,7 @@ message SM {
            int64  OnlineAt = 5;
            string IMServer = 6;
            string IDServer = 7;
+           string PeerId   = 8;
        }
 
        message Status {
@@ -41,11 +42,13 @@ message SM {
                string Platform  = 2;
                string Agent     = 3;
                string Token = 4;
+               string PeerId    = 5;
            }
 
            message Offline {
                uint64 UserId    = 1;
                string Platform  = 2;
+               string PeerId    = 3;
            }
 
            message CleanCache {
@@ -60,6 +63,36 @@ message SM {
         message Reply{
             repeated Status Values = 2;
         } 
+
+        message Servers{
+            message Info {
+                uint64 UserId = 1;
+                map<string, string> Servers = 2;
+            }
+
+            message Request {
+                repeated uint64 Values = 1; 
+            }
+
+            message Reply{
+                repeated Info Values = 2;
+            } 
+
+            message Assign{
+                string KitName = 2;
+                int32  LB      = 3;
+            }
+
+            message AssignServerRequest {
+                uint64 UserId = 1;
+                repeated Assign Values  = 2;
+            }
+
+            message AssignServerReply {
+                map<string, string> PeerId  = 1;
+                Info Values = 2;
+            }
+        }
    }
 
 

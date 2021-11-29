@@ -58,7 +58,7 @@ func InitRouter(config RouterConfig) {
 	cache.SnowflakeCacherOnFill(func(i int) ([]uint64, error) { return getSNID(int32(i)) })
 
 	sm := router.NewCall(config.ServiceSM)
-	muxRouter.Register(kit.SM.Int32(), router.New()).Handle(command.SMUserStatus, sm)
+	muxRouter.Register(kit.SM.Int32(), router.New()).Handle(command.SMUserServers, sm)
 
 	user := router.NewCall(config.ServiceUser)
 	muxRouter.Register(kit.User.Int32(), router.New()).Handle(command.UserCheckIsMyFriend, user).

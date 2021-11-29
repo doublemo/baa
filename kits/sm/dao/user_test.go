@@ -34,7 +34,7 @@ func TestOffline(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = Offline(context.Background(), 1, "pc")
+	err = Offline(context.Background(), 1, "pc", "")
 
 	if err != nil {
 		t.Fatal(err)
