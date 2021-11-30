@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -122,7 +123,7 @@ func getSNID(num int32) ([]uint64, error) {
 		return resp.Values, nil
 
 	case *corespb.Response_Error:
-		return nil, errors.New(payload.Error.Message)
+		return nil, fmt.Errorf("<%d> %s", payload.Error.Code, payload.Error.Message)
 	}
 
 	return nil, errors.New("snid failed")

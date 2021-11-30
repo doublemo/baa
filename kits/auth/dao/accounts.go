@@ -36,7 +36,6 @@ type (
 		Status     int
 		Type       int32 // 账户类型 0 普通 -1 机器人
 		ExpiresAt  int64
-		PeerID     string
 		CreatedAt  time.Time
 		UpdatedAt  time.Time
 		DeletedAt  gorm.DeletedAt `gorm:"index"`

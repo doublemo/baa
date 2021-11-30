@@ -127,11 +127,8 @@ message Authentication {
       }
 
       message Logout {
-         oneof Payload {
-            string ID = 1;
-            string Token = 2;
-            string PeerID = 3;
-         }
+         string AccountID = 1;
+         string UserID    = 2;
       }
 
       message LogoutReply {

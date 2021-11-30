@@ -9,6 +9,11 @@ message IM {
             ToG = 1;
         }
 
+        enum Origin {
+            OriginUser   = 0; // 用户
+            OriginSystem = 1; // 系统
+        }
+
         message ContentType {
             message Text {
                 string Content = 1;
@@ -47,6 +52,12 @@ message IM {
                 bytes   Content  = 1;
                 string  Name     = 2; // 名称
             }
+
+            message JoinGroupInvite {
+                string GroupID =  1;
+                string Name    = 2;
+                string Headimg = 3;
+            }
         }
 
         message Content {
@@ -54,17 +65,19 @@ message IM {
             uint64 SeqID = 2;
             string To    = 3;
             string From  = 4;
+            Group Group = 5;
+            uint64 Topic = 6;
+            int64 SendAt = 7;
+            Origin Origin = 8; // 来源
             oneof Payload {
-                ContentType.Text Text = 5;
-                ContentType.Video Video = 6;
-                ContentType.Image Image = 7;
-                ContentType.Voice Voice = 8;
-                ContentType.File File = 9;
-                ContentType.Emoticon Emoticon = 10;
+                ContentType.Text Text = 9;
+                ContentType.Video Video = 10;
+                ContentType.Image Image = 11;
+                ContentType.Voice Voice = 12;
+                ContentType.File File = 13;
+                ContentType.Emoticon Emoticon = 14;
+                ContentType.JoinGroupInvite JoinGroupInvite = 15;
             }
-            Group Group = 11;
-            uint64 Topic = 12;
-            int64 SendAt = 13;
         }
 
         message List {

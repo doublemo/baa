@@ -33,7 +33,8 @@ func openDataChannel(peer session.Peer, c RobotConfig) error {
 		// ok readyed
 		log.Debug(Logger()).Log("action", "Readyed", "Robot", peer.ID())
 		//fmt.Println(doCheckFriendRequest(peer, 1, c))
-		fmt.Println(sendTestChat(peer))
+		//fmt.Println(sendTestChat(peer))
+		fmt.Println(doCreateAndJoinGroup(peer, c))
 
 		// task, ok := peer.Params("Task")
 		// if !ok {

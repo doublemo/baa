@@ -173,6 +173,17 @@ message User{
 
 
     message Group {
+        message Create {
+            message Request {
+                string UserId = 1;
+                repeated string Members = 2; 
+            }
+
+            message Reply {
+                Info Info = 1;
+            }
+        }
+        
         message Info {
             string ID = 1;
             string Name = 2;

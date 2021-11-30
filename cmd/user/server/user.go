@@ -16,6 +16,7 @@ import (
 	"github.com/doublemo/baa/internal/metrics"
 	"github.com/doublemo/baa/internal/rpc"
 	"github.com/doublemo/baa/internal/sd"
+	"github.com/doublemo/baa/internal/worker"
 	"github.com/doublemo/baa/kits/user"
 	"github.com/doublemo/baa/kits/user/cache"
 	"github.com/doublemo/baa/kits/user/dao"
@@ -56,6 +57,9 @@ type Config struct {
 
 	// Metrics grpc metrics
 	Metrics metrics.Config `alias:"metrics"`
+
+	// workers 工人设置
+	Worker worker.Config `alias:"worker"`
 }
 
 type User struct {
@@ -121,6 +125,9 @@ func (s *User) Start() error {
 	// 路由
 	user.InitRouter(o.Router)
 	o.Nats.Name = o.MachineID
+
+	// 工人
+	worker.Init(o.Worker)
 
 	// 注册运行服务
 	s.actors.Add(s.mustProcessActor(user.NewNatsProcessActor(o.Nats)), true)

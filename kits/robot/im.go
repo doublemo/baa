@@ -82,6 +82,8 @@ func handleIMNotify(peer session.Peer, w coresproto.Response, c RobotConfig) err
 			switch v := message.Payload.(type) {
 			case *pb.IM_Msg_Content_Text:
 				fmt.Printf("<%s>id: %d, seq:%d from: %s message, %s\n", time.Unix(message.SendAt, 0).String(), message.Id, message.SeqID, message.From, v.Text.Content)
+			default:
+				fmt.Println("im:", v)
 			}
 		}
 	}

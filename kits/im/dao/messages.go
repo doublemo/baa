@@ -15,5 +15,6 @@ type Messages struct {
 	ContentType string
 	Topic       uint64
 	Status      int32
+	Origin      int32
 	CreatedAt   int64
 }

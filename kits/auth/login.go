@@ -18,9 +18,9 @@ import (
 	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
 	"github.com/doublemo/baa/internal/sd"
-	"github.com/doublemo/baa/kits/agent"
 	"github.com/doublemo/baa/kits/auth/dao"
 	"github.com/doublemo/baa/kits/auth/errcode"
+	"github.com/doublemo/baa/kits/auth/platform"
 	grpcproto "github.com/golang/protobuf/proto"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -140,25 +140,23 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	}
 
 	// 防止相同账户重复登录
-	status, err := getUsersStatus(true, account.UserID)
+	// 并分配相应固定服务器
+	servers, err := assignServers(account.UserID,
+		&pb.SM_User_Servers_Assign{KitName: kit.IMServiceName, LB: 1},
+		&pb.SM_User_Servers_Assign{KitName: kit.SNIDServiceName, LB: 1})
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
 
-	for _, data := range status {
-		if data.UserId != account.UserID {
-			continue
-		}
-
-		for _, value := range data.Values {
-			if value.Platform == "pc" {
-				kickedOut(account.PeerID)
-				break
-			}
-		}
+	imserver, ok := servers.Values.Servers[kit.IMServiceName]
+	if !ok {
+		return errcode.Bad(w, errcode.ErrInternalServer, "IM server is undefined"), nil
 	}
 
-	account.PeerID = peerID
+	if m, ok := servers.PeerId[peerID]; ok && m != peerID {
+		kickedOut(m)
+	}
+
 	accountInfo, err := makeAuthenticationFormAccountInfo(account, c, false)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, err.Error()), nil
@@ -167,9 +165,10 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	// 更新用户在线状态
 	online, _ := grpcproto.Marshal(&pb.SM_User_Action_Online{
 		UserId:   account.UserID,
-		Platform: "pc",
+		Platform: platform.PC,
 		Agent:    req.Header["Agent"],
 		Token:    accountInfo.Token,
+		PeerId:   peerID,
 	})
 
 	if err := publishUserState(&pb.SM_Event{Action: pb.SM_ActionUserOnline, Data: online}); err != nil {
@@ -188,7 +187,7 @@ func loginAccount(req *corespb.Request, reqFrame *pb.Authentication_Form_Login, 
 	w.Header["AccountID"] = strconv.FormatUint(account.ID, 10)
 	w.Header["UnionID"] = strconv.FormatUint(account.UnionID, 10)
 	w.Header["UserID"] = strconv.FormatUint(account.UserID, 10)
-	w.Header["IMServer"] = ""
+	w.Header["IMServer"] = imserver
 	w.Payload = &corespb.Response_Content{Content: b}
 	return w, nil
 }
@@ -705,7 +704,7 @@ func kickedOut(peerID string) {
 	w.Content = frameBytes
 	wBytes, _ := w.Marshal()
 	for _, endpoint := range endpoints {
-		if endpoint.Name() != agent.ServiceName {
+		if endpoint.Name() != kit.AgentServiceName {
 			continue
 		}
 		nc.Publish(endpoint.ID(), wBytes)

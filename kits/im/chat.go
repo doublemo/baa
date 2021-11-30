@@ -176,7 +176,9 @@ func sendtoC(msg *dao.Messages, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb.IM_Ms
 	}
 
 	// 消息送检
-	msgInspectionReport(msg)
+	if msg.Origin != int32(pb.IM_Msg_OriginSystem) {
+		msgInspectionReport(msg)
+	}
 
 	// 推送信息
 	worker.Submit(func() {
@@ -242,7 +244,9 @@ func sendtoG(msg *dao.Messages, c ChatConfig) (*pb.IM_Msg_AckReceived, *pb.IM_Ms
 	}
 
 	// 消息送检
-	msgInspectionReport(msg)
+	if msg.Origin != int32(pb.IM_Msg_OriginSystem) {
+		msgInspectionReport(msg)
+	}
 
 	gid, _ := id.Encrypt(msg.To, []byte(c.IDSecret))
 
@@ -319,6 +323,7 @@ func makeMessage(frame *pb.IM_Msg_Content, secret []byte) (*dao.Messages, error)
 		Group:     int32(frame.Group),
 		Topic:     frame.Topic,
 		CreatedAt: time.Now().Unix(),
+		Origin:    int32(frame.Origin),
 	}
 
 	var content []byte
@@ -341,6 +346,9 @@ func makeMessage(frame *pb.IM_Msg_Content, secret []byte) (*dao.Messages, error)
 	case *pb.IM_Msg_Content_Emoticon:
 		content, err = json.Marshal(payload)
 		msg.ContentType = mime.Emoticon
+	case *pb.IM_Msg_Content_JoinGroupInvite:
+		content, err = json.Marshal(payload)
+		msg.ContentType = mime.JoinGroupInvite
 	default:
 		return nil, errors.New("")
 	}
@@ -532,6 +540,13 @@ func makeMessageToPB(m dao.Messages, secret []byte) (*pb.IM_Msg_Content, error) 
 
 	case mime.Emoticon:
 		content := pb.IM_Msg_Content_Emoticon{}
+		if err := json.Unmarshal([]byte(m.Content), &content); err != nil {
+			return nil, err
+		}
+		frameMsg.Payload = &content
+
+	case mime.JoinGroupInvite:
+		content := pb.IM_Msg_Content_JoinGroupInvite{}
 		if err := json.Unmarshal([]byte(m.Content), &content); err != nil {
 			return nil, err
 		}

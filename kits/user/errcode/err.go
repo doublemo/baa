@@ -31,6 +31,15 @@ var (
 	// ErrContactsRequestNotFound 增加联系人请求不存在
 	ErrContactsRequestNotFound = types.NewErrCode(kit.MakeErrCode(kit.User, 8), "The request to add a contact has deleted")
 
+	// ErrInvalidUserID 错误的用户ID
+	ErrInvalidUserID = types.NewErrCode(kit.MakeErrCode(kit.User, 9), "User ID is incorrect")
+
+	// ErrGroupMembersLessThen1 群组成员不能少于1个
+	ErrGroupMembersLessThen1 = types.NewErrCode(kit.MakeErrCode(kit.User, 10), "Group members cannot be less than 1")
+
+	// ErrGroupMemnersIDIncorrect 群组成员唯一识别信息不正确，无法找到对应用户信息
+	ErrGroupMemnersIDIncorrect = types.NewErrCode(kit.MakeErrCode(kit.User, 11), "The unique identification information of group members is incorrect, and the corresponding user information cannot be found")
+
 	// ErrInternalServer 服务器内部错误
 	ErrInternalServer = types.NewErrCode(kit.MakeErrCode(kit.User, 500), "Internal Server Error")
 )

@@ -66,24 +66,18 @@ func accountInfo(req *corespb.Request, c LRConfig) (*corespb.Response, error) {
 
 // 处理账户下线
 func offline(r *corespb.Request, c LRConfig) (*corespb.Response, error) {
-	var (
-		accountID string
-		peerID    string
-	)
-
-	if r.Header != nil {
-		if m, ok := r.Header["PeerId"]; ok {
-			peerID = m
-		}
-
-		if m, ok := r.Header["AccountID"]; ok {
-			accountID = m
-		}
+	w := &corespb.Response{
+		Command: r.Command,
+		Payload: &corespb.Response_Content{Content: r.Payload},
 	}
 
-	uid, err0 := strconv.ParseUint(accountID, 10, 64)
-	if err0 != nil {
-		return nil, err0
+	if r.Header == nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, "header is nil"), nil
+	}
+
+	peerid, ok := r.Header["PeerId"]
+	if !ok {
+		return errcode.Bad(w, errcode.ErrInternalServer, "PeerId is undefined"), nil
 	}
 
 	var frame pb.Authentication_Form_Logout
@@ -93,41 +87,20 @@ func offline(r *corespb.Request, c LRConfig) (*corespb.Response, error) {
 		}
 	}
 
-	var (
-		accounts *dao.Accounts
-		err      error
-	)
-
-	switch payload := frame.Payload.(type) {
-	case *pb.Authentication_Form_Logout_ID:
-	case *pb.Authentication_Form_Logout_PeerID:
-		peerID = payload.PeerID
-		accounts, err = dao.GetAccoutsByID(uid)
-		if err != nil {
-			return nil, err
-		}
-
-	case *pb.Authentication_Form_Logout_Token:
-	}
-
-	w := &corespb.Response{
-		Command: r.Command,
-		Payload: &corespb.Response_Content{Content: r.Payload},
-	}
-
-	if accounts == nil || accounts.PeerID != peerID {
-		return w, nil
+	userid, err := strconv.ParseUint(frame.UserID, 10, 64)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrAccountIDInvalid, err.Error()), nil
 	}
 
 	// 更新用户在线状态
 	online, _ := grpcproto.Marshal(&pb.SM_User_Action_Offline{
-		UserId:   accounts.UserID,
-		Platform: "pc",
+		UserId:   userid,
+		Platform: "",
+		PeerId:   peerid,
 	})
 
 	if err := publishUserState(&pb.SM_Event{Action: pb.SM_ActionUserOffline, Data: online}); err != nil {
 		return errcode.Bad(w, errcode.ErrUsernameOrPasswordIncorrect, "change status falied"), nil
 	}
-	dao.UpdatesAccountByID(accounts.ID, "peer_id", "")
 	return w, nil
 }

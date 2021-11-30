@@ -172,7 +172,7 @@ func userAssignServer(req *corespb.Request) (*corespb.Response, error) {
 	}
 
 	for _, user := range status {
-		resp.PeerId[user.Platform] = user.PeerID
+		resp.PeerId[user.PeerID] = user.Platform
 	}
 
 	newAssignServers := make(map[string]int32, 0)
@@ -275,7 +275,23 @@ func offline(evt *pb.SM_Event) error {
 		}
 	}
 
-	if err := dao.Offline(context.Background(), frame.UserId, frame.Platform, frame.PeerId); err != nil {
+	users, err := dao.GetCachedUsers(context.Background(), frame.UserId)
+	if err != nil {
+		return err
+	}
+
+	platform := ""
+	for _, user := range users {
+		if user.PeerID == frame.PeerId {
+			platform = user.Platform
+		}
+	}
+
+	if platform == "" {
+		return nil
+	}
+
+	if err := dao.Offline(context.Background(), frame.UserId, platform, frame.PeerId); err != nil {
 		return err
 	}
 

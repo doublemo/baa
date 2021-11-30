@@ -315,8 +315,8 @@ func FindContactsRequestByUserID(userid uint64, page, size int32, version int64,
 	return data, count, nil
 }
 
-// FindContactsByUserID 获取联系人
-func FindContactsByUserID(userid uint64, page, size int32, version int64, cols ...string) ([]*Contacts, int64, error) {
+// FindContactsByUserIDPage 获取联系人
+func FindContactsByUserIDPage(userid uint64, page, size int32, version int64, cols ...string) ([]*Contacts, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -350,4 +350,23 @@ func FindContactsByUserID(userid uint64, page, size int32, version int64, cols .
 	}
 
 	return data, count, nil
+}
+
+// FindContactsByUserID 获取联系人
+func FindContactsByUserID(userid uint64, members []uint64, cols ...string) ([]*Contacts, error) {
+	if database == nil {
+		return nil, gorm.ErrInvalidDB
+	}
+
+	data := make([]*Contacts, 0)
+	tx := database.Scopes(UseContactsTable(userid))
+	if len(cols) > 1 {
+		tx.Select(cols)
+	}
+	tx.Where("user_id = ? AND friend_id IN ? AND status = 0", userid, members).Find(&data)
+	if tx.Error != nil {
+		return nil, gorm.ErrInvalidDB
+	}
+
+	return data, nil
 }

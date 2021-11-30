@@ -478,7 +478,7 @@ func contacts(req *corespb.Request, c UserConfig) (*corespb.Response, error) {
 		return errcode.Bad(w, errcode.ErrUserNotfound), nil
 	}
 
-	list, count, err := dao.FindContactsByUserID(uid, frame.Page, frame.Size, frame.Version)
+	list, count, err := dao.FindContactsByUserIDPage(uid, frame.Page, frame.Size, frame.Version)
 	if err != nil {
 		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}

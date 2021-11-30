@@ -49,5 +49,5 @@ func InitRouter(config RouterConfig) {
 	muxRouter.Handle(kit.SNID.Int32(), command.SNIDSnowflake, newSnidRouter(config.ServiceSNID))
 
 	sm := router.NewCall(config.ServiceSM)
-	muxRouter.Register(kit.SM.Int32(), router.New()).Handle(command.SMUserStatus, sm).Handle(command.SMUserServers, sm)
+	muxRouter.Register(kit.SM.Int32(), router.New()).Handle(command.SMUserStatus, sm).Handle(command.SMAssginServers, sm)
 }

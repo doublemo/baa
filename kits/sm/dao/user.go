@@ -224,6 +224,9 @@ func Online(ctx context.Context, users *Users) error {
 				kit.AgentServiceName + "/" + users.Platform: users.AgentServer,
 			})
 
+			pipe.ExpireAt(ctx, namerOnline, time.Now().Add(time.Hour*24*7))
+			pipe.ExpireAt(ctx, namerUsers, time.Now().Add(time.Hour*24*7))
+			pipe.ExpireAt(ctx, namerServer, time.Now().Add(time.Hour*24*30))
 			return nil
 		})
 		return err

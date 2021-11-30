@@ -32,4 +32,7 @@ const (
 
 	// UserInfo 用户信息
 	UserInfo
+
+	// UserCreateGroup 创建并邀请用户加入群组
+	UserCreateGroup
 )

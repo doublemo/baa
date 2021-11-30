@@ -2,6 +2,7 @@ package dao
 
 import (
 	"errors"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -13,6 +14,17 @@ const (
 	defaultGroupMembersMaxTable  = 100
 )
 
+const (
+	GroupMemberOfficialTitleNone  = 0 // 普通成员
+	GroupMemberOfficialTitleOwner = 1 // 群主创建者
+)
+
+const (
+	GroupMembersStatusInvitationNotSent = -2 // 还未发出邀请
+	GroupMembersStatusWaitingJoin       = -1 // 等待加入的用户
+	GroupMembersStatusNormal            = 0  // 正常的用户
+)
+
 type (
 	// Groups 群组
 	Groups struct {
@@ -20,22 +32,28 @@ type (
 		Name    string `gorm:"size:50"`
 		Notice  string `gorm:"size:1000"`
 		Headimg string `gorm:"size:255"`
+		UserID  uint64 `gorm:"index"`
+		Topic   uint64
 	}
 
 	// GroupMembers 群用户
 	GroupMembers struct {
-		ID          uint64 `gorm:"<-:create;primaryKey;autoIncrement"`
-		GroupID     uint64 `gorm:"<-:create;index"`
-		UserID      uint64
-		Nickname    string `gorm:"size:50"`
-		Headimg     string `gorm:"size:255"`
-		Sex         int8
-		Remark      string `gorm:"size:50"`
-		Mute        int8   // 消息免打扰
-		StickyOnTop int8   // 聊天置顶
-		Alias       string `gorm:"size:50"`
-		Topic       uint64
-		Version     int64
+		ID            uint64 `gorm:"<-:create;primaryKey;autoIncrement"`
+		GroupID       uint64 `gorm:"<-:create;index;index:group_id_user_id"`
+		UserID        uint64 `gorm:"<-:create;index:group_id_user_id"`
+		Nickname      string `gorm:"size:50"`
+		Headimg       string `gorm:"size:255"`
+		Sex           int8
+		Remark        string `gorm:"size:50"`
+		Mute          int8   // 消息免打扰
+		StickyOnTop   int8   // 聊天置顶
+		Alias         string `gorm:"size:50"`
+		Topic         uint64
+		OfficialTitle int8
+		Status        int8
+		CreateAt      int64 `gorm:"autoCreateTime"`
+		JoinAt        int64 // 加入时间
+		Version       int64
 	}
 )
 
@@ -150,4 +168,60 @@ func FindGroupsMembersIDByGroupID(id uint64, page, size int32) ([]uint64, int64,
 		return nil, 0, gorm.ErrInvalidDB
 	}
 	return data, count, nil
+}
+
+func CreateAndJoinGroup(group *Groups, members ...*GroupMembers) error {
+	if database == nil {
+		return gorm.ErrInvalidDB
+	}
+
+	return database.Transaction(func(tx *gorm.DB) error {
+		r := tx.Scopes(UseGroupsTable(group.ID)).Create(group)
+		if r.Error != nil {
+			return r.Error
+		}
+
+		if r.RowsAffected < 1 {
+			return errors.New("CreateFailed")
+		}
+
+		r = tx.Scopes(UseContactsTable(group.UserID)).Create(&Contacts{
+			UserID:    group.UserID,
+			FriendID:  group.ID,
+			FNickname: group.Name,
+			FHeadimg:  group.Headimg,
+			FSex:      0,
+			Type:      ContactsTypeGroup,
+			Topic:     group.Topic,
+			Status:    0,
+			Version:   time.Now().Unix(),
+		})
+
+		if r.Error != nil {
+			return r.Error
+		}
+
+		if r.RowsAffected < 1 {
+			return errors.New("CreateFailed")
+		}
+
+		r = tx.Scopes(UseGroupMembersTable(group.ID)).Create(members)
+		if r.Error != nil {
+			return r.Error
+		}
+
+		if r.RowsAffected < 1 {
+			return errors.New("CreateFailed")
+		}
+		return nil
+	})
+}
+
+func UpdateGroupMembersStatus(id uint64, status int, members ...uint64) error {
+	if database == nil {
+		return gorm.ErrInvalidDB
+	}
+
+	tx := database.Scopes(UseGroupMembersTable(id)).Where("group_id = ? AND user_id IN ?", id, members).Update("status", status)
+	return tx.Error
 }

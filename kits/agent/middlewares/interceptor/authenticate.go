@@ -110,7 +110,7 @@ func OnLogin(next router.ResponseInterceptor) router.ResponseInterceptor {
 		accountID, ok1 := w.Header["AccountID"]
 		unionID, ok2 := w.Header["UnionID"]
 		userID, ok3 := w.Header["UserID"]
-		im, ok4 := w.Header["IMSeerver"]
+		im, ok4 := w.Header["IMServer"]
 		if !ok1 || !ok2 || !ok3 || !ok4 {
 			return errors.New("Invalid login return data, causing the gateway to fail to complete the login action")
 		}

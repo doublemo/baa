@@ -105,6 +105,8 @@ func InitRouter(config RouterConfig) {
 				call.UseResponseInterceptor(interceptor.OnLogin)
 			} else if route.Config.Name == kit.IMFServiceName {
 				interceptors = append(interceptors, interceptor.OnSelectIMServer)
+			} else if route.Config.Name == kit.UserServiceName {
+				interceptors = append(interceptors, interceptor.AddIMServerToHeader)
 			}
 
 			call.UseRequestInterceptor(interceptors...)
@@ -121,6 +123,8 @@ func InitRouter(config RouterConfig) {
 
 			if route.Config.Name == kit.IMServiceName {
 				interceptors = append(interceptors, interceptor.OnSelectIMServer)
+			} else if route.Config.Name == kit.UserServiceName {
+				interceptors = append(interceptors, interceptor.AddIMServerToHeader)
 			}
 
 			call := router.NewCall(route.Config, Logger())
