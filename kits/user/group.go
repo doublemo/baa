@@ -337,7 +337,7 @@ func groupCreate(req *corespb.Request, c GroupConfig) (*corespb.Response, error)
 			SeqID:  0,
 			To:     enid,
 			From:   frame.UserId,
-			Group:  pb.IM_Msg_ToG,
+			Group:  pb.IM_Msg_ToC,
 			Topic:  contact.Topic,
 			SendAt: time.Now().Unix(),
 			Origin: pb.IM_Msg_OriginSystem,
@@ -441,8 +441,12 @@ func makeJoinGroupInvite(im, userid string, gid uint64, messages ...*pb.IM_Msg_C
 		}
 
 		ids := make([]uint64, len(acked))
-		for _, ack := range acked {
-			ids = append(ids, ack.SeqID)
+		for i, ack := range acked {
+			ids[i] = ack.SeqID
+		}
+
+		if len(ids) < 1 {
+			return
 		}
 
 		dao.UpdateGroupMembersStatus(gid, dao.GroupMembersStatusWaitingJoin, ids...)
