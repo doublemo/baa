@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +31,292 @@ type GroupConfig struct {
 
 	// NameMaxLength 昵称最大长度
 	NameMaxLength int `alias:"nameMaxLength" default:"34"`
+}
+
+func group(req *corespb.Request, c GroupConfig) (*corespb.Response, error) {
+	var frame pb.User_Group_Request
+	{
+		if router.IsHTTP(req) {
+			if err := jsonpb.UnmarshalString(string(req.Payload), &frame); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := grpcproto.Unmarshal(req.Payload, &frame); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	switch payload := frame.Payload.(type) {
+	case *pb.User_Group_Request_Accept:
+		return acceptGroup(req, payload, c)
+	}
+
+	return nil, errors.New("notsupported")
+}
+
+func acceptGroup(req *corespb.Request, frame *pb.User_Group_Request_Accept, c GroupConfig) (*corespb.Response, error) {
+	if req.Header == nil {
+		req.Header = make(map[string]string)
+	}
+
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  req.Header,
+	}
+
+	useridstr, ok := req.Header["UserID"]
+	if !ok {
+		return errcode.Bad(w, errcode.ErrUserNotfound), nil
+	}
+
+	userid, err := strconv.ParseUint(useridstr, 10, 64)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+	}
+
+	fuserid, err := id.Decrypt(frame.Accept.UserId, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+	}
+
+	if userid == fuserid {
+		return errcode.Bad(w, errcode.ErrUserNotfound), nil
+	}
+
+	fgroupid, err := id.Decrypt(frame.Accept.GroupId, []byte(c.GroupSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrGroupIsNotFound, err.Error()), nil
+	}
+
+	group, err := dao.FindGroupsByGroupID(fgroupid)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrGroupIsNotFound, err.Error()), nil
+	}
+
+	// 查看有没有被邀请过
+	member, err := dao.FindGroupsMemberByGroupIDAndUserID(group.ID, userid, "status")
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrGroupIsNotFound, err.Error()), nil
+	}
+
+	resp := &pb.User_Group_Notify{
+		Payload: &pb.User_Group_Notify_GroupRequest{
+			GroupRequest: &pb.User_Group_Info{
+				ID:      frame.Accept.GroupId,
+				Name:    group.Name,
+				Notice:  group.Notice,
+				Headimg: group.Notice,
+			},
+		},
+	}
+
+	var respBytes []byte
+	{
+		if router.IsHTTP(req) {
+			jsonpbM := &jsonpb.Marshaler{}
+			json, _ := jsonpbM.MarshalToString(resp)
+			respBytes = []byte(json)
+		} else {
+			respBytes, _ = grpcproto.Marshal(resp)
+		}
+	}
+
+	if member.Status == dao.GroupMembersStatusNormal {
+		w.Payload = &corespb.Response_Content{Content: respBytes}
+		return w, nil
+	}
+
+	if err := dao.UpdateGroupMembersStatus(group.ID, dao.GroupMembersStatusNormal, userid); err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	// 添加群到通讯录
+	contact := &dao.Contacts{
+		UserID:    group.UserID,
+		FriendID:  group.ID,
+		FNickname: group.Name,
+		FHeadimg:  group.Headimg,
+		FSex:      0,
+		Type:      dao.ContactsTypeGroup,
+		Topic:     group.Topic,
+		Status:    0,
+		Version:   time.Now().Unix(),
+	}
+
+	dao.CreateContacts(contact)
+	w.Payload = &corespb.Response_Content{Content: respBytes}
+	return w, nil
+}
+
+func inviteAddGroup(req *corespb.Request, frame *pb.User_Group_Request_Invite, c GroupConfig) (*corespb.Response, error) {
+	if req.Header == nil {
+		req.Header = make(map[string]string)
+	}
+
+	w := &corespb.Response{
+		Command: req.Command,
+		Header:  req.Header,
+	}
+
+	useridstr, ok := req.Header["UserID"]
+	if !ok {
+		return errcode.Bad(w, errcode.ErrUserNotfound), nil
+	}
+
+	userid, err := strconv.ParseUint(useridstr, 10, 64)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+	}
+
+	fuserid, err := id.Decrypt(frame.Invite.UserId, []byte(c.IDSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+	}
+
+	if userid != fuserid || len(frame.Invite.FriendId) < 1 {
+		return errcode.Bad(w, errcode.ErrUserNotfound), nil
+	}
+
+	im, err := findRequestHeaderIMServer(req, userid)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	friends := make([]uint64, len(frame.Invite.FriendId))
+	for i, value := range frame.Invite.FriendId {
+		friendid, err := id.Decrypt(value, []byte(c.IDSecret))
+		if err != nil {
+			return errcode.Bad(w, errcode.ErrUserNotfound, err.Error()), nil
+		}
+		friends[i] = friendid
+	}
+
+	fgroupid, err := id.Decrypt(frame.Invite.GroupId, []byte(c.GroupSecret))
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrGroupIsNotFound, err.Error()), nil
+	}
+
+	group, err := dao.FindGroupsByGroupID(fgroupid)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrGroupIsNotFound, err.Error()), nil
+	}
+
+	// 查看有没有被邀请过
+	members, err := dao.FindGroupsMembersNotNormalByGroupIDAndUserID(group.ID, friends, "status")
+	if err != dao.ErrRecordNotFound && err != nil {
+		return errcode.Bad(w, errcode.ErrGroupIsNotFound, err.Error()), nil
+	}
+
+	resp := &pb.User_Group_Reply{
+		OK: true,
+	}
+
+	var respBytes []byte
+	{
+		if router.IsHTTP(req) {
+			jsonpbM := &jsonpb.Marshaler{}
+			json, _ := jsonpbM.MarshalToString(resp)
+			respBytes = []byte(json)
+		} else {
+			respBytes, _ = grpcproto.Marshal(resp)
+		}
+	}
+
+	invited := make(map[uint64]*dao.GroupMembers)
+	for _, member := range members {
+		invited[member.UserID] = member
+	}
+
+	users, err := dao.FindContactsByUserID(userid, friends, "id", "user_id", "friend_id", "f_nickname", "f_headimg", "f_sex", "type", "topic")
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	contacts := make(map[uint64]*dao.Contacts)
+	for _, u := range users {
+		contacts[u.FriendID] = u
+	}
+
+	gmembers := make([]*dao.GroupMembers, 0)
+	messages := make([]*pb.IM_Msg_Content, 0)
+	var message *pb.IM_Msg_Content
+	for _, fid := range friends {
+		contact, ok := contacts[fid]
+		if !ok {
+			continue
+		}
+
+		enid, _ := id.Encrypt(fid, []byte(c.IDSecret))
+		message = &pb.IM_Msg_Content{
+			SeqID:  fid,
+			To:     enid,
+			From:   frame.Invite.UserId,
+			Group:  pb.IM_Msg_ToC,
+			Topic:  contact.Topic,
+			SendAt: time.Now().Unix(),
+			Origin: pb.IM_Msg_OriginSystem,
+		}
+
+		if m, ok := invited[fid]; ok {
+			if m.Status == dao.GroupMembersStatusNormal {
+				continue
+			}
+
+			messages = append(messages, message)
+			continue
+		}
+
+		messages = append(messages, message)
+		gmembers = append(gmembers, &dao.GroupMembers{
+			GroupID:       group.ID,
+			UserID:        contact.FriendID,
+			Nickname:      contact.FNickname,
+			Headimg:       contact.FHeadimg,
+			Sex:           contact.FSex,
+			Topic:         group.Topic,
+			OfficialTitle: dao.GroupMemberOfficialTitleNone,
+			Status:        dao.GroupMembersStatusInvitationNotSent,
+			JoinAt:        0,
+			Origin:        dao.GroupMembersOriginInvite,
+			Handler:       userid,
+			Version:       time.Now().Unix(),
+		})
+	}
+
+	if err := dao.CreateGroupsMember(group.ID, gmembers...); err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
+	}
+
+	// 发送邀请信息
+	// 从聊天信息发送
+	gid, _ := id.Encrypt(group.ID, []byte(c.GroupSecret))
+	waitSendMssages := make([]*pb.IM_Msg_Content, 0)
+	i := 0
+	for _, message := range messages {
+		message.Payload = &pb.IM_Msg_Content_JoinGroupInvite{
+			JoinGroupInvite: &pb.IM_Msg_ContentType_JoinGroupInvite{
+				GroupID: gid,
+				Name:    group.Name,
+				Headimg: group.Headimg,
+			},
+		}
+
+		waitSendMssages = append(waitSendMssages, message)
+		i++
+		if i >= 10 {
+			worker.Submit(makeJoinGroupInvite(im, frame.Invite.GroupId, group.ID, waitSendMssages...))
+			waitSendMssages = make([]*pb.IM_Msg_Content, 0)
+			i = 0
+		}
+	}
+
+	if len(waitSendMssages) > 0 {
+		worker.Submit(makeJoinGroupInvite(im, frame.Invite.GroupId, group.ID, waitSendMssages...))
+	}
+
+	w.Payload = &corespb.Response_Content{Content: respBytes}
+	return w, nil
 }
 
 func checkInGroup(req *corespb.Request) (*corespb.Response, error) {
@@ -229,32 +516,9 @@ func groupCreate(req *corespb.Request, c GroupConfig) (*corespb.Response, error)
 		return errcode.Bad(w, errcode.ErrInvalidUserID), nil
 	}
 
-	im, ok := req.Header["IMServer"]
-	if !ok {
-		servers, err := getUserServers(userid)
-		if err != nil {
-			return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
-		}
-
-		server, ok := servers[userid]
-		if !ok {
-			return errcode.Bad(w, errcode.ErrInvalidUserID, "im server 0"), nil
-		}
-
-		if m, ok := server[kit.IMServiceName]; ok {
-			endpoints, err := sd.GetEndpointsByID(m)
-			if err != nil {
-				return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
-			}
-
-			if m0, ok := endpoints[m]; ok && m0 != nil {
-				im = m0.Addr()
-			}
-		}
-
-		if im == "" {
-			return errcode.Bad(w, errcode.ErrInvalidUserID, "im server 1"), nil
-		}
+	im, err := findRequestHeaderIMServer(req, userid)
+	if err != nil {
+		return errcode.Bad(w, errcode.ErrInternalServer, err.Error()), nil
 	}
 
 	muser, err := dao.FindUsersByID(userid, "id", "nickname", "headimg", "sex")
@@ -325,6 +589,8 @@ func groupCreate(req *corespb.Request, c GroupConfig) (*corespb.Response, error)
 			OfficialTitle: dao.GroupMemberOfficialTitleNone,
 			Status:        dao.GroupMembersStatusInvitationNotSent,
 			JoinAt:        0,
+			Origin:        dao.GroupMembersOriginInvite,
+			Handler:       userid,
 			Version:       version,
 		})
 
@@ -358,6 +624,8 @@ func groupCreate(req *corespb.Request, c GroupConfig) (*corespb.Response, error)
 		OfficialTitle: dao.GroupMemberOfficialTitleOwner,
 		Status:        dao.GroupMembersStatusNormal,
 		JoinAt:        time.Now().Unix(),
+		Origin:        dao.GroupMembersOriginVolunteer,
+		Handler:       userid,
 		Version:       version,
 	})
 
@@ -451,4 +719,40 @@ func makeJoinGroupInvite(im, userid string, gid uint64, messages ...*pb.IM_Msg_C
 
 		dao.UpdateGroupMembersStatus(gid, dao.GroupMembersStatusWaitingJoin, ids...)
 	}
+}
+
+func findRequestHeaderIMServer(req *corespb.Request, userid uint64) (string, error) {
+	if req.Header == nil {
+		return "", errors.New("request header is nil")
+	}
+
+	im, ok := req.Header["IMServer"]
+	if !ok {
+		servers, err := getUserServers(userid)
+		if err != nil {
+			return "", err
+		}
+
+		server, ok := servers[userid]
+		if !ok {
+			return "", errors.New("im server 0")
+		}
+
+		if m, ok := server[kit.IMServiceName]; ok {
+			endpoints, err := sd.GetEndpointsByID(m)
+			if err != nil {
+				return "", err
+			}
+
+			if m0, ok := endpoints[m]; ok && m0 != nil {
+				im = m0.Addr()
+			}
+		}
+	}
+
+	if im == "" {
+		return "", errors.New("Could not find im server")
+	}
+
+	return im, nil
 }

@@ -370,3 +370,12 @@ func FindContactsByUserID(userid uint64, members []uint64, cols ...string) ([]*C
 
 	return data, nil
 }
+
+func CreateContacts(contact *Contacts) error {
+	if database == nil {
+		return gorm.ErrInvalidDB
+	}
+
+	tx := database.Scopes(UseContactsTable(contact.UserID)).Create(contact)
+	return tx.Error
+}

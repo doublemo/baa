@@ -57,6 +57,8 @@ message IM {
                 string GroupID =  1;
                 string Name    = 2;
                 string Headimg = 3;
+                string UserId  = 4; // 邀请人ID
+                string Nickname = 5; // 邀请人昵称
             }
         }
 

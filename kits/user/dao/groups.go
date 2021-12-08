@@ -15,14 +15,19 @@ const (
 )
 
 const (
-	GroupMemberOfficialTitleNone  = 0 // 普通成员
-	GroupMemberOfficialTitleOwner = 1 // 群主创建者
+	GroupMemberOfficialTitleNone  = 0  // 普通成员
+	GroupMemberOfficialTitleOwner = 10 // 群主创建者
 )
 
 const (
 	GroupMembersStatusInvitationNotSent = -2 // 还未发出邀请
 	GroupMembersStatusWaitingJoin       = -1 // 等待加入的用户
 	GroupMembersStatusNormal            = 0  // 正常的用户
+)
+
+const (
+	GroupMembersOriginVolunteer = 0 // 自己加入
+	GroupMembersOriginInvite    = 1 // 通过邀请加入
 )
 
 type (
@@ -51,8 +56,10 @@ type (
 		Topic         uint64
 		OfficialTitle int8
 		Status        int8
-		CreateAt      int64 `gorm:"autoCreateTime"`
-		JoinAt        int64 // 加入时间
+		CreateAt      int64  `gorm:"autoCreateTime"`
+		JoinAt        int64  // 加入时间
+		Origin        int8   // 来源 0 自己加入  1 邀请加入
+		Handler       uint64 // 办理用户加入的人ID
 		Version       int64
 	}
 )
@@ -170,6 +177,72 @@ func FindGroupsMembersIDByGroupID(id uint64, page, size int32) ([]uint64, int64,
 	return data, count, nil
 }
 
+func FindGroupsMemberByGroupIDAndUserID(groupid, userid uint64, cols ...string) (*GroupMembers, error) {
+	if database == nil {
+		return nil, gorm.ErrInvalidDB
+	}
+
+	groupMembers := &GroupMembers{}
+	tx := database.Scopes(UseGroupMembersTable(groupid))
+	if len(cols) > 0 {
+		tx.Select(cols)
+	}
+	tx.Where("group_id = ? AND user_id = ?", groupid, userid).Last(groupMembers)
+	if tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+
+		return nil, tx.Error
+	}
+
+	return groupMembers, nil
+}
+
+func FindGroupsMembersByGroupIDAndUserID(groupid uint64, userid []uint64, cols ...string) ([]*GroupMembers, error) {
+	if database == nil {
+		return nil, gorm.ErrInvalidDB
+	}
+
+	groupMembers := make([]*GroupMembers, 0)
+	tx := database.Scopes(UseGroupMembersTable(groupid))
+	if len(cols) > 0 {
+		tx.Select(cols)
+	}
+	tx.Where("group_id = ? AND user_id IN ?", groupid, userid).Find(&groupMembers)
+	if tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+
+		return nil, tx.Error
+	}
+
+	return groupMembers, nil
+}
+
+func FindGroupsMembersNotNormalByGroupIDAndUserID(groupid uint64, userid []uint64, cols ...string) ([]*GroupMembers, error) {
+	if database == nil {
+		return nil, gorm.ErrInvalidDB
+	}
+
+	groupMembers := make([]*GroupMembers, 0)
+	tx := database.Scopes(UseGroupMembersTable(groupid))
+	if len(cols) > 0 {
+		tx.Select(cols)
+	}
+	tx.Where("group_id = ? AND user_id IN ? AND status < ?", groupid, userid, GroupMembersStatusNormal).Find(&groupMembers)
+	if tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+
+		return nil, tx.Error
+	}
+
+	return groupMembers, nil
+}
+
 func CreateAndJoinGroup(group *Groups, members ...*GroupMembers) error {
 	if database == nil {
 		return gorm.ErrInvalidDB
@@ -224,4 +297,22 @@ func UpdateGroupMembersStatus(id uint64, status int, members ...uint64) error {
 
 	tx := database.Scopes(UseGroupMembersTable(id)).Where("group_id = ? AND user_id IN ?", id, members).Update("status", status)
 	return tx.Error
+}
+
+func CreateGroupsMember(id uint64, members ...*GroupMembers) error {
+	if database == nil {
+		return gorm.ErrInvalidDB
+	}
+
+	return database.Transaction(func(tx *gorm.DB) error {
+		r := tx.Scopes(UseGroupMembersTable(id)).Create(members)
+		if r.Error != nil {
+			return r.Error
+		}
+
+		if r.RowsAffected < 1 {
+			return errors.New("CreateFailed")
+		}
+		return nil
+	})
 }

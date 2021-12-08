@@ -40,6 +40,9 @@ var (
 	// ErrGroupMemnersIDIncorrect 群组成员唯一识别信息不正确，无法找到对应用户信息
 	ErrGroupMemnersIDIncorrect = types.NewErrCode(kit.MakeErrCode(kit.User, 11), "The unique identification information of group members is incorrect, and the corresponding user information cannot be found")
 
+	// ErrGroupIsNotFound 群聊组不存在
+	ErrGroupIsNotFound = types.NewErrCode(kit.MakeErrCode(kit.User, 12), "Group ID is incorrect")
+
 	// ErrInternalServer 服务器内部错误
 	ErrInternalServer = types.NewErrCode(kit.MakeErrCode(kit.User, 500), "Internal Server Error")
 )

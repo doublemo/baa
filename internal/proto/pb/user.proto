@@ -233,20 +233,20 @@ message User{
             string GroupId = 1; 
             string Remark = 2;
             string Message = 3;
+            string UserId  = 4;
         } 
 
         message Accept {
             string GroupId = 1; 
-            string Remark = 2;
+            string UserId  = 2;
+            string Remark = 3;
         }
 
-        message Refuse {
+        message Invite {
             string GroupId = 1; 
             string Message = 2;
-        }
-
-        message Cancel {
-            string GroupId = 1; 
+            string UserId  = 3;
+           repeated string FriendId = 4;
         }
 
         message In{
@@ -266,8 +266,7 @@ message User{
             oneof Payload {
                 Add Add = 1;
                 Accept Accept = 2;
-                Refuse Refuse = 3;
-                Cancel Cancel = 4;
+                Invite Invite = 3;
             }
         }
 
@@ -279,7 +278,7 @@ message User{
             oneof Payload {
                 MemberRequest MemberRequest = 1;
                 Info  GroupRequest = 2;
-                Refuse Refuse = 3;
+                Invite Invite = 3;
             }
         }
     }

@@ -17,21 +17,7 @@ func WriteInboxC(ctx context.Context, msg *Messages) error {
 	tinboxNamer := RDBNamer(defaultInboxKey, strconv.FormatUint(msg.To, 10))
 	finboxNamer := RDBNamer(defaultInboxKey, strconv.FormatUint(msg.From, 10))
 	messageNamer := RDBNamer(defaultInboxMessageKey, strconv.FormatUint(msg.ID, 10))
-
-	message := make(map[string]interface{})
-	message["ID"] = msg.ID
-	message["SeqId"] = msg.SeqId
-	message["To"] = msg.To
-	message["From"] = msg.From
-	message["Content"] = msg.Content
-	message["Group"] = msg.Group
-	message["ContentType"] = msg.ContentType
-	message["CreatedAt"] = msg.CreatedAt
-	message["TSeqId"] = msg.TSeqId
-	message["FSeqId"] = msg.FSeqId
-	message["Status"] = msg.Status
-	message["Topic"] = msg.Topic
-
+	message := msg.ToMap()
 	var (
 		retInbox   []*redis.IntCmd
 		retMessage *redis.BoolCmd
@@ -65,21 +51,7 @@ func WriteInboxC(ctx context.Context, msg *Messages) error {
 func WriteInboxG(ctx context.Context, msg *Messages) error {
 	tinboxNamer := RDBNamer(defaultInboxKey, strconv.FormatUint(msg.To, 10))
 	messageNamer := RDBNamer(defaultInboxMessageKey, strconv.FormatUint(msg.ID, 10))
-
-	message := make(map[string]interface{})
-	message["ID"] = msg.ID
-	message["SeqId"] = msg.SeqId
-	message["To"] = msg.To
-	message["From"] = msg.From
-	message["Content"] = msg.Content
-	message["Group"] = msg.Group
-	message["ContentType"] = msg.ContentType
-	message["CreatedAt"] = msg.CreatedAt
-	message["TSeqId"] = msg.TSeqId
-	message["FSeqId"] = msg.FSeqId
-	message["Status"] = msg.Status
-	message["Topic"] = msg.Topic
-
+	message := msg.ToMap()
 	var (
 		retInbox   []*redis.IntCmd
 		retMessage *redis.BoolCmd

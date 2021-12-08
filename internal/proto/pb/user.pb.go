@@ -2396,6 +2396,7 @@ type User_Group_Add struct {
 	GroupId string `protobuf:"bytes,1,opt,name=GroupId,proto3" json:"GroupId,omitempty"`
 	Remark  string `protobuf:"bytes,2,opt,name=Remark,proto3" json:"Remark,omitempty"`
 	Message string `protobuf:"bytes,3,opt,name=Message,proto3" json:"Message,omitempty"`
+	UserId  string `protobuf:"bytes,4,opt,name=UserId,proto3" json:"UserId,omitempty"`
 }
 
 func (x *User_Group_Add) Reset() {
@@ -2451,13 +2452,21 @@ func (x *User_Group_Add) GetMessage() string {
 	return ""
 }
 
+func (x *User_Group_Add) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
 type User_Group_Accept struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
 	GroupId string `protobuf:"bytes,1,opt,name=GroupId,proto3" json:"GroupId,omitempty"`
-	Remark  string `protobuf:"bytes,2,opt,name=Remark,proto3" json:"Remark,omitempty"`
+	UserId  string `protobuf:"bytes,2,opt,name=UserId,proto3" json:"UserId,omitempty"`
+	Remark  string `protobuf:"bytes,3,opt,name=Remark,proto3" json:"Remark,omitempty"`
 }
 
 func (x *User_Group_Accept) Reset() {
@@ -2499,6 +2508,13 @@ func (x *User_Group_Accept) GetGroupId() string {
 	return ""
 }
 
+func (x *User_Group_Accept) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
 func (x *User_Group_Accept) GetRemark() string {
 	if x != nil {
 		return x.Remark
@@ -2506,17 +2522,19 @@ func (x *User_Group_Accept) GetRemark() string {
 	return ""
 }
 
-type User_Group_Refuse struct {
+type User_Group_Invite struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	GroupId string `protobuf:"bytes,1,opt,name=GroupId,proto3" json:"GroupId,omitempty"`
-	Message string `protobuf:"bytes,2,opt,name=Message,proto3" json:"Message,omitempty"`
+	GroupId  string   `protobuf:"bytes,1,opt,name=GroupId,proto3" json:"GroupId,omitempty"`
+	Message  string   `protobuf:"bytes,2,opt,name=Message,proto3" json:"Message,omitempty"`
+	UserId   string   `protobuf:"bytes,3,opt,name=UserId,proto3" json:"UserId,omitempty"`
+	FriendId []string `protobuf:"bytes,4,rep,name=FriendId,proto3" json:"FriendId,omitempty"`
 }
 
-func (x *User_Group_Refuse) Reset() {
-	*x = User_Group_Refuse{}
+func (x *User_Group_Invite) Reset() {
+	*x = User_Group_Invite{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_internal_proto_pb_user_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2524,13 +2542,13 @@ func (x *User_Group_Refuse) Reset() {
 	}
 }
 
-func (x *User_Group_Refuse) String() string {
+func (x *User_Group_Invite) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*User_Group_Refuse) ProtoMessage() {}
+func (*User_Group_Invite) ProtoMessage() {}
 
-func (x *User_Group_Refuse) ProtoReflect() protoreflect.Message {
+func (x *User_Group_Invite) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_pb_user_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2542,70 +2560,37 @@ func (x *User_Group_Refuse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use User_Group_Refuse.ProtoReflect.Descriptor instead.
-func (*User_Group_Refuse) Descriptor() ([]byte, []int) {
+// Deprecated: Use User_Group_Invite.ProtoReflect.Descriptor instead.
+func (*User_Group_Invite) Descriptor() ([]byte, []int) {
 	return file_internal_proto_pb_user_proto_rawDescGZIP(), []int{0, 8, 9}
 }
 
-func (x *User_Group_Refuse) GetGroupId() string {
+func (x *User_Group_Invite) GetGroupId() string {
 	if x != nil {
 		return x.GroupId
 	}
 	return ""
 }
 
-func (x *User_Group_Refuse) GetMessage() string {
+func (x *User_Group_Invite) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
 }
 
-type User_Group_Cancel struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	GroupId string `protobuf:"bytes,1,opt,name=GroupId,proto3" json:"GroupId,omitempty"`
-}
-
-func (x *User_Group_Cancel) Reset() {
-	*x = User_Group_Cancel{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_user_proto_msgTypes[37]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *User_Group_Cancel) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*User_Group_Cancel) ProtoMessage() {}
-
-func (x *User_Group_Cancel) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_user_proto_msgTypes[37]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use User_Group_Cancel.ProtoReflect.Descriptor instead.
-func (*User_Group_Cancel) Descriptor() ([]byte, []int) {
-	return file_internal_proto_pb_user_proto_rawDescGZIP(), []int{0, 8, 10}
-}
-
-func (x *User_Group_Cancel) GetGroupId() string {
+func (x *User_Group_Invite) GetUserId() string {
 	if x != nil {
-		return x.GroupId
+		return x.UserId
 	}
 	return ""
+}
+
+func (x *User_Group_Invite) GetFriendId() []string {
+	if x != nil {
+		return x.FriendId
+	}
+	return nil
 }
 
 type User_Group_In struct {
@@ -2620,7 +2605,7 @@ type User_Group_In struct {
 func (x *User_Group_In) Reset() {
 	*x = User_Group_In{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_user_proto_msgTypes[38]
+		mi := &file_internal_proto_pb_user_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2633,7 +2618,7 @@ func (x *User_Group_In) String() string {
 func (*User_Group_In) ProtoMessage() {}
 
 func (x *User_Group_In) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_user_proto_msgTypes[38]
+	mi := &file_internal_proto_pb_user_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2646,7 +2631,7 @@ func (x *User_Group_In) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User_Group_In.ProtoReflect.Descriptor instead.
 func (*User_Group_In) Descriptor() ([]byte, []int) {
-	return file_internal_proto_pb_user_proto_rawDescGZIP(), []int{0, 8, 11}
+	return file_internal_proto_pb_user_proto_rawDescGZIP(), []int{0, 8, 10}
 }
 
 func (x *User_Group_In) GetGroupId() uint64 {
@@ -2678,7 +2663,7 @@ type User_Group_MemberRequest struct {
 func (x *User_Group_MemberRequest) Reset() {
 	*x = User_Group_MemberRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_user_proto_msgTypes[39]
+		mi := &file_internal_proto_pb_user_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2691,7 +2676,7 @@ func (x *User_Group_MemberRequest) String() string {
 func (*User_Group_MemberRequest) ProtoMessage() {}
 
 func (x *User_Group_MemberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_user_proto_msgTypes[39]
+	mi := &file_internal_proto_pb_user_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2704,7 +2689,7 @@ func (x *User_Group_MemberRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User_Group_MemberRequest.ProtoReflect.Descriptor instead.
 func (*User_Group_MemberRequest) Descriptor() ([]byte, []int) {
-	return file_internal_proto_pb_user_proto_rawDescGZIP(), []int{0, 8, 12}
+	return file_internal_proto_pb_user_proto_rawDescGZIP(), []int{0, 8, 11}
 }
 
 func (x *User_Group_MemberRequest) GetUserID() string {
@@ -2750,15 +2735,14 @@ type User_Group_Request struct {
 	// Types that are assignable to Payload:
 	//	*User_Group_Request_Add
 	//	*User_Group_Request_Accept
-	//	*User_Group_Request_Refuse
-	//	*User_Group_Request_Cancel
+	//	*User_Group_Request_Invite
 	Payload isUser_Group_Request_Payload `protobuf_oneof:"Payload"`
 }
 
 func (x *User_Group_Request) Reset() {
 	*x = User_Group_Request{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_user_proto_msgTypes[40]
+		mi := &file_internal_proto_pb_user_proto_msgTypes[39]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2771,7 +2755,7 @@ func (x *User_Group_Request) String() string {
 func (*User_Group_Request) ProtoMessage() {}
 
 func (x *User_Group_Request) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_user_proto_msgTypes[40]
+	mi := &file_internal_proto_pb_user_proto_msgTypes[39]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2784,7 +2768,7 @@ func (x *User_Group_Request) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User_Group_Request.ProtoReflect.Descriptor instead.
 func (*User_Group_Request) Descriptor() ([]byte, []int) {
-	return file_internal_proto_pb_user_proto_rawDescGZIP(), []int{0, 8, 13}
+	return file_internal_proto_pb_user_proto_rawDescGZIP(), []int{0, 8, 12}
 }
 
 func (m *User_Group_Request) GetPayload() isUser_Group_Request_Payload {
@@ -2808,16 +2792,9 @@ func (x *User_Group_Request) GetAccept() *User_Group_Accept {
 	return nil
 }
 
-func (x *User_Group_Request) GetRefuse() *User_Group_Refuse {
-	if x, ok := x.GetPayload().(*User_Group_Request_Refuse); ok {
-		return x.Refuse
-	}
-	return nil
-}
-
-func (x *User_Group_Request) GetCancel() *User_Group_Cancel {
-	if x, ok := x.GetPayload().(*User_Group_Request_Cancel); ok {
-		return x.Cancel
+func (x *User_Group_Request) GetInvite() *User_Group_Invite {
+	if x, ok := x.GetPayload().(*User_Group_Request_Invite); ok {
+		return x.Invite
 	}
 	return nil
 }
@@ -2834,21 +2811,15 @@ type User_Group_Request_Accept struct {
 	Accept *User_Group_Accept `protobuf:"bytes,2,opt,name=Accept,proto3,oneof"`
 }
 
-type User_Group_Request_Refuse struct {
-	Refuse *User_Group_Refuse `protobuf:"bytes,3,opt,name=Refuse,proto3,oneof"`
-}
-
-type User_Group_Request_Cancel struct {
-	Cancel *User_Group_Cancel `protobuf:"bytes,4,opt,name=Cancel,proto3,oneof"`
+type User_Group_Request_Invite struct {
+	Invite *User_Group_Invite `protobuf:"bytes,3,opt,name=Invite,proto3,oneof"`
 }
 
 func (*User_Group_Request_Add) isUser_Group_Request_Payload() {}
 
 func (*User_Group_Request_Accept) isUser_Group_Request_Payload() {}
 
-func (*User_Group_Request_Refuse) isUser_Group_Request_Payload() {}
-
-func (*User_Group_Request_Cancel) isUser_Group_Request_Payload() {}
+func (*User_Group_Request_Invite) isUser_Group_Request_Payload() {}
 
 type User_Group_Reply struct {
 	state         protoimpl.MessageState
@@ -2861,7 +2832,7 @@ type User_Group_Reply struct {
 func (x *User_Group_Reply) Reset() {
 	*x = User_Group_Reply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_user_proto_msgTypes[41]
+		mi := &file_internal_proto_pb_user_proto_msgTypes[40]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2874,7 +2845,7 @@ func (x *User_Group_Reply) String() string {
 func (*User_Group_Reply) ProtoMessage() {}
 
 func (x *User_Group_Reply) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_user_proto_msgTypes[41]
+	mi := &file_internal_proto_pb_user_proto_msgTypes[40]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2887,7 +2858,7 @@ func (x *User_Group_Reply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User_Group_Reply.ProtoReflect.Descriptor instead.
 func (*User_Group_Reply) Descriptor() ([]byte, []int) {
-	return file_internal_proto_pb_user_proto_rawDescGZIP(), []int{0, 8, 14}
+	return file_internal_proto_pb_user_proto_rawDescGZIP(), []int{0, 8, 13}
 }
 
 func (x *User_Group_Reply) GetOK() bool {
@@ -2905,14 +2876,14 @@ type User_Group_Notify struct {
 	// Types that are assignable to Payload:
 	//	*User_Group_Notify_MemberRequest
 	//	*User_Group_Notify_GroupRequest
-	//	*User_Group_Notify_Refuse
+	//	*User_Group_Notify_Invite
 	Payload isUser_Group_Notify_Payload `protobuf_oneof:"Payload"`
 }
 
 func (x *User_Group_Notify) Reset() {
 	*x = User_Group_Notify{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_user_proto_msgTypes[42]
+		mi := &file_internal_proto_pb_user_proto_msgTypes[41]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2925,7 +2896,7 @@ func (x *User_Group_Notify) String() string {
 func (*User_Group_Notify) ProtoMessage() {}
 
 func (x *User_Group_Notify) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_user_proto_msgTypes[42]
+	mi := &file_internal_proto_pb_user_proto_msgTypes[41]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2938,7 +2909,7 @@ func (x *User_Group_Notify) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User_Group_Notify.ProtoReflect.Descriptor instead.
 func (*User_Group_Notify) Descriptor() ([]byte, []int) {
-	return file_internal_proto_pb_user_proto_rawDescGZIP(), []int{0, 8, 15}
+	return file_internal_proto_pb_user_proto_rawDescGZIP(), []int{0, 8, 14}
 }
 
 func (m *User_Group_Notify) GetPayload() isUser_Group_Notify_Payload {
@@ -2962,9 +2933,9 @@ func (x *User_Group_Notify) GetGroupRequest() *User_Group_Info {
 	return nil
 }
 
-func (x *User_Group_Notify) GetRefuse() *User_Group_Refuse {
-	if x, ok := x.GetPayload().(*User_Group_Notify_Refuse); ok {
-		return x.Refuse
+func (x *User_Group_Notify) GetInvite() *User_Group_Invite {
+	if x, ok := x.GetPayload().(*User_Group_Notify_Invite); ok {
+		return x.Invite
 	}
 	return nil
 }
@@ -2981,15 +2952,15 @@ type User_Group_Notify_GroupRequest struct {
 	GroupRequest *User_Group_Info `protobuf:"bytes,2,opt,name=GroupRequest,proto3,oneof"`
 }
 
-type User_Group_Notify_Refuse struct {
-	Refuse *User_Group_Refuse `protobuf:"bytes,3,opt,name=Refuse,proto3,oneof"`
+type User_Group_Notify_Invite struct {
+	Invite *User_Group_Invite `protobuf:"bytes,3,opt,name=Invite,proto3,oneof"`
 }
 
 func (*User_Group_Notify_MemberRequest) isUser_Group_Notify_Payload() {}
 
 func (*User_Group_Notify_GroupRequest) isUser_Group_Notify_Payload() {}
 
-func (*User_Group_Notify_Refuse) isUser_Group_Notify_Payload() {}
+func (*User_Group_Notify_Invite) isUser_Group_Notify_Payload() {}
 
 type User_Group_Create_Request struct {
 	state         protoimpl.MessageState
@@ -3003,7 +2974,7 @@ type User_Group_Create_Request struct {
 func (x *User_Group_Create_Request) Reset() {
 	*x = User_Group_Create_Request{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_user_proto_msgTypes[43]
+		mi := &file_internal_proto_pb_user_proto_msgTypes[42]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3016,7 +2987,7 @@ func (x *User_Group_Create_Request) String() string {
 func (*User_Group_Create_Request) ProtoMessage() {}
 
 func (x *User_Group_Create_Request) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_user_proto_msgTypes[43]
+	mi := &file_internal_proto_pb_user_proto_msgTypes[42]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3057,7 +3028,7 @@ type User_Group_Create_Reply struct {
 func (x *User_Group_Create_Reply) Reset() {
 	*x = User_Group_Create_Reply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_pb_user_proto_msgTypes[44]
+		mi := &file_internal_proto_pb_user_proto_msgTypes[43]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3070,7 +3041,7 @@ func (x *User_Group_Create_Reply) String() string {
 func (*User_Group_Create_Reply) ProtoMessage() {}
 
 func (x *User_Group_Create_Reply) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_pb_user_proto_msgTypes[44]
+	mi := &file_internal_proto_pb_user_proto_msgTypes[43]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3098,7 +3069,7 @@ var File_internal_proto_pb_user_proto protoreflect.FileDescriptor
 var file_internal_proto_pb_user_proto_rawDesc = []byte{
 	0x0a, 0x1c, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x2f, 0x70, 0x62, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x02,
-	0x70, 0x62, 0x22, 0xe6, 0x24, 0x0a, 0x04, 0x55, 0x73, 0x65, 0x72, 0x1a, 0xc0, 0x01, 0x0a, 0x04,
+	0x70, 0x62, 0x22, 0xf5, 0x24, 0x0a, 0x04, 0x55, 0x73, 0x65, 0x72, 0x1a, 0xc0, 0x01, 0x0a, 0x04,
 	0x49, 0x6e, 0x66, 0x6f, 0x12, 0x16, 0x0a, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x1a, 0x0a, 0x08,
 	0x4e, 0x69, 0x63, 0x6b, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08,
@@ -3282,7 +3253,7 @@ var file_internal_proto_pb_user_proto_rawDesc = []byte{
 	0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x70, 0x62, 0x2e, 0x55, 0x73, 0x65, 0x72,
 	0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x61, 0x63, 0x74, 0x73, 0x2e, 0x52, 0x65, 0x66, 0x75, 0x73, 0x65,
 	0x48, 0x00, 0x52, 0x06, 0x52, 0x65, 0x66, 0x75, 0x73, 0x65, 0x42, 0x09, 0x0a, 0x07, 0x50, 0x61,
-	0x79, 0x6c, 0x6f, 0x61, 0x64, 0x1a, 0xe3, 0x0d, 0x0a, 0x05, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x1a,
+	0x79, 0x6c, 0x6f, 0x61, 0x64, 0x1a, 0xf2, 0x0d, 0x0a, 0x05, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x1a,
 	0x77, 0x0a, 0x06, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x1a, 0x3b, 0x0a, 0x07, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x18, 0x0a, 0x07,
@@ -3338,22 +3309,26 @@ var file_internal_proto_pb_user_proto_rawDesc = []byte{
 	0x04, 0x53, 0x69, 0x7a, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x53, 0x69, 0x7a,
 	0x65, 0x12, 0x20, 0x0a, 0x0b, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x43, 0x6f, 0x75, 0x6e, 0x74,
 	0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0b, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x43, 0x6f,
-	0x75, 0x6e, 0x74, 0x1a, 0x51, 0x0a, 0x03, 0x41, 0x64, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x47, 0x72,
+	0x75, 0x6e, 0x74, 0x1a, 0x69, 0x0a, 0x03, 0x41, 0x64, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x47, 0x72,
 	0x6f, 0x75, 0x70, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x47, 0x72, 0x6f,
 	0x75, 0x70, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x52, 0x65, 0x6d, 0x61, 0x72, 0x6b, 0x18, 0x02,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x52, 0x65, 0x6d, 0x61, 0x72, 0x6b, 0x12, 0x18, 0x0a, 0x07,
 	0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x4d,
-	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x1a, 0x3a, 0x0a, 0x06, 0x41, 0x63, 0x63, 0x65, 0x70, 0x74,
-	0x12, 0x18, 0x0a, 0x07, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x07, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x52, 0x65,
-	0x6d, 0x61, 0x72, 0x6b, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x52, 0x65, 0x6d, 0x61,
-	0x72, 0x6b, 0x1a, 0x3c, 0x0a, 0x06, 0x52, 0x65, 0x66, 0x75, 0x73, 0x65, 0x12, 0x18, 0x0a, 0x07,
+	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64,
+	0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x1a, 0x52,
+	0x0a, 0x06, 0x41, 0x63, 0x63, 0x65, 0x70, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x47, 0x72, 0x6f, 0x75,
+	0x70, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x47, 0x72, 0x6f, 0x75, 0x70,
+	0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x52, 0x65,
+	0x6d, 0x61, 0x72, 0x6b, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x52, 0x65, 0x6d, 0x61,
+	0x72, 0x6b, 0x1a, 0x70, 0x0a, 0x06, 0x49, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x12, 0x18, 0x0a, 0x07,
 	0x47, 0x72, 0x6f, 0x75, 0x70, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x47,
 	0x72, 0x6f, 0x75, 0x70, 0x49, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67,
 	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
-	0x1a, 0x22, 0x0a, 0x06, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x12, 0x18, 0x0a, 0x07, 0x47, 0x72,
-	0x6f, 0x75, 0x70, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x47, 0x72, 0x6f,
-	0x75, 0x70, 0x49, 0x64, 0x1a, 0x36, 0x0a, 0x02, 0x49, 0x6e, 0x12, 0x18, 0x0a, 0x07, 0x47, 0x72,
+	0x12, 0x16, 0x0a, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x46, 0x72, 0x69, 0x65,
+	0x6e, 0x64, 0x49, 0x64, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x46, 0x72, 0x69, 0x65,
+	0x6e, 0x64, 0x49, 0x64, 0x1a, 0x36, 0x0a, 0x02, 0x49, 0x6e, 0x12, 0x18, 0x0a, 0x07, 0x47, 0x72,
 	0x6f, 0x75, 0x70, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x07, 0x47, 0x72, 0x6f,
 	0x75, 0x70, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x02,
 	0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x1a, 0x89, 0x01, 0x0a,
@@ -3365,37 +3340,34 @@ var file_internal_proto_pb_user_proto_rawDesc = []byte{
 	0x01, 0x28, 0x09, 0x52, 0x07, 0x48, 0x65, 0x61, 0x64, 0x69, 0x6d, 0x67, 0x12, 0x10, 0x0a, 0x03,
 	0x53, 0x65, 0x78, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x53, 0x65, 0x78, 0x12, 0x18,
 	0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x1a, 0xcf, 0x01, 0x0a, 0x07, 0x52, 0x65, 0x71,
+	0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x1a, 0x9e, 0x01, 0x0a, 0x07, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x12, 0x26, 0x0a, 0x03, 0x41, 0x64, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x0b, 0x32, 0x12, 0x2e, 0x70, 0x62, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x2e, 0x47, 0x72, 0x6f, 0x75,
 	0x70, 0x2e, 0x41, 0x64, 0x64, 0x48, 0x00, 0x52, 0x03, 0x41, 0x64, 0x64, 0x12, 0x2f, 0x0a, 0x06,
 	0x41, 0x63, 0x63, 0x65, 0x70, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x70,
 	0x62, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x2e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x2e, 0x41, 0x63, 0x63,
 	0x65, 0x70, 0x74, 0x48, 0x00, 0x52, 0x06, 0x41, 0x63, 0x63, 0x65, 0x70, 0x74, 0x12, 0x2f, 0x0a,
-	0x06, 0x52, 0x65, 0x66, 0x75, 0x73, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e,
-	0x70, 0x62, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x2e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x2e, 0x52, 0x65,
-	0x66, 0x75, 0x73, 0x65, 0x48, 0x00, 0x52, 0x06, 0x52, 0x65, 0x66, 0x75, 0x73, 0x65, 0x12, 0x2f,
-	0x0a, 0x06, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15,
-	0x2e, 0x70, 0x62, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x2e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x2e, 0x43,
-	0x61, 0x6e, 0x63, 0x65, 0x6c, 0x48, 0x00, 0x52, 0x06, 0x43, 0x61, 0x6e, 0x63, 0x65, 0x6c, 0x42,
-	0x09, 0x0a, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x1a, 0x17, 0x0a, 0x05, 0x52, 0x65,
-	0x70, 0x6c, 0x79, 0x12, 0x0e, 0x0a, 0x02, 0x4f, 0x4b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52,
-	0x02, 0x4f, 0x4b, 0x1a, 0xc5, 0x01, 0x0a, 0x06, 0x4e, 0x6f, 0x74, 0x69, 0x66, 0x79, 0x12, 0x44,
-	0x0a, 0x0d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x70, 0x62, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x2e,
-	0x47, 0x72, 0x6f, 0x75, 0x70, 0x2e, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x48, 0x00, 0x52, 0x0d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x12, 0x39, 0x0a, 0x0c, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x70, 0x62, 0x2e,
-	0x55, 0x73, 0x65, 0x72, 0x2e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x2e, 0x49, 0x6e, 0x66, 0x6f, 0x48,
-	0x00, 0x52, 0x0c, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
-	0x2f, 0x0a, 0x06, 0x52, 0x65, 0x66, 0x75, 0x73, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x15, 0x2e, 0x70, 0x62, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x2e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x2e,
-	0x52, 0x65, 0x66, 0x75, 0x73, 0x65, 0x48, 0x00, 0x52, 0x06, 0x52, 0x65, 0x66, 0x75, 0x73, 0x65,
-	0x42, 0x09, 0x0a, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x42, 0x2b, 0x5a, 0x29, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f, 0x75, 0x62, 0x6c, 0x65,
-	0x6d, 0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x06, 0x49, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e,
+	0x70, 0x62, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x2e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x2e, 0x49, 0x6e,
+	0x76, 0x69, 0x74, 0x65, 0x48, 0x00, 0x52, 0x06, 0x49, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x42, 0x09,
+	0x0a, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x1a, 0x17, 0x0a, 0x05, 0x52, 0x65, 0x70,
+	0x6c, 0x79, 0x12, 0x0e, 0x0a, 0x02, 0x4f, 0x4b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x02,
+	0x4f, 0x4b, 0x1a, 0xc5, 0x01, 0x0a, 0x06, 0x4e, 0x6f, 0x74, 0x69, 0x66, 0x79, 0x12, 0x44, 0x0a,
+	0x0d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x70, 0x62, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x2e, 0x47,
+	0x72, 0x6f, 0x75, 0x70, 0x2e, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x48, 0x00, 0x52, 0x0d, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x39, 0x0a, 0x0c, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x70, 0x62, 0x2e, 0x55,
+	0x73, 0x65, 0x72, 0x2e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x2e, 0x49, 0x6e, 0x66, 0x6f, 0x48, 0x00,
+	0x52, 0x0c, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2f,
+	0x0a, 0x06, 0x49, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15,
+	0x2e, 0x70, 0x62, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x2e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x2e, 0x49,
+	0x6e, 0x76, 0x69, 0x74, 0x65, 0x48, 0x00, 0x52, 0x06, 0x49, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x42,
+	0x09, 0x0a, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x6f, 0x75, 0x62, 0x6c, 0x65, 0x6d,
+	0x6f, 0x2f, 0x62, 0x61, 0x61, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -3410,7 +3382,7 @@ func file_internal_proto_pb_user_proto_rawDescGZIP() []byte {
 	return file_internal_proto_pb_user_proto_rawDescData
 }
 
-var file_internal_proto_pb_user_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
+var file_internal_proto_pb_user_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
 var file_internal_proto_pb_user_proto_goTypes = []interface{}{
 	(*User)(nil),                                 // 0: pb.User
 	(*User_Info)(nil),                            // 1: pb.User.Info
@@ -3448,15 +3420,14 @@ var file_internal_proto_pb_user_proto_goTypes = []interface{}{
 	(*User_Group_MembersIDListReply)(nil),        // 33: pb.User.Group.MembersIDListReply
 	(*User_Group_Add)(nil),                       // 34: pb.User.Group.Add
 	(*User_Group_Accept)(nil),                    // 35: pb.User.Group.Accept
-	(*User_Group_Refuse)(nil),                    // 36: pb.User.Group.Refuse
-	(*User_Group_Cancel)(nil),                    // 37: pb.User.Group.Cancel
-	(*User_Group_In)(nil),                        // 38: pb.User.Group.In
-	(*User_Group_MemberRequest)(nil),             // 39: pb.User.Group.MemberRequest
-	(*User_Group_Request)(nil),                   // 40: pb.User.Group.Request
-	(*User_Group_Reply)(nil),                     // 41: pb.User.Group.Reply
-	(*User_Group_Notify)(nil),                    // 42: pb.User.Group.Notify
-	(*User_Group_Create_Request)(nil),            // 43: pb.User.Group.Create.Request
-	(*User_Group_Create_Reply)(nil),              // 44: pb.User.Group.Create.Reply
+	(*User_Group_Invite)(nil),                    // 36: pb.User.Group.Invite
+	(*User_Group_In)(nil),                        // 37: pb.User.Group.In
+	(*User_Group_MemberRequest)(nil),             // 38: pb.User.Group.MemberRequest
+	(*User_Group_Request)(nil),                   // 39: pb.User.Group.Request
+	(*User_Group_Reply)(nil),                     // 40: pb.User.Group.Reply
+	(*User_Group_Notify)(nil),                    // 41: pb.User.Group.Notify
+	(*User_Group_Create_Request)(nil),            // 42: pb.User.Group.Create.Request
+	(*User_Group_Create_Reply)(nil),              // 43: pb.User.Group.Create.Reply
 }
 var file_internal_proto_pb_user_proto_depIdxs = []int32{
 	1,  // 0: pb.User.MoreInfo.Values:type_name -> pb.User.Info
@@ -3476,17 +3447,16 @@ var file_internal_proto_pb_user_proto_depIdxs = []int32{
 	29, // 14: pb.User.Group.MembersListReply.Values:type_name -> pb.User.Group.Member
 	34, // 15: pb.User.Group.Request.Add:type_name -> pb.User.Group.Add
 	35, // 16: pb.User.Group.Request.Accept:type_name -> pb.User.Group.Accept
-	36, // 17: pb.User.Group.Request.Refuse:type_name -> pb.User.Group.Refuse
-	37, // 18: pb.User.Group.Request.Cancel:type_name -> pb.User.Group.Cancel
-	39, // 19: pb.User.Group.Notify.MemberRequest:type_name -> pb.User.Group.MemberRequest
-	28, // 20: pb.User.Group.Notify.GroupRequest:type_name -> pb.User.Group.Info
-	36, // 21: pb.User.Group.Notify.Refuse:type_name -> pb.User.Group.Refuse
-	28, // 22: pb.User.Group.Create.Reply.Info:type_name -> pb.User.Group.Info
-	23, // [23:23] is the sub-list for method output_type
-	23, // [23:23] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	36, // 17: pb.User.Group.Request.Invite:type_name -> pb.User.Group.Invite
+	38, // 18: pb.User.Group.Notify.MemberRequest:type_name -> pb.User.Group.MemberRequest
+	28, // 19: pb.User.Group.Notify.GroupRequest:type_name -> pb.User.Group.Info
+	36, // 20: pb.User.Group.Notify.Invite:type_name -> pb.User.Group.Invite
+	28, // 21: pb.User.Group.Create.Reply.Info:type_name -> pb.User.Group.Info
+	22, // [22:22] is the sub-list for method output_type
+	22, // [22:22] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_internal_proto_pb_user_proto_init() }
@@ -3928,7 +3898,7 @@ func file_internal_proto_pb_user_proto_init() {
 			}
 		}
 		file_internal_proto_pb_user_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*User_Group_Refuse); i {
+			switch v := v.(*User_Group_Invite); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3940,18 +3910,6 @@ func file_internal_proto_pb_user_proto_init() {
 			}
 		}
 		file_internal_proto_pb_user_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*User_Group_Cancel); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_pb_user_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*User_Group_In); i {
 			case 0:
 				return &v.state
@@ -3963,7 +3921,7 @@ func file_internal_proto_pb_user_proto_init() {
 				return nil
 			}
 		}
-		file_internal_proto_pb_user_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_user_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*User_Group_MemberRequest); i {
 			case 0:
 				return &v.state
@@ -3975,7 +3933,7 @@ func file_internal_proto_pb_user_proto_init() {
 				return nil
 			}
 		}
-		file_internal_proto_pb_user_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_user_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*User_Group_Request); i {
 			case 0:
 				return &v.state
@@ -3987,7 +3945,7 @@ func file_internal_proto_pb_user_proto_init() {
 				return nil
 			}
 		}
-		file_internal_proto_pb_user_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_user_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*User_Group_Reply); i {
 			case 0:
 				return &v.state
@@ -3999,7 +3957,7 @@ func file_internal_proto_pb_user_proto_init() {
 				return nil
 			}
 		}
-		file_internal_proto_pb_user_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_user_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*User_Group_Notify); i {
 			case 0:
 				return &v.state
@@ -4011,7 +3969,7 @@ func file_internal_proto_pb_user_proto_init() {
 				return nil
 			}
 		}
-		file_internal_proto_pb_user_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_user_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*User_Group_Create_Request); i {
 			case 0:
 				return &v.state
@@ -4023,7 +3981,7 @@ func file_internal_proto_pb_user_proto_init() {
 				return nil
 			}
 		}
-		file_internal_proto_pb_user_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
+		file_internal_proto_pb_user_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*User_Group_Create_Reply); i {
 			case 0:
 				return &v.state
@@ -4057,16 +4015,15 @@ func file_internal_proto_pb_user_proto_init() {
 		(*User_Contacts_Notify_Request)(nil),
 		(*User_Contacts_Notify_Refuse)(nil),
 	}
-	file_internal_proto_pb_user_proto_msgTypes[40].OneofWrappers = []interface{}{
+	file_internal_proto_pb_user_proto_msgTypes[39].OneofWrappers = []interface{}{
 		(*User_Group_Request_Add)(nil),
 		(*User_Group_Request_Accept)(nil),
-		(*User_Group_Request_Refuse)(nil),
-		(*User_Group_Request_Cancel)(nil),
+		(*User_Group_Request_Invite)(nil),
 	}
-	file_internal_proto_pb_user_proto_msgTypes[42].OneofWrappers = []interface{}{
+	file_internal_proto_pb_user_proto_msgTypes[41].OneofWrappers = []interface{}{
 		(*User_Group_Notify_MemberRequest)(nil),
 		(*User_Group_Notify_GroupRequest)(nil),
-		(*User_Group_Notify_Refuse)(nil),
+		(*User_Group_Notify_Invite)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -4074,7 +4031,7 @@ func file_internal_proto_pb_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_internal_proto_pb_user_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   45,
+			NumMessages:   44,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
