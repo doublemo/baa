@@ -11,6 +11,7 @@ import (
 
 	"github.com/doublemo/baa/cores/crypto/id"
 	"github.com/doublemo/baa/cores/crypto/token"
+	log "github.com/doublemo/baa/cores/log/level"
 	coresproto "github.com/doublemo/baa/cores/proto"
 	corespb "github.com/doublemo/baa/cores/proto/pb"
 	"github.com/doublemo/baa/cores/types"
@@ -32,6 +33,7 @@ func RequestPostWithContext(ctx context.Context, cmd coresproto.Command, url str
 	t := time.Now().Unix()
 	url = fmt.Sprintf(url+"?t=%d", t)
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
+	log.Debug(Logger()).Log("action", "POST", "URL", req.URL.String())
 	if err != nil {
 		return nil, types.NewErrCode(errcode.ErrInternalServer.Code(), err.Error())
 	}

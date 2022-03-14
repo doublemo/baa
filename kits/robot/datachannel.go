@@ -3,13 +3,13 @@ package robot
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	log "github.com/doublemo/baa/cores/log/level"
 	coresproto "github.com/doublemo/baa/cores/proto"
 	"github.com/doublemo/baa/internal/proto/command"
 	"github.com/doublemo/baa/internal/proto/kit"
 	"github.com/doublemo/baa/internal/proto/pb"
+	"github.com/doublemo/baa/kits/robot/dao"
 	"github.com/doublemo/baa/kits/robot/session"
 	grpcproto "github.com/golang/protobuf/proto"
 	"github.com/pion/webrtc/v3"
@@ -32,9 +32,39 @@ func openDataChannel(peer session.Peer, c RobotConfig) error {
 	datachannel.OnOpen(func() {
 		// ok readyed
 		log.Debug(Logger()).Log("action", "Readyed", "Robot", peer.ID())
+
+		rb, ok := peer.Params("Robots")
+		if !ok {
+			log.Error(Logger()).Log("action", "获取机器人信息", "error", "没有找到")
+			peer.Close()
+			return
+		}
+
+		robot := rb.(*dao.Robots)
+
+		//
+		versions, err := dao.FindVersionByUserID(robot.UserID)
+		if err != nil {
+			log.Error(Logger()).Log("action", "FindVersionByUserID", "error", err)
+			peer.Close()
+			return
+		}
+
+		log.Debug(Logger()).Log("action", "同步联系", "Robot", peer.ID())
+		var contactsVersion int64
+		if m, ok := versions["contacts"]; ok && m != nil {
+			contactsVersion = m.VersionID
+		}
+
+		if err := syncContacts(peer, robot.UserID, contactsVersion, c); err != nil {
+			log.Error(Logger()).Log("action", "syncContacts", "error", err)
+			peer.Close()
+			return
+		}
+
 		//fmt.Println(doCheckFriendRequest(peer, 1, c))
 		//fmt.Println(sendTestChat(peer))
-		fmt.Println(doCreateAndJoinGroup(peer, c))
+		//fmt.Println(doCreateAndJoinGroup(peer, c))
 
 		// task, ok := peer.Params("Task")
 		// if !ok {

@@ -60,6 +60,14 @@ message IM {
                 string UserId  = 4; // 邀请人ID
                 string Nickname = 5; // 邀请人昵称
             }
+
+            message JoinedGroup {
+                string GroupID =  1;
+                string Name    = 2;
+                string Headimg = 3;
+                string UserId  = 4; // 邀请人ID
+                string Nickname = 5; // 邀请人昵称
+            }
         }
 
         message Content {
@@ -79,6 +87,7 @@ message IM {
                 ContentType.File File = 13;
                 ContentType.Emoticon Emoticon = 14;
                 ContentType.JoinGroupInvite JoinGroupInvite = 15;
+                ContentType.JoinedGroup JoinedGroup = 16;
             }
         }
 

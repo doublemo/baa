@@ -37,6 +37,7 @@ func InitRouter(config RouterConfig) {
 
 	// 注册处理请求
 	r.HandleFunc(command.UserContacts, func(req *corespb.Request) (*corespb.Response, error) { return contact(req, config.User) })
+	r.HandleFunc(command.UserContactsList, func(req *corespb.Request) (*corespb.Response, error) { return contacts(req, config.User) })
 	r.HandleFunc(command.UserContactsRequest, func(req *corespb.Request) (*corespb.Response, error) { return friendRequestList(req, config.User) })
 	r.HandleFunc(command.UserRegister, func(req *corespb.Request) (*corespb.Response, error) { return register(req, config.User) })
 	r.HandleFunc(command.UserCheckIsMyFriend, checkIsMyFriend)

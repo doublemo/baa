@@ -106,7 +106,7 @@ func acceptGroup(req *corespb.Request, frame *pb.User_Group_Request_Accept, c Gr
 				ID:      frame.Accept.GroupId,
 				Name:    group.Name,
 				Notice:  group.Notice,
-				Headimg: group.Notice,
+				Headimg: group.Headimg,
 			},
 		},
 	}

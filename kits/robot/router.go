@@ -114,7 +114,7 @@ func testSend() {
 		Values: []*pb.Robot_Start_Robot{
 			&pb.Robot_Start_Robot{ID: 1, TaskGroup: 0},
 			// &pb.Robot_Start_Robot{ID: 2, TaskGroup: 0},
-			&pb.Robot_Start_Robot{ID: 3, TaskGroup: 0},
+			//&pb.Robot_Start_Robot{ID: 3, TaskGroup: 0},
 		},
 		Async: true,
 	}

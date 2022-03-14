@@ -13,6 +13,8 @@ import (
 	grpcproto "github.com/golang/protobuf/proto"
 )
 
+func pullChatMessages() {}
+
 func SendChatMessage(peer session.Peer, messages ...*pb.IM_Msg_Content) error {
 
 	frame := &pb.IM_Send{

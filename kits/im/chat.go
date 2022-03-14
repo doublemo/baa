@@ -555,3 +555,7 @@ func makeMessageToPB(m dao.Messages, secret []byte) (*pb.IM_Msg_Content, error) 
 
 	return &frameMsg, nil
 }
+
+func pull(req *corespb.Request, c ChatConfig) (*corespb.Response, error) {
+	return nil, nil
+}
